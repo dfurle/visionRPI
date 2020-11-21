@@ -1,4 +1,7 @@
 #pragma once
+
+// #define RASPI
+
 #include <ctime>
 #include <iostream>
 #include <pthread.h>
@@ -20,12 +23,14 @@
 #include <fcntl.h>
 #include <iomanip>
 #include <iostream>
-// #include <linux/i2c-dev.h>
 #include <net/if.h>
 #include <sstream>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-// #include <sys/types.h>
+#ifdef RASPI
+  #include <linux/i2c-dev.h>
+  #include <sys/types.h>
+#endif
 
 
 
@@ -131,7 +136,8 @@ extern bool         SHOWTRACK;
 extern bool         USESERVER;
 extern bool         USECOLOR;
 extern bool         DOPRINT;
-extern bool         DISABLE_FRAME;
+extern bool         FRAME;
+extern bool         SAVE;
 extern int          printTime;
 extern double       InitPID[];
 extern int          cameraInput;

@@ -3,18 +3,23 @@
 // threads.cpp
 pthread_t MJPEG;
 void* VideoCap(void* arg);
+
 // threads.cpp
 pthread_t USBSlaveThread;
 void* USBSlave(void* arg);
+
 // tcpserver.cpp
 pthread_t tcpserver;
 void* opentcp(void* arg);
+
 // tcpserver.cpp
 pthread_t videoServerThread;
 void* videoServer(void* arg);
+
 // drive.cpp
 pthread_t PIDThread;
 void* movePID(void* arg);
+
 // drive.cpp
 pthread_t DriveThread;
 void* drive(void* arg);

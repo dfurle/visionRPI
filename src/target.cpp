@@ -4,7 +4,7 @@
 #include "parser.h"
 
 
-cv::VideoWriter out("output1.mjpg", -1, 30., cv::Size(Global::FrameWidth,Global::FrameWidth));
+// cv::VideoWriter out("output1.mjpg", -1, 30., cv::Size(Global::FrameWidth,Global::FrameWidth));
 
 void createTrackbars() {
   const std::string trackbarWindowName = "Trackbars";
@@ -185,14 +185,15 @@ int main(int argc, const char* argv[]) {
   if(true){
     Parser p(argc,argv);
     double printTime_d, cameraInput_d;
-    p.add_Parameter("-o","--orig",Switches::SHOWORIG,false,"displays original camera input w/ lines");
+    p.add_Parameter("-o" ,"--orig",Switches::SHOWORIG,false,"displays original camera input w/ lines");
     p.add_Parameter("-hu","--hue",Switches::SHOWHUE,false,"displays HSV of original image w/o lines");
     p.add_Parameter("-th","--threshold",Switches::SHOWTHRESH,false,"displays thresholded image (black & white)");
-    p.add_Parameter("-tr","--track",Switches::SHOWTRACK,false,"displays sliders for HSV (or RGB depending on code :P)");
-    p.add_Parameter("-s","--server",Switches::USESERVER,false,"use server for reading image (black & while ONLY! use with -c)");
-    p.add_Parameter("-c","--color",Switches::USECOLOR,false,"use color for the server");
-    p.add_Parameter("-p","--print",Switches::DOPRINT,false,"prints basic data");
-    p.add_Parameter("-df","--disframe",Switches::DISABLE_FRAME,false,"disables print of frames");
+    p.add_Parameter("-tr","--track",Switches::SHOWTRACK,false,"displays sliders for RGB (or HSV depending on code)");
+    p.add_Parameter("-s" ,"--server",Switches::USESERVER,false,"use server for reading image (B&W only. see below)");
+    p.add_Parameter("-c" ,"--color",Switches::USECOLOR,false,"use color for the server");
+    p.add_Parameter("-p" ,"--print",Switches::DOPRINT,false,"prints basic data");
+    p.add_Parameter("-f" ,"--frame",Switches::FRAME,true,"prints of frames found");
+    p.add_Parameter("-sv","--save",Switches::SAVE,false,"saves output to .avi file every 30s");
     p.add_Parameter("-pt","--ptime",printTime_d,0,"(1-2) prints time taken for each loop");
     p.add_Parameter("-P","--P",Switches::InitPID[0],0.0,"(0.0-1.0) Proportional value of PID");
     p.add_Parameter("-I","--I",Switches::InitPID[1],0.0,"(0.0-1.0) Integral     value of PID");
@@ -205,7 +206,9 @@ int main(int argc, const char* argv[]) {
     printf("cam: %d | pt: %d\n",Switches::cameraInput, Switches::printTime);
   }
   cv::VideoWriter out;
-  startSaving(out);
+  if (Switches::SAVE)
+    startSaving(out);
+    
   ClockTimer timer;
   Clock serverClock;
   Clock switchFrame;
@@ -243,11 +246,12 @@ int main(int argc, const char* argv[]) {
   Targets targets[Var::maxTargets];
   // Init Threads--------------------
 
+#ifdef RASPI
   startThread("TCP", &positionAV);
+  startThread("USB", NULL);
+#endif
 
   startThread("VIDEO", NULL);
-
-  // startThread("USB", NULL);
 
   startThread("DRIVE", &positionAV);
 
@@ -300,9 +304,9 @@ int main(int argc, const char* argv[]) {
       if (printTime)
         timer.printTime(" Get Frame");
       frameCounter++;
-      cv::cvtColor(img, HSV, CV_BGR2HSV);
-      if (printTime)
-        timer.printTime(" to HSV");
+      // cv::cvtColor(img, HSV, CV_BGR2HSV);
+      // if (printTime)
+      //   timer.printTime(" to HSV");
       // thresholded = ThresholdImage(HSV); // switch between HSV or RGB, see what works
       // best/fastest
       thresholded = ThresholdImage(img); //      ''                ''                ''
@@ -314,6 +318,9 @@ int main(int argc, const char* argv[]) {
         timer.printTime(" apply morphs");
 
       int targetsFound = findTarget(img, thresholded, targets); // FIND THE TARGETS
+
+      if(printTime)
+        timer.printTime(" findTarget");
       if (targetsFound != 1)
         printf("targetsFound:%d\n", targetsFound);
 
@@ -377,22 +384,28 @@ int main(int argc, const char* argv[]) {
         imshow("Thresholded", thresholded);
       if (Switches::SHOWHUE)
         imshow("HSV", HSV);
-      out.write(img);
-      if(savingClock.getTimeAsSecs() >= 30.){
-        printf("---SAVING---\n");
-        savingClock.restart();
-        out.release();
-        startSaving(out);
-      } else {
-        int time =  int(30.-savingClock.getTimeAsSecs());
-        if(time != prevTime){
-          printf("time till next save: %d\n",time);
-          prevTime = time;
+
+      if (printTime)
+        timer.printTime(" finished imshow");
+
+      if (Switches::SAVE){
+        out.write(img);
+        if(savingClock.getTimeAsSecs() >= 30.){
+          printf("---SAVING---\n");
+          savingClock.restart();
+          out.release();
+          startSaving(out);
+        } else {
+          int time =  int(30.-savingClock.getTimeAsSecs());
+          if(time != prevTime){
+            printf("time till next save: %d\n",time);
+            prevTime = time;
+          }
         }
       }
 
       if (printTime)
-        timer.printTime(" finished imshow");
+        timer.printTime(" fin saving vid");
 
       if (printTime) {
         timer.printTime("End");
@@ -413,7 +426,7 @@ int main(int argc, const char* argv[]) {
       frameCounterPrev = frameCounter;
       double dt = serverClock.getTimeAsSecs();
       serverClock.restart();
-      if(!Switches::DISABLE_FRAME){
+      if(Switches::FRAME){
         printf("------ Frame rate: %f fr/s (%f) \n", 10. / dt, frameCounter2 / dt);
         printf("------ Miss Frame: %d fr \n", missedFrames);
       }
