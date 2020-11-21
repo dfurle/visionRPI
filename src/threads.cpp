@@ -70,17 +70,17 @@ bool startThread(std::string name, void* params) {
 
 void* VideoCap(void* args) {
   cv::VideoCapture vcap;
-  if (Switches::cameraInput != 2) {
+  if (Switches::cameraInput == 2) {
+    // while (!vcap.open(0)) {
+    //   std::cout << "cant connect" << std::endl;
+    //   usleep(10000000);
+    // }
+    printf("Not Using Camera\n");
+  } else {
     while (!vcap.open(Switches::cameraInput)) {
       std::cout << "cant connect" << std::endl;
       usleep(10000000);
     }
-  } else {
-    while (!vcap.open(0)) {
-      std::cout << "cant connect" << std::endl;
-      usleep(10000000);
-    }
-    printf("Not Using Camera\n");
   }
   printf("setting brightness\n");
   vcap.set(cv::CAP_PROP_BRIGHTNESS, 100);
@@ -93,6 +93,10 @@ void* VideoCap(void* args) {
   vcap.set(cv::CAP_PROP_FRAME_HEIGHT, Var::HEIGHT);
   Global::FrameWidth = vcap.get(cv::CAP_PROP_FRAME_WIDTH);
   Global::FrameHeight = vcap.get(cv::CAP_PROP_FRAME_HEIGHT);
+  if(Switches::cameraInput == 2){
+    Global::FrameHeight = 480;
+    Global::FrameWidth = 640;
+  }
   while (true) {
     pthread_mutex_lock(&Global::frameMutex);
     if (Switches::cameraInput != 2)
