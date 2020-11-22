@@ -15,16 +15,16 @@ bool USECOLOR = false;
 
 
 int main(int argc, char** argv){
-if(argc>2){
-  std::string useColor = argv[argc-1];
-  if(useColor == "-c")
-    USECOLOR = true;
+  if(argc>2){
+    std::string useColor = argv[argc-1];
+    if(useColor == "-c")
+      USECOLOR = true;
+    else
+      USECOLOR = false;
+    printf("USECOLOR: %d\n",USECOLOR);
+  }
   else
-    USECOLOR = false;
-  printf("USECOLOR: %d\n",USECOLOR);
-}
-else
-USECOLOR=false;
+    USECOLOR=false;
 
   //--------------------------------------------------------
   //networking stuff: socket , connect
@@ -75,7 +75,7 @@ USECOLOR=false;
     
 
   //make img continuos
-    
+
   if ( ! img.isContinuous() ) { 
     img = img.clone();
   }
@@ -83,15 +83,21 @@ USECOLOR=false;
   std::cout << "Image Size:" << imgSize << std::endl;
 
 
-  namedWindow("CV Video Client",1);
-
+  // namedWindow("CV Video Client",1);
+  int debug = 0;
   while (key != 'q') {
+    printf("\ndebug%d\n\n",debug++);
 
     if ((bytes = recv(sokt, iptr, imgSize , MSG_WAITALL)) == -1) {
       std::cerr << "recv failed, received bytes = " << bytes << std::endl;
     }
-    cv::imshow("CV Video Client", img); 
+    printf("bytes rec: %d\n",bytes);
+    printf("\ndebug%d\n\n",debug++);
+    std::cout << img.data << std::endl;
+    printf("\ndebug%d\n\n",debug++);
+    cv::imshow("CVVidClient", img); 
       
+    printf("\ndebug%d\n\n",debug++);
     if (key = cv::waitKey(10) >= 0) break;
   }   
 

@@ -258,7 +258,7 @@ int main(int argc, const char* argv[]) {
   startThread("PID", NULL);
 
   if (Switches::USESERVER) {
-    startThread("VIDEO", NULL);
+    startThread("SERVER", NULL);
   }
 
   // End Init Threads-----------------------------
@@ -452,6 +452,7 @@ int main(int argc, const char* argv[]) {
             Global::videoError = true;
             printf("video error\n");
           }
+          printf("DEBUG - videoserver : bytes: %d\n", bytes);
         }
       }
     }
