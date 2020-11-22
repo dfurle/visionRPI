@@ -185,6 +185,7 @@ int main(int argc, const char* argv[]) {
   if(true){
     Parser p(argc,argv);
     double printTime_d, cameraInput_d;
+    double colLims[2][3];
     p.add_Parameter("-o" ,"--orig",Switches::SHOWORIG,false,"displays original camera input w/ lines");
     p.add_Parameter("-hu","--hue",Switches::SHOWHUE,false,"displays HSV of original image w/o lines");
     p.add_Parameter("-th","--threshold",Switches::SHOWTHRESH,false,"displays thresholded image (black & white)");
@@ -199,10 +200,22 @@ int main(int argc, const char* argv[]) {
     p.add_Parameter("-I","--I",Switches::InitPID[1],0.0,"(0.0-1.0) Integral     value of PID");
     p.add_Parameter("-D","--D",Switches::InitPID[2],0.0,"(0.0-1.0) Derivative   value of PID");
     p.add_Parameter("-cam","--camera",cameraInput_d,0,"(0-2) which camera port to use");
+    p.add_Parameter("-nR","--minRed",colLims[0][0],0,"(0-255) lower end of thresh of Red or Hue");
+    p.add_Parameter("-xR","--maxRed",colLims[1][0],255,"(0-255) upper end of thresh of Red or Hue");
+    p.add_Parameter("-nG","--minGreen",colLims[0][1],120,"(0-255) low ^ ^ of Green or Saturation");
+    p.add_Parameter("-xG","--maxGreen",colLims[1][1],255,"(0-255) up  ^ ^ of Green or Saturation");
+    p.add_Parameter("-nB","--minBlue",colLims[0][2],0,"(0-255) low ^ ^ of Blue or Value");
+    p.add_Parameter("-xB","--maxBlue",colLims[1][2],88,"(0-255) up  ^ ^ of Blue or Value");
     if(p.checkParams(true))
       return 0;
     Switches::cameraInput = std::round(cameraInput_d);
     Switches::printTime = std::round(printTime_d);
+    Var::minH = std::round(colLims[0][0]);
+    Var::minS = std::round(colLims[0][1]);
+    Var::minV = std::round(colLims[0][2]);
+    Var::maxH = std::round(colLims[1][0]);
+    Var::maxS = std::round(colLims[1][1]);
+    Var::maxV = std::round(colLims[1][2]);
     printf("cam: %d | pt: %d\n",Switches::cameraInput, Switches::printTime);
   }
   cv::VideoWriter out;

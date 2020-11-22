@@ -105,11 +105,11 @@ public:
     printf("%s\nHELP: VARIABLES\n%s\n",banner.c_str(),banner.c_str());
     for(P_Value s : values){
       if(s.s.length() == 0)
-        printf("\t| %*s%-*s | %-*s | default: %*s=%5.3f |\n",(4+max_short_size),"",width_longs,s.s_long.c_str(),width_explain_v,s.explain.c_str(),max_short_size,s.s.c_str(),s.df);
+        printf("\t| %*s%-*s | %-*s | default: %*s=%7.3f |\n",(4+max_short_size),"",width_longs,s.s_long.c_str(),width_explain_v,s.explain.c_str(),max_short_size,s.s.c_str(),s.df);
       else if(s.s_long.length() == 0)
-        printf("\t| %-*s%*s | %-*s | default: %*s=%5.3f |\n",max_short_size,s.s.c_str(),(4+width_longs),"",width_explain_v,s.explain.c_str(),max_short_size,s.s.c_str(),s.df);
+        printf("\t| %-*s%*s | %-*s | default: %*s=%7.3f |\n",max_short_size,s.s.c_str(),(4+width_longs),"",width_explain_v,s.explain.c_str(),max_short_size,s.s.c_str(),s.df);
       else
-        printf("\t| %-*s or %-*s | %-*s | default: %*s=%5.3f |\n",max_short_size,s.s.c_str(),width_longs,s.s_long.c_str(),width_explain_v,s.explain.c_str(),max_short_size,s.s.c_str(),s.df);
+        printf("\t| %-*s or %-*s | %-*s | default: %*s=%7.3f |\n",max_short_size,s.s.c_str(),width_longs,s.s_long.c_str(),width_explain_v,s.explain.c_str(),max_short_size,s.s.c_str(),s.df);
     }
     printf("%s\n",banner.c_str());
   }

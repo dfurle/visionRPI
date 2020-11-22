@@ -26,7 +26,7 @@ void* drive(void* arg);
 
 inline bool checkErr(int rc, std::string name) {
   if (rc != 0) {
-    printf("%s thread fail%d\n", name.c_str(), rc);
+    printf("%s thread fail %d\n", name.c_str(), rc);
     return false;
   } else
     return true;
@@ -41,32 +41,32 @@ inline bool checkErr(int rc, std::string name) {
 bool startThread(std::string name, void* params) {
   int rc = 1;
   if (!name.compare("USB")) {
-    pthread_create(&USBSlaveThread, NULL, USBSlave, NULL);
+    rc = pthread_create(&USBSlaveThread, NULL, USBSlave, NULL);
     // int rc = pthread_setname_np(USBSlaveThread, "GyroThread");
     return checkErr(rc, name);
   }
   if (!name.compare("SERVER")) {
-    pthread_create(&videoServerThread, NULL, videoServer, NULL);
+    rc = pthread_create(&videoServerThread, NULL, videoServer, NULL);
     // int rc = pthread_setname_np(videoServerThread, "VideoThread");
     return checkErr(rc, name);
   }
   if (!name.compare("DRIVE")) {
-    pthread_create(&DriveThread, NULL, drive, params);
+    rc = pthread_create(&DriveThread, NULL, drive, params);
     // int rc = pthread_setname_np(DriveThread, "DriveThread");
     return checkErr(rc, name);
   }
   if (!name.compare("PID")) {
-    pthread_create(&PIDThread, NULL, movePID, NULL);
+    rc = pthread_create(&PIDThread, NULL, movePID, NULL);
     // int rc = pthread_setname_np(PIDThread, "PIDThread");
     return checkErr(rc, name);
   }
   if (!name.compare("VIDEO")) {
-    pthread_create(&MJPEG, NULL, VideoCap, NULL);
+    rc = pthread_create(&MJPEG, NULL, VideoCap, NULL);
     // int rc = pthread_setname_np(MJPEG, "MJPEG Thread");
     return checkErr(rc, name);
   }
   if (!name.compare("TCP")) {
-    pthread_create(&tcpserver, NULL, opentcp, &params);
+    rc = pthread_create(&tcpserver, NULL, opentcp, &params);
     // int rc = pthread_setname_np(tcpserver, "tcpserver");
     return checkErr(rc, name);
   }
@@ -86,12 +86,13 @@ void* VideoCap(void* args) {
       std::cout << "cant connect" << std::endl;
       usleep(10000000);
     }
+    printf("Using Camera: %d\n",Switches::cameraInput);
   }
-  printf("setting brightness\n");
+  printf("  setting brightness\n");
   vcap.set(cv::CAP_PROP_BRIGHTNESS, 100);
-  printf("setting auto exposure\n");
+  printf("  setting auto exposure\n");
   vcap.set(cv::CAP_PROP_AUTO_EXPOSURE, 1);
-  printf("setting exposure\n");
+  printf("  setting exposure\n");
   vcap.set(cv::CAP_PROP_EXPOSURE, Var::EXPOSURE);
   vcap.set(cv::CAP_PROP_AUTOFOCUS, 0);
   vcap.set(cv::CAP_PROP_FRAME_WIDTH, Var::WIDTH);
@@ -144,7 +145,6 @@ void* USBSlave(void* arg) {
     // printf("line=%s\n",line);
     float roll, pitch, yaw;
     float ACCX, ACCY, GYROZ, AAZ;
-    // sscanf(line,"%f,%f,%f",&roll,&pitch,&yaw);
     sscanf(line, "%f %f %f %f %f %f %f", &ACCX, &ACCY, &roll, &pitch, &yaw, &GYROZ, &AAZ);
     if (GYROZ > 100)
       printf("yaw: %.2f; GYROZ: %.2f\n", yaw, GYROZ);
