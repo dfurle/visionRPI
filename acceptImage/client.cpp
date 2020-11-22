@@ -83,21 +83,16 @@ int main(int argc, char** argv){
   std::cout << "Image Size:" << imgSize << std::endl;
 
 
-  // namedWindow("CV Video Client",1);
-  int debug = 0;
+  namedWindow("CV Video Client",1);
+
   while (key != 'q') {
-    printf("\ndebug%d\n\n",debug++);
 
     if ((bytes = recv(sokt, iptr, imgSize , MSG_WAITALL)) == -1) {
       std::cerr << "recv failed, received bytes = " << bytes << std::endl;
     }
-    printf("bytes rec: %d\n",bytes);
-    printf("\ndebug%d\n\n",debug++);
     std::cout << img.data << std::endl;
-    printf("\ndebug%d\n\n",debug++);
-    cv::imshow("CVVidClient", img); 
-      
-    printf("\ndebug%d\n\n",debug++);
+    cv::imshow("CV Video Client", img); 
+    
     if (key = cv::waitKey(10) >= 0) break;
   }   
 
