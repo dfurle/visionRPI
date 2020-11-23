@@ -16,11 +16,11 @@ public:
   }
   double getTimeAsMillis() {
     gettimeofday(&time2, NULL);
-    return ((time2.tv_usec - time1.tv_usec) * 1e-3 + .1e-3 * (time2.tv_sec - time1.tv_sec));
+    return ((time2.tv_usec - time1.tv_usec) * 1e-3 + 1e+3 * (time2.tv_sec - time1.tv_sec));
   }
   double getTimeAsMicros() {
     gettimeofday(&time2, NULL);
-    return ((time2.tv_usec - time1.tv_usec) + 1e-6 * (time2.tv_sec - time1.tv_sec));
+    return ((time2.tv_usec - time1.tv_usec) + 1e+6 * (time2.tv_sec - time1.tv_sec));
   }
   void printTime(Clock& prev, std::string params) {
     printf(" %-20s %.2f tot: %.2f\n", params.c_str(), prev.getTimeAsMillis(), getTimeAsMillis());
