@@ -252,6 +252,9 @@ int main(int argc, const char* argv[]) {
 #ifdef RASPI
   startThread("TCP", &positionAV);
   startThread("USB", NULL);
+  // I don't remember if this is needed so I'll keep this for later script.sh
+  // stty -F /dev/ttyUSB0 115200
+  // stty -F /dev/ttyUSB0 -hupcl
 #endif
 
   startThread("VIDEO", NULL);
