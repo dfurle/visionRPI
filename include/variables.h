@@ -83,7 +83,7 @@ public:
   cv::RotatedRect        rect;
   cv::Rect               boundingRect;
   cv::Point2d            points[4];
-  void                   NullTargets() {
+  void NullTargets() {
     status   = 0;
     found    = "";
     center.x = 0;
@@ -143,8 +143,9 @@ extern double       InitPID[];
 extern int          cameraInput;
 } // namespace Switches
 
-
-typedef struct {
+class Position{
+public:
+  Position(){ nullifyStruct(); }
   double x;
   double y;
   double z;
@@ -159,24 +160,26 @@ typedef struct {
   double I;
   double D;
   int    dataValid;
-} Position;
 
-inline void nullifyStruct(Position& pos) {
-  pos.x         = 0;
-  pos.z         = 0;
-  pos.dist      = 0;
-  pos.alpha1    = 0;
-  pos.alpha2    = 0;
-  pos.OffSetx   = 0;
-  pos.speed     = 0;
-  pos.turn      = 0;
-  pos.gyro      = 0;
-  pos.P         = 0;
-  pos.I         = 0;
-  pos.D         = 0;
-  pos.dataValid = 0;
-}
+  void nullifyStruct() {
+    x         = 0;
+    z         = 0;
+    dist      = 0;
+    alpha1    = 0;
+    alpha2    = 0;
+    OffSetx   = 0;
+    speed     = 0;
+    turn      = 0;
+    gyro      = 0;
+    P         = 0;
+    I         = 0;
+    D         = 0;
+    dataValid = 0;
+  }
+};
+
 
 bool startThread(std::string name, void* params);
-void initSolvePnP(cv::Mat im);
-void findAnglePnP(cv::Mat im, Targets target, Position* position);
+// void initSolvePnP(const cv::Mat& img);
+void initSolvePnP();
+void findAnglePnP(cv::Mat& img, Targets& target, Position* position);

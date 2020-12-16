@@ -43,6 +43,12 @@ public:
     printf(" %-20s %.2f tot: %.2f\n", str.c_str(), between.getTimeAsMillis(), total.getTimeAsMillis());
     between.restart();
   }
+  void printTime(bool doPrint, std::string str){
+    if(doPrint){
+      printf(" %-20s %.2f tot: %.2f\n", str.c_str(), between.getTimeAsMillis(), total.getTimeAsMillis());
+      between.restart();
+    }
+  }
   void reset(){
     total.restart();
     between.restart();

@@ -17,10 +17,8 @@ void createTrackbars() {
   cv::createTrackbar("V_MAX", trackbarWindowName, &Var::maxV, 255, NULL);
 }
 
-cv::Mat ThresholdImage(cv::Mat original) {
-  cv::Mat thresholded;
+void ThresholdImage(const cv::Mat& original, cv::Mat& thresholded) {
   cv::inRange(original, cv::Scalar(Var::minH, Var::minS, Var::minV), cv::Scalar(Var::maxH, Var::maxS, Var::maxV), thresholded);
-  return thresholded;
 }
 
 void morphOps(cv::Mat& thresh) {
@@ -30,7 +28,7 @@ void morphOps(cv::Mat& thresh) {
   // dilate(thresh,thresh,dilateElement);
 }
 
-int findTarget(cv::Mat original, cv::Mat thresholded, Targets* targets) {
+int findTarget(const cv::Mat& original, const cv::Mat& thresholded, Targets* targets) {
   int targetsFound = 0;
   // Clock total, between;
   ClockTimer timer;
@@ -47,8 +45,7 @@ int findTarget(cv::Mat original, cv::Mat thresholded, Targets* targets) {
   // findContours(thresholded, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
   // findContours(thresholded, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
   cv::findContours(thresholded, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-  if (printTime)
-    timer.printTime(" finding Contours");
+  timer.printTime(printTime," finding Contours");
 
   for (std::vector<std::vector<cv::Point>>::iterator it = contours.begin(); it != contours.end();) {
     if (it->size() < 100) { // min contour
@@ -63,8 +60,7 @@ int findTarget(cv::Mat original, cv::Mat thresholded, Targets* targets) {
     std::cout << "too few targets found" << std::endl;
     return -1;
   }
-  if (printTime)
-    timer.printTime(" filter:Perim&size");
+  timer.printTime(printTime," filter:Perim&size");
 
   std::vector<cv::RotatedRect> minRect(contours.size());
   std::vector<std::vector<cv::Point>> hull(contours.size());
@@ -88,8 +84,7 @@ int findTarget(cv::Mat original, cv::Mat thresholded, Targets* targets) {
       std::copy(rect_points, rect_points + 4, targets[i].points);
       targets[i].rect = minRect[i];
       targets[i].boundingRect = minRect[i].boundingRect();
-      if (printTime)
-        timer.printTime(" findRect");
+      timer.printTime(printTime, " findRect");
       bool flag = false;
       int bounding = 20;
       for (int k = 0; k < 4; k++) {
@@ -106,23 +101,19 @@ int findTarget(cv::Mat original, cv::Mat thresholded, Targets* targets) {
         line(original, rect_points[j], rect_points[(j + 1) % 4], Global::BLUE, 1, 8);
         circle(original, rect_points[j], 3, Global::RED, -1, 8, 0);
       }
-      if (printTime)
-        timer.printTime(" drawRect");
+      timer.printTime(printTime," drawRect");
       convexHull(contours[i], hull[i]);
-      if (printTime)
-        timer.printTime(" convexHull");
+      timer.printTime(printTime," convexHull");
       double ratioTest = contourArea(hull[i]) / contourArea(contours[i]);
       if (ratioTest < 4) {
         if (printTime)
           printf("  SKIP: Area-Ratio: %.2f\n", ratioTest);
         continue;
       }
-      if (printTime)
-        timer.printTime(" ratioTest");
+      timer.printTime(printTime," ratioTest");
       // TODO
       approxPolyDP(hull[i], approx, arcLength(hull[i], true) * 0.005, true); // 0.015
-      if (printTime)
-        timer.printTime(" afterPoly");
+      timer.printTime(printTime," afterPoly");
       art.push_back(approx);
 
       // cv::Mat(targets[i].boundingRect).copyTo(workingImage);
@@ -139,16 +130,14 @@ int findTarget(cv::Mat original, cv::Mat thresholded, Targets* targets) {
     }
     if (num != -1)
       workingImage(targets[num].boundingRect).copyTo(workingImageSq);
-    if (printTime)
-      timer.printTime(" drawMat");
+    timer.printTime(printTime," drawMat");
     if (targetsFound == 1) {
       cv::goodFeaturesToTrack(workingImageSq, corners, Var::maxCorners, Var::qualityLevel, Var::minDistance, cv::Mat(), Var::blockSize, Var::useHarisDetector, Var::k);
       for (unsigned int i = 0; i < corners.size(); i++) {
         corners[i].x = corners[i].x + targets[num].boundingRect.x;
         corners[i].y = corners[i].y + targets[num].boundingRect.y;
       }
-      if (printTime)
-        timer.printTime(" goodFeaturesTrack");
+      timer.printTime(printTime," goodFeaturesTrack");
       // OffSetX = 320-(corners[0].x+corners[1].x+corners[2].x+corners[3].x)/4.;
       Global::target.corners.clear();
       Global::target.corners.push_back(corners[0]);
@@ -226,15 +215,16 @@ int main(int argc, const char* argv[]) {
   Clock serverClock;
   Clock switchFrame;
   Clock savingClock;
-  int aaa = 1;
+
+  int aaa = 0;
   bool printTime = false;
-  bool firstTime = true;
+  // bool firstTime = true;
   int frameCounter = 0, frameCounter2 = 0, frameCounterPrev = 0, missedFrames = 0;
 
   if (Switches::printTime == 1)
     printTime = true;
-  if (printTime)
-    timer.printTime("getting input");
+  timer.printTime(printTime,"getting input");
+  
 
   // start i2c connection:
   // int addr = 0x04;
@@ -279,21 +269,11 @@ int main(int argc, const char* argv[]) {
     createTrackbars();
   if (!img.isContinuous())
     img = img.clone();
-  nullifyStruct(position);
-  nullifyStruct(positionAV);
-  if (printTime)
-    timer.printTime("Init Threads");
-
-  if (Switches::cameraInput == 2) {
-    int num = (int(switchFrame.getTimeAsSecs() / 2.)) % 11 + 1;
-    std::string imgText = "2020/BG";
-    imgText.append(std::to_string(num));
-    imgText.append(".jpg");
-    printf("%s\n", imgText.c_str());
-    aaa = num;
-    Global::frame = cv::imread(imgText);
-  }
-
+  position.nullifyStruct();
+  positionAV.nullifyStruct();
+  timer.printTime(printTime,"Init Threads");
+  
+  initSolvePnP();
 
   while (true) {
     timer.reset();
@@ -312,43 +292,36 @@ int main(int argc, const char* argv[]) {
     if (!Global::frame.empty() && Global::newFrame) { // check for empty frame
       Global::frame.copyTo(img);
       pthread_mutex_unlock(&Global::frameMutex);
-      if (printTime)
-        timer.printTime("Begin");
-      if (printTime)
-        timer.printTime(" Get Frame");
+      timer.printTime(printTime,"Get Frame");
       frameCounter++;
-      // cv::cvtColor(img, HSV, CV_BGR2HSV);
-      // if (printTime)
-      //   timer.printTime(" to HSV");
-      // thresholded = ThresholdImage(HSV); // switch between HSV or RGB, see what works
-      // best/fastest
-      thresholded = ThresholdImage(img); //      ''                ''                ''
-      if (printTime)
-        timer.printTime(" thresholded");
 
-      morphOps(thresholded);
-      if (printTime)
-        timer.printTime(" apply morphs");
+      // cv::cvtColor(img, HSV, CV_BGR2HSV);
+      // timer.printTime(printTime," to HSV");
+      // thresholded = ThresholdImage(HSV); // switch between HSV or RGB, see what works
+
+      ThresholdImage(img,thresholded);
+      timer.printTime(printTime," thresholded");
+
+      // morphOps(thresholded);
+      // timer.printTime(printTime," apply morphs");
 
       int targetsFound = findTarget(img, thresholded, targets); // FIND THE TARGETS
+      timer.printTime(printTime," findTarget");
 
-      if(printTime)
-        timer.printTime(" findTarget");
       if (targetsFound != 1)
         printf("targetsFound:%d\n", targetsFound);
 
       if (targetsFound == 1) { // TARGET HAS BEEN FOUND----============---------------------==========-------------
-        if (firstTime) {
-          initSolvePnP(img);
-          firstTime = false;
-        }
+        // if (firstTime) {
+        //   initSolvePnP(img);
+        //   firstTime = false;
+        // }
         findAnglePnP(img, Global::target, &position); // SOLVE FOR POSITION AND ROTATION
-        if (printTime)
-          timer.printTime(" solvePnP");
+        timer.printTime(printTime," solvePnP");
         posA.push_back(position);
         if (posA.size() > Var::avSize)
           posA.erase(posA.begin());
-        nullifyStruct(positionAV);
+        positionAV.nullifyStruct();
 
         // avaraging--------
         int cntr = 0;
@@ -371,8 +344,7 @@ int main(int argc, const char* argv[]) {
         positionAV.dist /= cntr;
         positionAV.OffSetx /= cntr;
         //------------------
-        if (printTime)
-          timer.printTime(" avaraging");
+        timer.printTime(printTime," avaraging");
 
         if (Switches::DOPRINT) {
           printf("x=%6.2f, z=%6.2f, dist=%6.2f, alpha1=%6.2f, alpha2=%6.2f, speed=%4.2f, "
@@ -397,9 +369,8 @@ int main(int argc, const char* argv[]) {
         imshow("Thresholded", thresholded);
       if (Switches::SHOWHUE)
         imshow("HSV", HSV);
-
-      if (printTime)
-        timer.printTime(" finished imshow");
+      if(Switches::SHOWORIG || Switches::SHOWTHRESH || Switches::SHOWHUE)
+        timer.printTime(printTime," finished imshow");
 
       if (Switches::SAVE){
         out.write(img);
@@ -415,10 +386,8 @@ int main(int argc, const char* argv[]) {
             prevTime = time;
           }
         }
+        timer.printTime(printTime," fin saving vid");
       }
-
-      if (printTime)
-        timer.printTime(" fin saving vid");
 
       if (printTime) {
         timer.printTime("End");

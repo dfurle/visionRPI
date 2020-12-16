@@ -22,15 +22,16 @@ std::vector<cv::Mat> rvecs;
 std::vector<cv::Mat> tvecs;
 int count = 0;
 
-void initSolvePnP(cv::Mat img) {
+// void initSolvePnP(const cv::Mat& img) {
+void initSolvePnP() {
   mod3d.clear();
   mod3d.push_back(cv::Point3d(+tTop / 2.0, -tHeight, 0.0)); // top right
   mod3d.push_back(cv::Point3d(-tTop / 2.0, -tHeight, 0.0)); // top left
   mod3d.push_back(cv::Point3d(-tStrip / 2.0, 0.0, 0.0));    // bottom left
   mod3d.push_back(cv::Point3d(+tStrip / 2.0, 0.0, 0.0));    // bottom right
-  center = cv::Point2d(img.cols / 2, img.rows / 2);         // use the found center
-  focal_length = img.cols;
-  focal_length_r = img.rows;
+  center = cv::Point2d(Global::FrameWidth / 2, Global::FrameHeight / 2);         // use the found center
+  focal_length = Global::FrameWidth;
+  focal_length_r = Global::FrameHeight;
   camera_matrix = (cv::Mat_<double>(3, 3) << focal_length, 0, center.x, 0, focal_length_r, center.y, 0, 0, 1);
   dist_coeffs = cv::Mat::zeros(4, 1, cv::DataType<double>::type);
   size = cv::Size(Global::FrameWidth, Global::FrameHeight);
@@ -43,7 +44,10 @@ void initSolvePnP(cv::Mat img) {
   dist_coeffs = (cv::Mat_<double>(1, 5) << 0.1021387513883792 / 2, -0.1523456610014192 / 2, -0.0005797186028405386 / 2, -0.05044541761231074 / 2, 0.105243361554088 / 2);
 }
 
-void findAnglePnP(cv::Mat img, Targets target, Position* position) {
+// TODO: maybe change "Position* position" to "Position& position"?
+// TODO: remove "Targets& target", because it is in "Global::target"
+void findAnglePnP(cv::Mat& img, Targets& target, Position* position) {
+// void findAnglePnP(cv::Mat img, Targets& target, Position* position) {
   std::vector<cv::Point2f> img2dpoints;
 
   while (true) {
