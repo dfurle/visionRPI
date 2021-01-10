@@ -1,27 +1,27 @@
 #include "variables.h"
 
 // threads.cpp
-pthread_t MJPEG;
+pthread_t VideoCap_t;
 void* VideoCap(void* arg);
 
 // threads.cpp
-pthread_t USBSlaveThread;
+pthread_t USBSlave_t;
 void* USBSlave(void* arg);
 
 // tcpserver.cpp
-pthread_t tcpserver;
+pthread_t opentcp_t;
 void* opentcp(void* arg);
 
 // tcpserver.cpp
-pthread_t videoServerThread;
+pthread_t videoServer_t;
 void* videoServer(void* arg);
 
 // drive.cpp
-pthread_t PIDThread;
+pthread_t movePID_t;
 void* movePID(void* arg);
 
 // drive.cpp
-pthread_t DriveThread;
+pthread_t drive_t;
 void* drive(void* arg);
 
 inline bool checkErr(int rc, std::string name) {
@@ -41,32 +41,32 @@ inline bool checkErr(int rc, std::string name) {
 bool startThread(std::string name, void* params) {
   int rc = 1;
   if (!name.compare("USB")) {
-    rc = pthread_create(&USBSlaveThread, NULL, USBSlave, NULL);
+    rc = pthread_create(&USBSlave_t, NULL, USBSlave, NULL);
     // int rc = pthread_setname_np(USBSlaveThread, "GyroThread");
     return checkErr(rc, name);
   }
   if (!name.compare("SERVER")) {
-    rc = pthread_create(&videoServerThread, NULL, videoServer, NULL);
+    rc = pthread_create(&videoServer_t, NULL, videoServer, NULL);
     // int rc = pthread_setname_np(videoServerThread, "VideoThread");
     return checkErr(rc, name);
   }
   if (!name.compare("DRIVE")) {
-    rc = pthread_create(&DriveThread, NULL, drive, params);
+    rc = pthread_create(&drive_t, NULL, drive, params);
     // int rc = pthread_setname_np(DriveThread, "DriveThread");
     return checkErr(rc, name);
   }
   if (!name.compare("PID")) {
-    rc = pthread_create(&PIDThread, NULL, movePID, NULL);
+    rc = pthread_create(&movePID_t, NULL, movePID, NULL);
     // int rc = pthread_setname_np(PIDThread, "PIDThread");
     return checkErr(rc, name);
   }
   if (!name.compare("VIDEO")) {
-    rc = pthread_create(&MJPEG, NULL, VideoCap, NULL);
+    rc = pthread_create(&VideoCap_t, NULL, VideoCap, NULL);
     // int rc = pthread_setname_np(MJPEG, "MJPEG Thread");
     return checkErr(rc, name);
   }
   if (!name.compare("TCP")) {
-    rc = pthread_create(&tcpserver, NULL, opentcp, &params);
+    rc = pthread_create(&opentcp_t, NULL, opentcp, &params);
     // int rc = pthread_setname_np(tcpserver, "tcpserver");
     return checkErr(rc, name);
   }

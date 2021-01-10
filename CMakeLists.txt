@@ -14,7 +14,7 @@ target_include_directories(vision PRIVATE include)
 
 target_include_directories(vision PRIVATE /usr/local/include/opencv4)
 
-target_link_directories(vision PRIVATE /usr/local/lib/)
+target_link_directories(vision PRIVATE /usr/local/lib64/)
 
 target_link_libraries(vision
 opencv_core
