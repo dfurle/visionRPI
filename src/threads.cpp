@@ -66,7 +66,7 @@ bool startThread(std::string name, void* params) {
     return checkErr(rc, name);
   }
   if (!name.compare("TCP")) {
-    rc = pthread_create(&opentcp_t, NULL, opentcp, &params);
+    rc = pthread_create(&opentcp_t, NULL, opentcp, params);
     // int rc = pthread_setname_np(tcpserver, "tcpserver");
     return checkErr(rc, name);
   }

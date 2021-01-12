@@ -171,7 +171,7 @@ void startSaving(cv::VideoWriter& out){
 }
 
 int main(int argc, const char* argv[]) {
-  if(true){
+  {
     Parser p(argc,argv);
     double printTime_d, cameraInput_d;
     double colLims[2][3];
@@ -224,6 +224,10 @@ int main(int argc, const char* argv[]) {
   if (Switches::printTime == 1)
     printTime = true;
   timer.printTime(printTime,"getting input");
+
+  // if(Switches::USESERVER && Global::videoSocket == 0){
+  //   Switches::USESERVER = false;
+  // }
   
 
   // start i2c connection:
@@ -250,12 +254,12 @@ int main(int argc, const char* argv[]) {
   // Init Threads--------------------
 
 #ifdef RASPI
-  startThread("TCP", &positionAV);
   startThread("USB", NULL);
   // I don't remember if this is needed so I'll keep this for later script.sh
   // stty -F /dev/ttyUSB0 115200
   // stty -F /dev/ttyUSB0 -hupcl
 #endif
+  startThread("TCP", &positionAV);
 
   startThread("VIDEO", NULL);
 
@@ -275,7 +279,7 @@ int main(int argc, const char* argv[]) {
   position.nullifyStruct();
   positionAV.nullifyStruct();
   timer.printTime(printTime,"Init Threads");
-  
+
   initSolvePnP();
 
   while (true) {
@@ -404,10 +408,10 @@ int main(int argc, const char* argv[]) {
     else
       pthread_mutex_unlock(&Global::frameMutex);
 
+
+
     frameCounter2++;
     if (frameCounter % 10 == 0 && frameCounter != frameCounterPrev) {
-      // printf("videoServer: sock: %d, err: %d, port: %d\n",Global::videoSocket,
-      // Global::videoError, Var::videoPort);
       frameCounterPrev = frameCounter;
       double dt = serverClock.getTimeAsSecs();
       serverClock.restart();
@@ -418,26 +422,24 @@ int main(int argc, const char* argv[]) {
       frameCounter2 = 0;
       missedFrames = 0;
 
-      if (Switches::USESERVER && Global::videoSocket > 0 && !Global::videoError) {
+      if (Switches::USESERVER && Global::videoSocket != 0 && !Global::videoError) {
         int bytes = 0;
         if (Switches::USECOLOR) {
           int imgSize = img.total() * img.elemSize();
           if (!img.isContinuous())
             img = img.clone();
-          if ((bytes = send(Global::videoSocket, img.data, imgSize, 0x4000)) < 0) {
+          if ((bytes = send(Global::videoSocket, img.data, imgSize, MSG_NOSIGNAL)) < 0) {
             Global::videoError = true;
             printf("video error\n");
           }
-          printf("DEBUG - videoserver : bytes: %d\n", bytes);
         } else {
           int imgSize = thresholded.total() * thresholded.elemSize();
-          if (!thresholded.isContinuous())
-            thresholded = thresholded.clone();
-          if ((bytes = send(Global::videoSocket, thresholded.data, imgSize, 0)) < 0) {
+          // if (!thresholded.isContinuous())
+          //   thresholded = thresholded.clone();
+          if ((bytes = send(Global::videoSocket, thresholded.data, imgSize, MSG_NOSIGNAL)) < 0) {
             Global::videoError = true;
             printf("video error\n");
           }
-          printf("DEBUG - videoserver : bytes: %d\n", bytes);
         }
       }
     }
