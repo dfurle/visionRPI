@@ -76,10 +76,6 @@ bool startThread(std::string name, void* params) {
 void* VideoCap(void* args) {
   cv::VideoCapture vcap;
   if (Switches::cameraInput == 2) {
-    // while (!vcap.open(0)) {
-    //   std::cout << "cant connect" << std::endl;
-    //   usleep(10000000);
-    // }
     printf("Not Using Camera\n");
   } else {
     while (!vcap.open(Switches::cameraInput)) {
@@ -103,12 +99,19 @@ void* VideoCap(void* args) {
     Global::FrameHeight = 480;
     Global::FrameWidth = 640;
   }
+  vcap.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('H','2','6','4'));
+  int b = vcap.get(cv::CAP_PROP_FOURCC);
+  char* fourcc = (char*) &b;
+  printf("fourcc: %d |%s|\n",b,fourcc);
+
   while (true) {
-    pthread_mutex_lock(&Global::frameMutex);
-    if (Switches::cameraInput != 2)
-      vcap.read(Global::frame);
-    pthread_mutex_unlock(&Global::frameMutex);
-    Global::newFrame = true;
+    if(vcap.grab()){
+      pthread_mutex_lock(&Global::frameMutex);
+      if (Switches::cameraInput != 2)
+        vcap.retrieve(Global::frame);
+      Global::newFrame = true;
+      pthread_mutex_unlock(&Global::frameMutex);
+    }
     usleep(Var::waitAfterFrame);
   }
 }

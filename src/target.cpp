@@ -34,7 +34,7 @@ int findTarget(const cv::Mat& original, const cv::Mat& thresholded, Targets* tar
   ClockTimer timer;
   bool printTime = false;
   std::vector<cv::Vec4i> hierarchy;
-  std::vector<std::vector<cv::Point>> contours;
+  std::vector<std::vector<cv::Point> > contours;
   std::vector<cv::Point2f> corners;
   if (Switches::printTime == 2) {
     printTime = true;
@@ -47,24 +47,24 @@ int findTarget(const cv::Mat& original, const cv::Mat& thresholded, Targets* tar
   cv::findContours(thresholded, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
   timer.printTime(printTime," finding Contours");
 
-  for (std::vector<std::vector<cv::Point>>::iterator it = contours.begin(); it != contours.end();) {
+  for (std::vector<std::vector<cv::Point> >::iterator it = contours.begin(); it != contours.end();) {
     if (it->size() < 100) { // min contour
       it = contours.erase(it);
     } else
       ++it;
   }
   if (contours.size() > Var::maxTargets) {
-    std::cout << " too many targets found = " << contours.size() << std::endl;
-    return -1;
+    std::cout << " too many potential targets found = " << contours.size() << std::endl;
+    return targetsFound;
   } else if (1 > contours.size()) {
-    std::cout << "too few targets found" << std::endl;
-    return -1;
+    std::cout << "too few potential targets found" << std::endl;
+    return targetsFound;
   }
   timer.printTime(printTime," filter:Perim&size");
 
   std::vector<cv::RotatedRect> minRect(contours.size());
-  std::vector<std::vector<cv::Point>> hull(contours.size());
-  std::vector<std::vector<cv::Point>> art;
+  std::vector<std::vector<cv::Point> > hull(contours.size());
+  std::vector<std::vector<cv::Point> > art;
   std::vector<cv::Point> approx;
   cv::Mat workingImage(Global::FrameHeight, Global::FrameWidth, CV_8UC1, cv::Scalar(0));
   cv::Mat workingImageSq;
@@ -102,9 +102,9 @@ int findTarget(const cv::Mat& original, const cv::Mat& thresholded, Targets* tar
         circle(original, rect_points[j], 3, Global::RED, -1, 8, 0);
       }
       timer.printTime(printTime," drawRect");
-      convexHull(contours[i], hull[i]);
+      cv::convexHull(contours[i], hull[i]);
       timer.printTime(printTime," convexHull");
-      double ratioTest = contourArea(hull[i]) / contourArea(contours[i]);
+      double ratioTest = cv::contourArea(hull[i]) / cv::contourArea(contours[i]);
       if (ratioTest < 4) {
         if (printTime)
           printf("  SKIP: Area-Ratio: %.2f\n", ratioTest);
@@ -112,7 +112,7 @@ int findTarget(const cv::Mat& original, const cv::Mat& thresholded, Targets* tar
       }
       timer.printTime(printTime," ratioTest");
       // TODO
-      approxPolyDP(hull[i], approx, arcLength(hull[i], true) * 0.005, true); // 0.015
+      approxPolyDP(hull[i], approx, cv::arcLength(hull[i], true) * 0.005, true); // 0.015
       timer.printTime(printTime," afterPoly");
       art.push_back(approx);
 
@@ -189,12 +189,12 @@ int main(int argc, const char* argv[]) {
     p.add_Parameter("-I","--I",Switches::InitPID[1],0.0,"(0.0-1.0) Integral     value of PID");
     p.add_Parameter("-D","--D",Switches::InitPID[2],0.0,"(0.0-1.0) Derivative   value of PID");
     p.add_Parameter("-cam","--camera",cameraInput_d,0,"(0-2) which camera port to use");
-    p.add_Parameter("-nR","--minRed",colLims[0][0],0,"(0-255) lower end of thresh of Red or Hue");
-    p.add_Parameter("-xR","--maxRed",colLims[1][0],255,"(0-255) upper end of thresh of Red or Hue");
-    p.add_Parameter("-nG","--minGreen",colLims[0][1],120,"(0-255) low ^ ^ of Green or Saturation");
-    p.add_Parameter("-xG","--maxGreen",colLims[1][1],255,"(0-255) up  ^ ^ of Green or Saturation");
-    p.add_Parameter("-nB","--minBlue",colLims[0][2],0,"(0-255) low ^ ^ of Blue or Value");
-    p.add_Parameter("-xB","--maxBlue",colLims[1][2],88,"(0-255) up  ^ ^ of Blue or Value");
+    p.add_Parameter("-nR","--minRed",colLims[0][0],Var::minH,"(0-255) lower end of thresh of Red or Hue");
+    p.add_Parameter("-xR","--maxRed",colLims[1][0],Var::maxH,"(0-255) upper end of thresh of Red or Hue");
+    p.add_Parameter("-nG","--minGreen",colLims[0][1],Var::minS,"(0-255) low ^ ^ of Green or Saturation");
+    p.add_Parameter("-xG","--maxGreen",colLims[1][1],Var::maxS,"(0-255) up  ^ ^ of Green or Saturation");
+    p.add_Parameter("-nB","--minBlue",colLims[0][2],Var::minV,"(0-255) low ^ ^ of Blue or Value");
+    p.add_Parameter("-xB","--maxBlue",colLims[1][2],Var::maxV,"(0-255) up  ^ ^ of Blue or Value");
     if(p.checkParams(true))
       return 0;
     Switches::cameraInput = std::round(cameraInput_d);
@@ -316,7 +316,7 @@ int main(int argc, const char* argv[]) {
       timer.printTime(printTime," findTarget");
 
       if (targetsFound != 1)
-        printf("targetsFound:%d\n", targetsFound);
+        printf("targetsFound: %d\n", targetsFound);
 
       if (targetsFound == 1) { // TARGET HAS BEEN FOUND----============---------------------==========-------------
         // if (firstTime) {
