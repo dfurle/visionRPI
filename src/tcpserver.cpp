@@ -1,9 +1,10 @@
 #include "tcpserver.h"
 
-#define MAXLINE 80 // check
-#define MLEN 8192  // check
+#define MAXLINE 80
+#define MLEN 8192
 #define HOSTNAMELENGTH 128
 #define MAXCLIENTS 32
+#define RIO_ID 1220
 
 bool interrupt = false;
 
@@ -36,7 +37,7 @@ int TCPServer::getClient(HOST &host){
 void* opentcp(void* arg) {
   Position* pos = (Position*)arg;
   int ID = 0;
-  struct HOST host = TCPServer::create_socket(6969);
+  struct HOST host = TCPServer::create_socket(RIO_ID);
   while(!interrupt){
     int sd_client = TCPServer::getClient(host);
     if (ID >= MAXCLIENTS)
@@ -69,9 +70,8 @@ static void* client_thread(void* arg) {
 
     // Clear to_client message and get ready to send
     bzero(to_client, MLEN);
-    sprintf(to_client, "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", pos->x, pos->z, pos->dist, pos->alpha1, pos->alpha2, pos->OffSetx, pos->speed, pos->turn, pos->gyro, pos->P, pos->I, pos->D);
-    // sprintf(&to_client[strlen(to_client)], "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,", pos->x, pos->z, pos->dist, pos->alpha1, pos->alpha2, pos->OffSetx, pos->speed, pos->turn, pos->gyro, pos->P, pos->I, pos->D);
-    // sprintf(&to_client[strlen(to_client)], "\n");
+    // sprintf(to_client, "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", pos->x, pos->z, pos->dist, pos->alpha1, pos->alpha2, pos->OffSetx, pos->speed, pos->turn, pos->gyro, pos->P, pos->I, pos->D);
+    sprintf(to_client, "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", pos->x, pos->z, pos->dist, pos->alpha1, pos->alpha2, pos->OffSetx);
 
     int bytesSent = send(socket, to_client, sizeof(to_client), MSG_NOSIGNAL);
     if(bytesSent < 0){

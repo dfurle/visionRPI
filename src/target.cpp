@@ -243,7 +243,7 @@ int main(int argc, const char* argv[]) {
   //     return false;
   // }
 
-  cv::Mat img, HSV, thresholded;
+  cv::Mat img, gray, HSV, thresholded;
   Global::gyroAngle = 0;
   Global::driveAngle = 0;
   // int videoPort=4097;
@@ -254,7 +254,7 @@ int main(int argc, const char* argv[]) {
   // Init Threads--------------------
 
 #ifdef RASPI
-  startThread("USB", NULL);
+  // startThread("USB", NULL);
   // I don't remember if this is needed so I'll keep this for later script.sh
   // stty -F /dev/ttyUSB0 115200
   // stty -F /dev/ttyUSB0 -hupcl
@@ -263,9 +263,9 @@ int main(int argc, const char* argv[]) {
 
   startThread("VIDEO", NULL);
 
-  startThread("DRIVE", &positionAV);
+  // startThread("DRIVE", &positionAV);
 
-  startThread("PID", NULL);
+  // startThread("PID", NULL);
 
   if (Switches::USESERVER) {
     startThread("SERVER", NULL);
@@ -282,20 +282,22 @@ int main(int argc, const char* argv[]) {
 
   initSolvePnP();
 
+  serverClock.restart();
+
   while (true) {
     timer.reset();
     pthread_mutex_lock(&Global::frameMutex);
-    if (Switches::cameraInput == 2) {
-      int num = (int(switchFrame.getTimeAsSecs() / 5.)) % 11 + 1;
-      if (num != aaa) {
-        std::string imgText = "2020/BG";
-        imgText.append(std::to_string(num));
-        imgText.append(".jpg");
-        aaa = num;
-        printf("%s\n", imgText.c_str());
-        Global::frame = cv::imread(imgText);
-      }
-    }
+    // if (Switches::cameraInput == 2) {
+    //   int num = (int(switchFrame.getTimeAsSecs() / 5.)) % 11 + 1;
+    //   if (num != aaa) {
+    //     std::string imgText = "2020/BG";
+    //     imgText.append(std::to_string(num));
+    //     imgText.append(".jpg");
+    //     aaa = num;
+    //     printf("%s\n", imgText.c_str());
+    //     Global::frame = cv::imread(imgText);
+    //   }
+    // }
     if (!Global::frame.empty() && Global::newFrame) { // check for empty frame
       Global::frame.copyTo(img);
       pthread_mutex_unlock(&Global::frameMutex);
@@ -305,6 +307,9 @@ int main(int argc, const char* argv[]) {
       // cv::cvtColor(img, HSV, CV_BGR2HSV);
       // timer.printTime(printTime," to HSV");
       // thresholded = ThresholdImage(HSV); // switch between HSV or RGB, see what works
+
+      cv::cvtColor(img,gray,CV_BGR2GRAY);
+      timer.printTime(printTime," to gray");
 
       ThresholdImage(img,thresholded);
       timer.printTime(printTime," thresholded");
@@ -414,11 +419,11 @@ int main(int argc, const char* argv[]) {
     if (frameCounter % 10 == 0 && frameCounter != frameCounterPrev) {
       frameCounterPrev = frameCounter;
       double dt = serverClock.getTimeAsSecs();
-      serverClock.restart();
       if(Switches::FRAME){
         printf("------ Frame rate: %f fr/s (%f) \n", 10. / dt, frameCounter2 / dt);
         printf("------ Miss Frame: %d fr \n", missedFrames);
       }
+      serverClock.restart();
       frameCounter2 = 0;
       missedFrames = 0;
 
