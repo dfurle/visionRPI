@@ -2,9 +2,9 @@
 #define PI 3.141592
 
 double i2cm = 2.54;
-double tTop = 39.0 * i2cm;
-double tStrip = 19.5 * i2cm;
-double tHeight = 18.0 * i2cm;
+double tTop = 39.0 * i2cm;    // 26
+double tStrip = 19.5 * i2cm;  // 14.5
+double tHeight = 18.0 * i2cm; // 13
 
 std::vector<cv::Point3f> mod3d;
 cv::Point2d center;

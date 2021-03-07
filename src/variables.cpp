@@ -13,7 +13,7 @@ int maxV = 88;  // 241
 int          WIDTH          = 640; // 1920//1280//640
 int          HEIGHT         = 480; // 1080//720//480
 int          EXPOSURE       = 100;
-unsigned int waitAfterFrame = 33000;
+unsigned int waitAfterFrame = 100;
 
 double qualityLevel     = 0.05;
 double minDistance      = 30;

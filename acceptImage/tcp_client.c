@@ -2,7 +2,13 @@
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <string.h> 
+#include <unistd.h>
+#include <netdb.h>
+#include <arpa/inet.h>
 #include <sys/socket.h> 
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
 #define MAX 8192 
 
 int func(int sockfd){ 
