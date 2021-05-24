@@ -53,14 +53,17 @@ int findTarget(const cv::Mat& original, const cv::Mat& thresholded, Targets* tar
     } else
       ++it;
   }
+  timer.printTime(printTime," filter:Perim");
   if (contours.size() > Var::maxTargets) {
-    std::cout << " too many potential targets found = " << contours.size() << std::endl;
+    timer.printTime(printTime," many targets");
+    //std::cout << " too many potential targets found = " << contours.size() << std::endl;
     return targetsFound;
   } else if (1 > contours.size()) {
-    std::cout << "too few potential targets found" << std::endl;
+    timer.printTime(printTime," few targets");
+    //std::cout << "too few potential targets found" << std::endl;
     return targetsFound;
   }
-  timer.printTime(printTime," filter:Perim&size");
+  timer.printTime(printTime," filter:Size");
 
   std::vector<cv::RotatedRect> minRect(contours.size());
   std::vector<std::vector<cv::Point> > hull(contours.size());
@@ -105,10 +108,12 @@ int findTarget(const cv::Mat& original, const cv::Mat& thresholded, Targets* tar
       cv::convexHull(contours[i], hull[i]);
       timer.printTime(printTime," convexHull");
       double ratioTest = cv::contourArea(hull[i]) / cv::contourArea(contours[i]);
-      if (ratioTest < 4) {
-        if (printTime)
+      if (ratioTest < 3.25) { // TODO: before was 4
+        if (printTime){
           printf("  SKIP: Area-Ratio: %.2f\n", ratioTest);
-        continue;
+	  printf("  x:%d, y:%d\n",contours[i][0].x,contours[i][0].y);
+	}
+	continue;
       }
       timer.printTime(printTime," ratioTest");
       // TODO
@@ -195,6 +200,26 @@ int main(int argc, const char* argv[]) {
     p.add_Parameter("-xG","--maxGreen",colLims[1][1],Var::maxS,"(0-255) up  ^ ^ of Green or Saturation");
     p.add_Parameter("-nB","--minBlue",colLims[0][2],Var::minV,"(0-255) low ^ ^ of Blue or Value");
     p.add_Parameter("-xB","--maxBlue",colLims[1][2],Var::maxV,"(0-255) up  ^ ^ of Blue or Value");
+
+    p.add_Parameter("-fx","--fx",Var::fx,Var::fx,"---");
+    p.add_Parameter("-fy","--fy",Var::fy,Var::fy,"---");
+    p.add_Parameter("-cx","--cx",Var::cx,Var::cx,"---");
+    p.add_Parameter("-cy","--cy",Var::cy,Var::cy,"---");
+
+
+    p.add_Parameter("-d1","--d1",Var::dist_cof[0],1.,"---");
+    p.add_Parameter("-d2","--d2",Var::dist_cof[1],1.,"---");
+    p.add_Parameter("-d3","--d3",Var::dist_cof[2],1.,"---");
+    p.add_Parameter("-d4","--d4",Var::dist_cof[3],1.,"---");
+    p.add_Parameter("-d5","--d5",Var::dist_cof[4],1.,"---");
+    printf("dist: %f\n",Var::dist_cof[0]);
+    Var::dist_cof[0] *=  0.05106937569;
+    Var::dist_cof[1] *= -0.0761728305;
+    Var::dist_cof[2] *= -0.0002898593;
+    Var::dist_cof[3] *= -0.0252227088;
+    Var::dist_cof[4] *=  0.05262168077;
+
+
     if(p.checkParams(true))
       return 0;
     Switches::cameraInput = std::round(cameraInput_d);
@@ -243,7 +268,7 @@ int main(int argc, const char* argv[]) {
   //     return false;
   // }
 
-  cv::Mat img, gray, HSV, thresholded;
+  cv::Mat img, HSV, gray, thresholded;
   Global::gyroAngle = 0;
   Global::driveAngle = 0;
   // int videoPort=4097;
@@ -259,9 +284,13 @@ int main(int argc, const char* argv[]) {
   // stty -F /dev/ttyUSB0 115200
   // stty -F /dev/ttyUSB0 -hupcl
 #endif
+  //startThread("VIDEO", NULL);
+  //int rc = pthread_create(&VideoCap_t, NULL, VideoCap, NULL);
+  //rc = pthread_setname_np(VideoCap_t, "MJPEG Thread");
+  
   startThread("TCP", &positionAV);
+  
 
-  startThread("VIDEO", NULL);
 
   // startThread("DRIVE", &positionAV);
 
@@ -284,9 +313,25 @@ int main(int argc, const char* argv[]) {
 
   serverClock.restart();
 
+  cv::VideoCapture vcap;
+  while (!vcap.open(Switches::cameraInput)) {
+    std::cout << "cant connect" << std::endl;
+    usleep(10000000);
+  }
+  printf("  setting brightness\n");
+  vcap.set(cv::CAP_PROP_BRIGHTNESS, 100);
+  printf("  setting auto exposure\n");
+  vcap.set(cv::CAP_PROP_AUTO_EXPOSURE, 1);
+  printf("  setting exposure\n");
+  vcap.set(cv::CAP_PROP_EXPOSURE, Var::EXPOSURE);
+  usleep(1000);
+
+  
   while (true) {
     timer.reset();
+    //printf("locking\n");
     pthread_mutex_lock(&Global::frameMutex);
+    //printf("unlocking\n");
     // if (Switches::cameraInput == 2) {
     //   int num = (int(switchFrame.getTimeAsSecs() / 5.)) % 11 + 1;
     //   if (num != aaa) {
@@ -298,7 +343,9 @@ int main(int argc, const char* argv[]) {
     //     Global::frame = cv::imread(imgText);
     //   }
     // }
-    if (!Global::frame.empty() && Global::newFrame) { // check for empty frame
+    //if (!Global::frame.empty() && Global::newFrame) { // check for empty frame
+    
+    if (vcap.read(Global::frame)) { // check for empty frame
       Global::frame.copyTo(img);
       pthread_mutex_unlock(&Global::frameMutex);
       timer.printTime(printTime,"Get Frame");
@@ -308,8 +355,14 @@ int main(int argc, const char* argv[]) {
       // timer.printTime(printTime," to HSV");
       // thresholded = ThresholdImage(HSV); // switch between HSV or RGB, see what works
 
-      cv::cvtColor(img,gray,CV_BGR2GRAY);
-      timer.printTime(printTime," to gray");
+      //cv::cvtColor(img,gray,CV_BGR2GRAY);
+      //timer.printTime(printTime," to gray");
+      
+      // TODO: lower resolution of thresholding
+
+      
+
+
 
       ThresholdImage(img,thresholded);
       timer.printTime(printTime," thresholded");
@@ -320,7 +373,7 @@ int main(int argc, const char* argv[]) {
       int targetsFound = findTarget(img, thresholded, targets); // FIND THE TARGETS
       timer.printTime(printTime," findTarget");
 
-      if (targetsFound != 1)
+      //if (targetsFound != 1)
         printf("targetsFound: %d\n", targetsFound);
 
       if (targetsFound == 1) { // TARGET HAS BEEN FOUND----============---------------------==========-------------
@@ -372,6 +425,8 @@ int main(int argc, const char* argv[]) {
                  positionAV.dataValid);
           // printf("P=%2.3f I=%2.3f D=%2.3f\n",Global::P, Global::I, Global::D);
         }
+      } else {
+        missedFrames++;
       }
 
       // finished calculating
@@ -414,7 +469,6 @@ int main(int argc, const char* argv[]) {
       pthread_mutex_unlock(&Global::frameMutex);
 
 
-
     frameCounter2++;
     if (frameCounter % 10 == 0 && frameCounter != frameCounterPrev) {
       frameCounterPrev = frameCounter;
@@ -448,6 +502,6 @@ int main(int argc, const char* argv[]) {
         }
       }
     }
-    usleep(100);
+    usleep(1000);
   }
 }
