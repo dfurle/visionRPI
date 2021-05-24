@@ -12,6 +12,7 @@ int maxV = 180;  // 241
 
 int          WIDTH          = 640; // 1920//1280//640
 int          HEIGHT         = 480; // 1080//720//480
+<<<<<<< HEAD
 int          EXPOSURE       = 20;
 unsigned int waitAfterFrame = 1000;
 
@@ -21,6 +22,10 @@ double cx = 250;
 double cy = 260;
 
 double dist_cof[5];
+=======
+int          EXPOSURE       = 100;
+unsigned int waitAfterFrame = 100;
+>>>>>>> 6e79d8718831ac55ae706c864d2ae6e3bc18ce41
 
 double qualityLevel     = 0.05;
 double minDistance      = 30;

@@ -1,6 +1,7 @@
 #include "variables.h"
 #define PI 3.141592
 
+<<<<<<< HEAD
 //double i2cm = 2.54;
 //double tTop = 26.0 * i2cm;
 //double tStrip = 14.5 * i2cm;
@@ -15,6 +16,12 @@ double i2cm = 0.08333; // 2.54
 double tTop = 39.26 * i2cm; // 37.7
 double tStrip = 19.5 * i2cm; // 19.5
 double tHeight = 17.0 * i2cm; // 17.0
+=======
+double i2cm = 2.54;
+double tTop = 39.0 * i2cm;    // 26
+double tStrip = 19.5 * i2cm;  // 14.5
+double tHeight = 18.0 * i2cm; // 13
+>>>>>>> 6e79d8718831ac55ae706c864d2ae6e3bc18ce41
 
 std::vector<cv::Point3f> mod3d;
 cv::Point2d center;

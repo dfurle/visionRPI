@@ -1,10 +1,14 @@
 #include "tcpserver.h"
 
-#define MAXLINE 80 // check
-#define MLEN 8192  // check
+#define MAXLINE 80
+#define MLEN 8192
 #define HOSTNAMELENGTH 128
 #define MAXCLIENTS 32
+<<<<<<< HEAD
 #define RIO_ID 5957 // 1220
+=======
+#define RIO_ID 1220
+>>>>>>> 6e79d8718831ac55ae706c864d2ae6e3bc18ce41
 
 bool interrupt = false;
 
@@ -73,8 +77,12 @@ static void* client_thread(void* arg) {
     bzero(to_client, MLEN);
     // sprintf(to_client, "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", pos->x, pos->z, pos->dist, pos->alpha1, pos->alpha2, pos->OffSetx, pos->speed, pos->turn, pos->gyro, pos->P, pos->I, pos->D);
     sprintf(to_client, "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", pos->x, pos->z, pos->dist, pos->alpha1, pos->alpha2, pos->OffSetx);
+<<<<<<< HEAD
     // sprintf(&to_client[strlen(to_client)], "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,", pos->x, pos->z, pos->dist, pos->alpha1, pos->alpha2, pos->OffSetx, pos->speed, pos->turn, pos->gyro, pos->P, pos->I, pos->D);
     // sprintf(&to_client[strlen(to_client)], "\n");
+=======
+
+>>>>>>> 6e79d8718831ac55ae706c864d2ae6e3bc18ce41
     int bytesSent = send(socket, to_client, sizeof(to_client), MSG_NOSIGNAL);
     if(bytesSent < 0){
       printf("thread: %d failed\n",client->ID);

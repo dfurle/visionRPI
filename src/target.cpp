@@ -268,7 +268,11 @@ int main(int argc, const char* argv[]) {
   //     return false;
   // }
 
+<<<<<<< HEAD
   cv::Mat img, HSV, gray, thresholded;
+=======
+  cv::Mat img, gray, HSV, thresholded;
+>>>>>>> 6e79d8718831ac55ae706c864d2ae6e3bc18ce41
   Global::gyroAngle = 0;
   Global::driveAngle = 0;
   // int videoPort=4097;
@@ -313,6 +317,7 @@ int main(int argc, const char* argv[]) {
 
   serverClock.restart();
 
+<<<<<<< HEAD
   cv::VideoCapture vcap;
   while (!vcap.open(Switches::cameraInput)) {
     std::cout << "cant connect" << std::endl;
@@ -327,11 +332,16 @@ int main(int argc, const char* argv[]) {
   usleep(1000);
 
   
+=======
+>>>>>>> 6e79d8718831ac55ae706c864d2ae6e3bc18ce41
   while (true) {
     timer.reset();
     //printf("locking\n");
     pthread_mutex_lock(&Global::frameMutex);
+<<<<<<< HEAD
     //printf("unlocking\n");
+=======
+>>>>>>> 6e79d8718831ac55ae706c864d2ae6e3bc18ce41
     // if (Switches::cameraInput == 2) {
     //   int num = (int(switchFrame.getTimeAsSecs() / 5.)) % 11 + 1;
     //   if (num != aaa) {
@@ -343,9 +353,13 @@ int main(int argc, const char* argv[]) {
     //     Global::frame = cv::imread(imgText);
     //   }
     // }
+<<<<<<< HEAD
     //if (!Global::frame.empty() && Global::newFrame) { // check for empty frame
     
     if (vcap.read(Global::frame)) { // check for empty frame
+=======
+    if (!Global::frame.empty() && Global::newFrame) { // check for empty frame
+>>>>>>> 6e79d8718831ac55ae706c864d2ae6e3bc18ce41
       Global::frame.copyTo(img);
       pthread_mutex_unlock(&Global::frameMutex);
       timer.printTime(printTime,"Get Frame");
@@ -355,6 +369,7 @@ int main(int argc, const char* argv[]) {
       // timer.printTime(printTime," to HSV");
       // thresholded = ThresholdImage(HSV); // switch between HSV or RGB, see what works
 
+<<<<<<< HEAD
       //cv::cvtColor(img,gray,CV_BGR2GRAY);
       //timer.printTime(printTime," to gray");
       
@@ -363,6 +378,10 @@ int main(int argc, const char* argv[]) {
       
 
 
+=======
+      cv::cvtColor(img,gray,CV_BGR2GRAY);
+      timer.printTime(printTime," to gray");
+>>>>>>> 6e79d8718831ac55ae706c864d2ae6e3bc18ce41
 
       ThresholdImage(img,thresholded);
       timer.printTime(printTime," thresholded");
