@@ -5,8 +5,8 @@ pthread_t VideoCap_t;
 void* VideoCap(void* arg);
 
 // threads.cpp
-pthread_t USBSlave_t;
-void* USBSlave(void* arg);
+// pthread_t USBSlave_t;
+// void* USBSlave(void* arg);
 
 // tcpserver.cpp
 pthread_t opentcp_t;
@@ -17,12 +17,12 @@ pthread_t videoServer_t;
 void* videoServer(void* arg);
 
 // drive.cpp
-pthread_t movePID_t;
-void* movePID(void* arg);
+// pthread_t movePID_t;
+// void* movePID(void* arg);
 
 // drive.cpp
-pthread_t drive_t;
-void* drive(void* arg);
+// pthread_t drive_t;
+// void* drive(void* arg);
 
 inline bool checkErr(int rc, std::string name) {
   if (rc != 0) {
@@ -40,34 +40,34 @@ inline bool checkErr(int rc, std::string name) {
 */
 bool startThread(std::string name, void* params) {
   int rc = 1;
-  if (!name.compare("USB")) {
-    rc = pthread_create(&USBSlave_t, NULL, USBSlave, NULL);
-    // int rc = pthread_setname_np(USBSlaveThread, "GyroThread");
-    return checkErr(rc, name);
-  }
+  // if (!name.compare("USB")) {
+  //   rc = pthread_create(&USBSlave_t, NULL, USBSlave, NULL);
+  //   // int rc = pthread_setname_np(USBSlaveThread, "GyroThread");
+  //   return checkErr(rc, name);
+  // }
   if (!name.compare("SERVER")) {
     rc = pthread_create(&videoServer_t, NULL, videoServer, NULL);
-    // int rc = pthread_setname_np(videoServerThread, "VideoThread");
+    int rc = pthread_setname_np(videoServer_t, "VideoThread");
     return checkErr(rc, name);
   }
-  if (!name.compare("DRIVE")) {
-    rc = pthread_create(&drive_t, NULL, drive, params);
-    // int rc = pthread_setname_np(DriveThread, "DriveThread");
-    return checkErr(rc, name);
-  }
-  if (!name.compare("PID")) {
-    rc = pthread_create(&movePID_t, NULL, movePID, NULL);
-    // int rc = pthread_setname_np(PIDThread, "PIDThread");
-    return checkErr(rc, name);
-  }
+  // if (!name.compare("DRIVE")) {
+  //   rc = pthread_create(&drive_t, NULL, drive, params);
+  //   // int rc = pthread_setname_np(DriveThread, "DriveThread");
+  //   return checkErr(rc, name);
+  // }
+  // if (!name.compare("PID")) {
+  //   rc = pthread_create(&movePID_t, NULL, movePID, NULL);
+  //   // int rc = pthread_setname_np(PIDThread, "PIDThread");
+  //   return checkErr(rc, name);
+  // }
   if (!name.compare("VIDEO")) {
     rc = pthread_create(&VideoCap_t, NULL, VideoCap, NULL);
-    // int rc = pthread_setname_np(MJPEG, "MJPEG Thread");
+    int rc = pthread_setname_np(VideoCap_t, "MJPEG Thread");
     return checkErr(rc, name);
   }
   if (!name.compare("TCP")) {
     rc = pthread_create(&opentcp_t, NULL, opentcp, params);
-    // int rc = pthread_setname_np(tcpserver, "tcpserver");
+    int rc = pthread_setname_np(opentcp_t, "tcpserver");
     return checkErr(rc, name);
   }
   return false;
@@ -77,6 +77,8 @@ void* VideoCap(void* args) {
   cv::VideoCapture vcap;
   if (Switches::cameraInput == 2) {
     printf("Not Using Camera\n");
+    printf("ERR: function was disabled\n");
+    exit(1);
   } else {
     while (!vcap.open(Switches::cameraInput)) {
       std::cout << "cant connect" << std::endl;
@@ -90,6 +92,8 @@ void* VideoCap(void* args) {
   vcap.set(cv::CAP_PROP_AUTO_EXPOSURE, 1);
   printf("  setting exposure\n");
   vcap.set(cv::CAP_PROP_EXPOSURE, Var::EXPOSURE);
+  usleep(1000);
+  printf("  exposure at: %d\n",vcap.get(cv::CAP_PROP_EXPOSURE));
   vcap.set(cv::CAP_PROP_AUTOFOCUS, 0);
   vcap.set(cv::CAP_PROP_FRAME_WIDTH, Var::WIDTH);
   vcap.set(cv::CAP_PROP_FRAME_HEIGHT, Var::HEIGHT);
@@ -99,16 +103,18 @@ void* VideoCap(void* args) {
     Global::FrameHeight = 480;
     Global::FrameWidth = 640;
   }
-  vcap.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('H','2','6','4'));
+  // vcap.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('H','2','6','4'));
   int b = vcap.get(cv::CAP_PROP_FOURCC);
   char* fourcc = (char*) &b;
+  fourcc[4] = 0;
+  int cont = 0;
   printf("fourcc: %d |%s|\n",b,fourcc);
-
   while (true) {
+    //printf("grabbing\n");
     if(vcap.grab()){
       pthread_mutex_lock(&Global::frameMutex);
-      if (Switches::cameraInput != 2)
-        vcap.retrieve(Global::frame);
+      // if (Switches::cameraInput != 2)
+      vcap.retrieve(Global::frame);
       Global::newFrame = true;
       pthread_mutex_unlock(&Global::frameMutex);
     }
@@ -116,42 +122,42 @@ void* VideoCap(void* args) {
   }
 }
 
-void* USBSlave(void* arg) {
-  printf("enter gyro slave\n");
-  int ttyFid = open("/dev/ttyUSB0", O_RDWR);
-  if (ttyFid == -1) {
-    printf("Error unable to open port\n");
-  }
-  printf("enter readBus\n");
-  char line[256];
-  while (true) {
-    for (int ii = 0; ii < 200; ii++) {
-      int nb = read(ttyFid, &line[ii], 1);
-      if (nb != 1) {
-        printf("nb=%d\n", nb);
-        Global::dataValid = false;
-      } else
-        Global::dataValid = true;
-      if (nb < 0) {
-        sleep(1);
-        ii = 11;
-        continue;
-      }
-      if (line[ii] == ',') {
-        line[ii] = ' ';
-      }
-      if (line[ii] == '\n') {
-        line[ii + 1] = 0;
-        break;
-      }
-    }
-    // printf("line=%s\n",line);
-    float roll, pitch, yaw;
-    float ACCX, ACCY, GYROZ, AAZ;
-    sscanf(line, "%f %f %f %f %f %f %f", &ACCX, &ACCY, &roll, &pitch, &yaw, &GYROZ, &AAZ);
-    if (GYROZ > 100)
-      printf("yaw: %.2f; GYROZ: %.2f\n", yaw, GYROZ);
-    Global::gyroAngle = yaw;
-    Global::gyroVelocity = GYROZ;
-  }
-}
+// void* USBSlave(void* arg) {
+//   printf("enter gyro slave\n");
+//   int ttyFid = open("/dev/ttyUSB0", O_RDWR);
+//   if (ttyFid == -1) {
+//     printf("Error unable to open port\n");
+//   }
+//   printf("enter readBus\n");
+//   char line[256];
+//   while (true) {
+//     for (int ii = 0; ii < 200; ii++) {
+//       int nb = read(ttyFid, &line[ii], 1);
+//       if (nb != 1) {
+//         printf("nb=%d\n", nb);
+//         Global::dataValid = false;
+//       } else
+//         Global::dataValid = true;
+//       if (nb < 0) {
+//         sleep(1);
+//         ii = 11;
+//         continue;
+//       }
+//       if (line[ii] == ',') {
+//         line[ii] = ' ';
+//       }
+//       if (line[ii] == '\n') {
+//         line[ii + 1] = 0;
+//         break;
+//       }
+//     }
+//     // printf("line=%s\n",line);
+//     float roll, pitch, yaw;
+//     float ACCX, ACCY, GYROZ, AAZ;
+//     sscanf(line, "%f %f %f %f %f %f %f", &ACCX, &ACCY, &roll, &pitch, &yaw, &GYROZ, &AAZ);
+//     if (GYROZ > 100)
+//       printf("yaw: %.2f; GYROZ: %.2f\n", yaw, GYROZ);
+//     Global::gyroAngle = yaw;
+//     Global::gyroVelocity = GYROZ;
+//   }
+// }
