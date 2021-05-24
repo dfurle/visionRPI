@@ -4,7 +4,11 @@
 #define MLEN 8192
 #define HOSTNAMELENGTH 128
 #define MAXCLIENTS 32
+<<<<<<< HEAD
+#define RIO_ID 5957 // 1220
+=======
 #define RIO_ID 1220
+>>>>>>> 6e79d8718831ac55ae706c864d2ae6e3bc18ce41
 
 bool interrupt = false;
 
@@ -46,11 +50,13 @@ void* opentcp(void* arg) {
     client.ID = ID++;
     client.socket = sd_client;
     client.pos = pos;
-
+    printf("connecting to client now\n");
     int ok = pthread_create(&client_thread_t[ID], 0, client_thread, &client);
+    int rc = pthread_setname_np(client_thread_t[ID], "client_thread");
     ok = pthread_detach(client_thread_t[ID]);
     if (ok != 0)
       printf("clientThread error\n");
+    usleep(1000);
   }
   return 0;
 }
@@ -67,12 +73,16 @@ static void* client_thread(void* arg) {
     // Read from client
     bzero(from_client, MAXLINE);
     int lenbuf = read(socket, from_client, sizeof(from_client));
-
     // Clear to_client message and get ready to send
     bzero(to_client, MLEN);
     // sprintf(to_client, "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", pos->x, pos->z, pos->dist, pos->alpha1, pos->alpha2, pos->OffSetx, pos->speed, pos->turn, pos->gyro, pos->P, pos->I, pos->D);
     sprintf(to_client, "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", pos->x, pos->z, pos->dist, pos->alpha1, pos->alpha2, pos->OffSetx);
+<<<<<<< HEAD
+    // sprintf(&to_client[strlen(to_client)], "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,", pos->x, pos->z, pos->dist, pos->alpha1, pos->alpha2, pos->OffSetx, pos->speed, pos->turn, pos->gyro, pos->P, pos->I, pos->D);
+    // sprintf(&to_client[strlen(to_client)], "\n");
+=======
 
+>>>>>>> 6e79d8718831ac55ae706c864d2ae6e3bc18ce41
     int bytesSent = send(socket, to_client, sizeof(to_client), MSG_NOSIGNAL);
     if(bytesSent < 0){
       printf("thread: %d failed\n",client->ID);
@@ -81,6 +91,7 @@ static void* client_thread(void* arg) {
     }
     // printf("message sent: %s",to_client);
     // printf("Bytes sent: %d/%d, but only needed %d\n",bytesSent,sizeof(to_client), strlen(to_client));
+    usleep(100);
   }
   close(client->socket);
   return 0;
@@ -97,6 +108,7 @@ void* videoServer(void* arg) {
     close(Global::videoSocket);
     Global::videoSocket = 0;
     Global::videoError = false;
+    usleep(1000);
   }
   printf("error videoServer\n");
   return 0;

@@ -49,6 +49,9 @@ extern int          HEIGHT;
 extern int          EXPOSURE;
 extern unsigned int waitAfterFrame;
 
+extern double fx, fy, cx, cy;
+extern double dist_cof[5];
+
 extern double qualityLevel;
 extern double minDistance;
 extern int    blockSize;
