@@ -3,29 +3,17 @@
 
 
 namespace Var {
-int minH = 150;   // 218
+int minH = 0;   // 218
 int maxH = 255; // 255
-int minS = 195; // 209
+int minS = 120; // 209
 int maxS = 255; // 255
 int minV = 0;   // 222
-int maxV = 180;  // 241
+int maxV = 88;  // 241
 
 int          WIDTH          = 640; // 1920//1280//640
 int          HEIGHT         = 480; // 1080//720//480
-<<<<<<< HEAD
-int          EXPOSURE       = 20;
-unsigned int waitAfterFrame = 1000;
-
-double fx = 600;
-double fy = 600;
-double cx = 250;
-double cy = 260;
-
-double dist_cof[5];
-=======
 int          EXPOSURE       = 100;
 unsigned int waitAfterFrame = 100;
->>>>>>> 6e79d8718831ac55ae706c864d2ae6e3bc18ce41
 
 double qualityLevel     = 0.05;
 double minDistance      = 30;
@@ -37,7 +25,7 @@ int    maxCorners       = 4;
 size_t maxTargets = 50;
 size_t avSize     = 10;
 
-double IRLOffset = 0.;
+double IRLOffset = 10.;
 
 unsigned int videoPort = 4097;
 } // namespace Var
