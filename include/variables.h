@@ -37,12 +37,12 @@
 
 
 namespace Var {
-extern int minH;
-extern int maxH;
-extern int minS;
-extern int maxS;
-extern int minV;
-extern int maxV;
+extern int minR;
+extern int maxR;
+extern int minG;
+extern int maxG;
+extern int minB;
+extern int maxB;
 
 extern int          WIDTH;
 extern int          HEIGHT;
@@ -67,39 +67,45 @@ extern double IRLOffset;
 extern unsigned int videoPort;
 } // namespace Var
 
-class Targets {
+class Target {
 public:
-  Targets() { NullTargets(); };
-  int                    status;
-  std::string            found;
-  cv::Point              center;
-  double                 height;
-  double                 width;
-  double                 area;
-  char                   LorR;
-  int                    number;
-  std::string            reason;
-  double                 angle;
-  double                 ratio;
-  std::vector<cv::Point> corners;
-  int                    offby;
+  Target() { NullTargets(); };
+  // int                    status;
+  // std::string            found;
+  // cv::Point              center;
+  // double                 height;
+  // double                 width;
+  // double                 area;
+  // char                   LorR;
+  // int                    number;
+  // std::string            reason;
+  // double                 angle;
+  // double                 ratio;
+  // std::vector<cv::Point> corners;
+  // int                    offby;
   cv::RotatedRect        rect;
   cv::Rect               boundingRect;
+  double                 area;
+  int                    id;
   cv::Point2d            points[4];
   void NullTargets() {
-    status   = 0;
-    found    = "";
-    center.x = 0;
-    center.y = 0;
-    height   = 0;
-    width    = 0;
-    area     = 0;
-    LorR     = ' ';
-    number   = 0;
-    reason   = "";
-    angle    = 0;
-    ratio    = 0;
-    offby    = 0;
+    // status   = 0;
+    // found    = "";
+    // center.x = 0;
+    // center.y = 0;
+    // height   = 0;
+    // width    = 0;
+    // area     = 0;
+    // LorR     = ' ';
+    // number   = 0;
+    // reason   = "";
+    // angle    = 0;
+    // ratio    = 0;
+    // offby    = 0;
+    // rect = cv::RotatedRect();
+    // boundingRect = cv::Rect();
+    area = 0.;
+    id = -1;
     for (int i = 0; i < 4; i++) {
       points[i].x = 0;
       points[i].y = 0;
@@ -117,7 +123,7 @@ extern double           gyroVelocity;
 extern double           driveAngle;
 extern double           turn;
 extern double           P, I, D;
-extern Targets          target;
+extern std::vector<Target> targets;
 extern int              buttonPress;
 extern bool             videoError;
 extern int              videoSocket;
@@ -185,4 +191,4 @@ public:
 bool startThread(std::string name, void* params);
 // void initSolvePnP(const cv::Mat& img);
 void initSolvePnP();
-void findAnglePnP(cv::Mat& img, Targets& target, Position* position);
+void findAnglePnP(cv::Mat& img, Position position);

@@ -77,8 +77,8 @@ void* VideoCap(void* args) {
   cv::VideoCapture vcap;
   if (Switches::cameraInput == 2) {
     printf("Not Using Camera\n");
-    printf("ERR: function was disabled\n");
-    exit(1);
+    // printf("ERR: function was disabled\n");
+    // exit(1);
   } else {
     while (!vcap.open(Switches::cameraInput)) {
       std::cout << "cant connect" << std::endl;
@@ -109,16 +109,18 @@ void* VideoCap(void* args) {
   fourcc[4] = 0;
   int cont = 0;
   printf("fourcc: %d |%s|\n",b,fourcc);
-  while (true) {
-    //printf("grabbing\n");
-    if(vcap.grab()){
-      pthread_mutex_lock(&Global::frameMutex);
-      // if (Switches::cameraInput != 2)
-      vcap.retrieve(Global::frame);
-      Global::newFrame = true;
-      pthread_mutex_unlock(&Global::frameMutex);
+  if(Switches::cameraInput != 2){
+    while (true) {
+      //printf("grabbing\n");
+      if(vcap.grab()){
+        pthread_mutex_lock(&Global::frameMutex);
+        // if (Switches::cameraInput != 2)
+        vcap.retrieve(Global::frame);
+        Global::newFrame = true;
+        pthread_mutex_unlock(&Global::frameMutex);
+      }
+      usleep(Var::waitAfterFrame);
     }
-    usleep(Var::waitAfterFrame);
   }
 }
 

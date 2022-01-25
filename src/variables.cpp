@@ -2,13 +2,13 @@
 
 
 
-namespace Var {
-int minH = 150;   // 218
-int maxH = 255; // 255
-int minS = 195; // 209
-int maxS = 255; // 255
-int minV = 0;   // 222
-int maxV = 180;  // 241
+namespace Var {    //      2021
+int minR = 0;   // 218   // 150
+int maxR = 255; // 255
+int minG = 100; // 209   // 195
+int maxG = 255; // 255
+int minB = 0;   // 222
+int maxB = 180; // 241
 
 int          WIDTH          = 640; // 1920//1280//640
 int          HEIGHT         = 480; // 1080//720//480
@@ -47,7 +47,7 @@ double           gyroVelocity = 0.0;
 double           driveAngle   = 0;
 double           turn         = 0.0;
 double           P = 0.0, I = 0.0, D = 0.0;
-Targets          target;
+std::vector<Target> targets;
 int              buttonPress = 0;
 bool             videoError  = false;
 int              videoSocket = 0;
