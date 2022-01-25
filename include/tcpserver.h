@@ -9,7 +9,7 @@ struct HOST{
 struct CLIENT {
   int ID;
   int socket;
-  Position* pos;
+  // Position* pos;
 };
 
 class TCPServer {

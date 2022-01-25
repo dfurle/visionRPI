@@ -1,12 +1,13 @@
 #include "variables.h"
+#include "clock.h"
 
 // threads.cpp
 pthread_t VideoCap_t;
 void* VideoCap(void* arg);
 
-// threads.cpp
-// pthread_t USBSlave_t;
-// void* USBSlave(void* arg);
+
+pthread_t videoSave_t;
+void* VideoSave(void* arg);
 
 // tcpserver.cpp
 pthread_t opentcp_t;
@@ -15,14 +16,6 @@ void* opentcp(void* arg);
 // tcpserver.cpp
 pthread_t videoServer_t;
 void* videoServer(void* arg);
-
-// drive.cpp
-// pthread_t movePID_t;
-// void* movePID(void* arg);
-
-// drive.cpp
-// pthread_t drive_t;
-// void* drive(void* arg);
 
 inline bool checkErr(int rc, std::string name) {
   if (rc != 0) {
@@ -40,34 +33,20 @@ inline bool checkErr(int rc, std::string name) {
 */
 bool startThread(std::string name, void* params) {
   int rc = 1;
-  // if (!name.compare("USB")) {
-  //   rc = pthread_create(&USBSlave_t, NULL, USBSlave, NULL);
-  //   // int rc = pthread_setname_np(USBSlaveThread, "GyroThread");
-  //   return checkErr(rc, name);
-  // }
   if (!name.compare("SERVER")) {
     rc = pthread_create(&videoServer_t, NULL, videoServer, NULL);
-    // int rc = pthread_setname_np(videoServer_t, "VideoThread");
     return checkErr(rc, name);
   }
-  // if (!name.compare("DRIVE")) {
-  //   rc = pthread_create(&drive_t, NULL, drive, params);
-  //   // int rc = pthread_setname_np(DriveThread, "DriveThread");
-  //   return checkErr(rc, name);
-  // }
-  // if (!name.compare("PID")) {
-  //   rc = pthread_create(&movePID_t, NULL, movePID, NULL);
-  //   // int rc = pthread_setname_np(PIDThread, "PIDThread");
-  //   return checkErr(rc, name);
-  // }
   if (!name.compare("VIDEO")) {
     rc = pthread_create(&VideoCap_t, NULL, VideoCap, NULL);
-    // int rc = pthread_setname_np(VideoCap_t, "MJPEG Thread");
     return checkErr(rc, name);
   }
   if (!name.compare("TCP")) {
+    rc = pthread_create(&opentcp_t, NULL, opentcp, NULL);
+    return checkErr(rc, name);
+  }
+  if(!name.compare("SAVE")){
     rc = pthread_create(&opentcp_t, NULL, opentcp, params);
-    // int rc = pthread_setname_np(opentcp_t, "tcpserver");
     return checkErr(rc, name);
   }
   return false;
@@ -111,55 +90,44 @@ void* VideoCap(void* args) {
   printf("fourcc: %d |%s|\n",b,fourcc);
   if(Switches::cameraInput != 2){
     while (true) {
-      //printf("grabbing\n");
       if(vcap.grab()){
-        pthread_mutex_lock(&Global::frameMutex);
-        // if (Switches::cameraInput != 2)
+        Global::muteFrame.lock();
         vcap.retrieve(Global::frame);
         Global::newFrame = true;
-        pthread_mutex_unlock(&Global::frameMutex);
+        Global::muteFrame.unlock();
       }
       usleep(Var::waitAfterFrame);
     }
   }
 }
 
-// void* USBSlave(void* arg) {
-//   printf("enter gyro slave\n");
-//   int ttyFid = open("/dev/ttyUSB0", O_RDWR);
-//   if (ttyFid == -1) {
-//     printf("Error unable to open port\n");
-//   }
-//   printf("enter readBus\n");
-//   char line[256];
-//   while (true) {
-//     for (int ii = 0; ii < 200; ii++) {
-//       int nb = read(ttyFid, &line[ii], 1);
-//       if (nb != 1) {
-//         printf("nb=%d\n", nb);
-//         Global::dataValid = false;
-//       } else
-//         Global::dataValid = true;
-//       if (nb < 0) {
-//         sleep(1);
-//         ii = 11;
-//         continue;
-//       }
-//       if (line[ii] == ',') {
-//         line[ii] = ' ';
-//       }
-//       if (line[ii] == '\n') {
-//         line[ii + 1] = 0;
-//         break;
-//       }
-//     }
-//     // printf("line=%s\n",line);
-//     float roll, pitch, yaw;
-//     float ACCX, ACCY, GYROZ, AAZ;
-//     sscanf(line, "%f %f %f %f %f %f %f", &ACCX, &ACCY, &roll, &pitch, &yaw, &GYROZ, &AAZ);
-//     if (GYROZ > 100)
-//       printf("yaw: %.2f; GYROZ: %.2f\n", yaw, GYROZ);
-//     Global::gyroAngle = yaw;
-//     Global::gyroVelocity = GYROZ;
-//   }
-// }
+void* VideoSave(void* arg){
+  cv::Mat* img = (cv::Mat*) arg;
+  int currentLog = 0;
+  int fourcc = cv::VideoWriter::fourcc('M','J','P','G');
+  int prevTime = 30;
+  cv::VideoWriter out;
+  Clock savingClock;
+
+  if (Switches::SAVE){
+    Global::muteImg.lock();
+    out.write(*img);
+    Global::muteImg.unlock();
+    if(savingClock.getTimeAsSecs() >= 30.){
+      printf("---SAVING---\n");
+      savingClock.restart();
+      out.release();
+      std::string name = "./output";
+      name += std::to_string(currentLog);
+      name += ".avi";
+      currentLog++;
+      out.open(name,fourcc,30.,cv::Size(Var::WIDTH,Var::HEIGHT));
+    } else {
+      int time =  int(30.-savingClock.getTimeAsSecs());
+      if(time != prevTime){
+        printf("time till next save: %d\n",time);
+        prevTime = time;
+      }
+    }
+  }
+}

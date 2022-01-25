@@ -1,7 +1,5 @@
 #include "tcpserver.h"
 
-#define MAXLINE 80 // check
-#define MLEN 8192  // check
 #define HOSTNAMELENGTH 128
 #define MAXCLIENTS 32
 #define RIO_ID 5957 // 1220
@@ -35,7 +33,6 @@ int TCPServer::getClient(HOST &host){
 
 
 void* opentcp(void* arg) {
-  Position* pos = (Position*)arg;
   int ID = 0;
   struct HOST host = TCPServer::create_socket(RIO_ID);
   while(!interrupt){
@@ -45,7 +42,6 @@ void* opentcp(void* arg) {
     struct CLIENT client;
     client.ID = ID++;
     client.socket = sd_client;
-    client.pos = pos;
     printf("connecting to client now\n");
     int ok = pthread_create(&client_thread_t[ID], 0, client_thread, &client);
     // int rc = pthread_setname_np(client_thread_t[ID], "client_thread");
@@ -61,21 +57,28 @@ static void* client_thread(void* arg) {
   struct CLIENT* client = (CLIENT*)arg;
 
   int socket = client->socket;
-  Position* pos = client->pos;
 
-  char to_client[MLEN];
+  const int MAXLINE = 32; // random value for buffer just in case?
   char from_client[MAXLINE];
+  const int MLEN = 1024;
+  char to_client[MLEN];
   while (true) {
     // Read from client
     bzero(from_client, MAXLINE);
     int lenbuf = read(socket, from_client, sizeof(from_client));
-    // Clear to_client message and get ready to send
-    bzero(to_client, MLEN);
-    // sprintf(to_client, "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", pos->x, pos->z, pos->dist, pos->alpha1, pos->alpha2, pos->OffSetx, pos->speed, pos->turn, pos->gyro, pos->P, pos->I, pos->D);
-    sprintf(to_client, "%.2f,%.2f,%d\n", pos->dist, pos->robotAngle, pos->dataValid);
-    // sprintf(&to_client[strlen(to_client)], "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,", pos->x, pos->z, pos->dist, pos->alpha1, pos->alpha2, pos->OffSetx, pos->speed, pos->turn, pos->gyro, pos->P, pos->I, pos->D);
-    // sprintf(&to_client[strlen(to_client)], "\n");
-    int bytesSent = send(socket, to_client, sizeof(to_client), MSG_NOSIGNAL);
+    // bzero(to_client, MLEN);
+
+    
+    // sprintf(to_client, "%.2f,%.2f,%d\n", pos->dist, pos->robotAngle, pos->dataValid);
+    // sprintf(to_client, "%.2f,%.2f,%d\n", Global::position->dist, Global::position->robotAngle, Global::position->dataValid);
+    // mutex are most likely required, test performance
+    Global::mutePos.lock();
+    snprintf(to_client, sizeof(to_client), "%.2f,%.2f,%d\n", Global::position.dist, Global::position.robotAngle, Global::position.dataValid);
+    Global::mutePos.unlock();
+    std::string send_to = to_client;
+
+    // int bytesSent = send(socket, to_client, sizeof(to_client), MSG_NOSIGNAL);
+    int bytesSent = send(socket, send_to.c_str(), sizeof(send_to), MSG_NOSIGNAL);
     if(bytesSent < 0){
       printf("thread: %d failed\n",client->ID);
       close(socket);
@@ -92,15 +95,14 @@ static void* client_thread(void* arg) {
 void* videoServer(void* arg) {
   struct HOST host = TCPServer::create_socket(Var::videoPort);
   while(true){
-    int sd_client = TCPServer::getClient(host);
-    Global::videoSocket = sd_client;
+    Global::videoSocket = TCPServer::getClient(host);
     printf("video socket: %d\n", Global::videoSocket);
     while (!Global::videoError)
       sleep(1);
     close(Global::videoSocket);
     Global::videoSocket = 0;
     Global::videoError = false;
-    usleep(1000);
+    sleep(5);
   }
   printf("error videoServer\n");
   return 0;

@@ -106,7 +106,7 @@ void initSolvePnP() {
 
 }
 
-void findAnglePnP(cv::Mat& img, Position position) {
+void findAnglePnP(cv::Mat& img) {
   std::vector<cv::Point2f> img2dpoints;
   ClockTimer timer;
   bool printTime = false;
@@ -116,68 +116,19 @@ void findAnglePnP(cv::Mat& img, Position position) {
     printf("begin findTarget\n");
   }
 
-  // For 2021
-  // =========
-  // while (true) {
-  //   int change = 0;
-  //   for (int i = 0; i < 3; i++) {
-  //     if (Global::target.corners[i].y > Global::target.corners[i + 1].y) {
-  //       change = 1;
-  //       cv::Point2f tmp = Global::target.corners[i];
-  //       Global::target.corners[i] = Global::target.corners[i + 1];
-  //       Global::target.corners[i + 1] = tmp;
-  //     }
-  //   }
-  //   if (change == 0)
-  //     break;
-  // }
-  // if (Global::target.corners[0].x < Global::target.corners[1].x) {
-  //   img2dpoints.push_back(Global::target.corners[1]);
-  //   img2dpoints.push_back(Global::target.corners[0]);
-  // } else {
-  //   img2dpoints.push_back(Global::target.corners[0]);
-  //   img2dpoints.push_back(Global::target.corners[1]);
-  // }
-  // if (Global::target.corners[2].x < Global::target.corners[3].x) {
-  //   img2dpoints.push_back(Global::target.corners[2]);
-  //   img2dpoints.push_back(Global::target.corners[3]);
-  // } else {
-  //   img2dpoints.push_back(Global::target.corners[3]);
-  //   img2dpoints.push_back(Global::target.corners[2]);
-  // }
-
-
   // For 2022, placeholder
   for(int t = 0; t < 3; t++){
     img2dpoints.push_back(Global::targets[t].points[2]);
     img2dpoints.push_back(Global::targets[t].points[0]);
-
-    // int idSmall = 0;
-    // for(int i = 1; i < 4; i++){
-    //   if(Global::targets[t].corners[i].y < Global::targets[t].corners[idSmall].y){
-    //     if(Global::targets[t].corners[i].y < Global::targets[t].corners[idSmall].y){
-          
-    //     }
-    //   }
-    // }
   }
   timer.printTime(printTime," added pts");
 
-  // for(int i = 0; i < img2dpoints.size(); i++){
-  //   printf("[%.2f,%.2f], ",img2dpoints[i].x,img2dpoints[i].y);
-  // }
-  // printf("\n");
-
-
-  
   // debugging drawing
   // for(int i=0; i < (int) mod3d.size(); i++) {
   //   circle(img, img2dpoints[i], i, cv::Scalar(0,255,0), 2);
   //   circle(img, cv::Point2d(mod3d[i].x*100+center.x,-mod3d[i].y*100+center.y), i*5,
   //           cv::Scalar(255,255,0), 2);
   // }
-
-
 
   cv::Mat rvec;
   cv::Mat tvec;
@@ -199,33 +150,23 @@ void findAnglePnP(cv::Mat& img, Position position) {
   // cv::Rodrigues(rMat.t(),rotationVecTest);
   // cv::Mat tvecT = -rMat.t()*tvec;
 
-  // imshow("debug",img);
-  // cv::waitKey(0);
-
+  // 2022
   // transvec is the transposing vector of target, x=0 y=1 z=2; x=dir y=height z=depth; rotation of robot matters
   double* transvec = tvec.ptr<double>();
-  cv::Mat xWorldd = -rMat.t() * tvec;
-  double* xWorld = xWorldd.ptr<double>();
-  transvec[0] -= Var::IRLOffset;
+  double* xWorld = cv::Mat(-rMat.t() * tvec).ptr<double>();
+  // transvec[0] -= Var::IRLOffset;
   double distance = sqrt(xWorld[0] * xWorld[0] + xWorld[2] * xWorld[2]);
-  double alpha1 = atan2(transvec[0], transvec[2]);
+  double robotAngle = atan2(transvec[0], transvec[2]);
   // angle between dist vector and robot facing forward.
 
-  // xWorld is the irl coords of cam vs target; rotation of robot does NOT matter
-  // double alpha2 = atan2(xWorld[0], -xWorld[2]);
-  // angle between dist vector and target facing forward.
 
-  cv::Point2d tc((img2dpoints[2].x + img2dpoints[3].x) / 2.0, ((img2dpoints[2].y + img2dpoints[3].y) + (img2dpoints[1].y + img2dpoints[0].y)) / 4.0);
-
-  // 2021, writing data
-  // position.x = sin(alpha2) * distance;
-  // position.z = cos(alpha2) * distance;
-  // position.x = xWorld[0];
-  // position.z = -xWorld[2];
-  // position.dist = distance;
-  // position.alpha1 = alpha1 * (180. / PI);
-  // position.alpha2 = alpha2 * (180. / PI);
+  Global::mutePos.lock();
+  Global::position.dist = distance;
+  Global::position.robotAngle = robotAngle;
+  Global::position.dataValid = 1;
+  Global::mutePos.unlock();
   timer.printTime(printTime," maths");
+  // printf("position: %f, %f\n",position.dist,position.robotAngle);
 
   // TODO AXIS
   std::vector<cv::Point3f> axis3D;

@@ -70,38 +70,12 @@ extern unsigned int videoPort;
 class Target {
 public:
   Target() { NullTargets(); };
-  // int                    status;
-  // std::string            found;
-  // cv::Point              center;
-  // double                 height;
-  // double                 width;
-  // double                 area;
-  // char                   LorR;
-  // int                    number;
-  // std::string            reason;
-  // double                 angle;
-  // double                 ratio;
-  // std::vector<cv::Point> corners;
-  // int                    offby;
-  cv::RotatedRect        rect;
-  cv::Rect               boundingRect;
-  double                 area;
-  int                    id;
-  cv::Point2d            points[4];
+  cv::RotatedRect rect;
+  cv::Rect        boundingRect;
+  double          area;
+  int             id;
+  cv::Point2d     points[4];
   void NullTargets() {
-    // status   = 0;
-    // found    = "";
-    // center.x = 0;
-    // center.y = 0;
-    // height   = 0;
-    // width    = 0;
-    // area     = 0;
-    // LorR     = ' ';
-    // number   = 0;
-    // reason   = "";
-    // angle    = 0;
-    // ratio    = 0;
-    // offby    = 0;
     // rect = cv::RotatedRect();
     // boundingRect = cv::Rect();
     area = 0.;
@@ -110,6 +84,34 @@ public:
       points[i].x = 0;
       points[i].y = 0;
     }
+  }
+};
+
+
+class Position{
+public:
+  Position(){ nullifyStruct(); }
+  double dist;
+  double robotAngle;
+  int    dataValid;
+  void nullifyStruct() {
+    dist = 0;
+    robotAngle = 0;
+    dataValid = 0;
+  }
+};
+
+class mMutex{
+public:
+  pthread_mutex_t mutex;
+  mMutex(){
+    mutex = PTHREAD_MUTEX_INITIALIZER;
+  }
+  void lock(){
+    pthread_mutex_lock(&mutex);
+  }
+  void unlock(){
+    pthread_mutex_unlock(&mutex);
   }
 };
 
@@ -124,6 +126,7 @@ extern double           driveAngle;
 extern double           turn;
 extern double           P, I, D;
 extern std::vector<Target> targets;
+extern Position         position, positionAV;
 extern int              buttonPress;
 extern bool             videoError;
 extern int              videoSocket;
@@ -131,9 +134,12 @@ extern const cv::Scalar BLUE, RED, YELLOW, GREEN;
 
 extern cv::Mat frame;
 
-extern pthread_mutex_t frameMutex;
-// extern pthread_mutex_t targetMutex;
-// extern pthread_mutex_t positionMutex;
+// extern pthread_mutex_t muteFrame;
+// extern pthread_mutex_t mutePos;
+// extern pthread_mutex_t muteImg;
+extern mMutex muteFrame;
+extern mMutex mutePos;
+extern mMutex muteImg;
 
 } // namespace Global
 
@@ -152,50 +158,8 @@ extern double       InitPID[];
 extern int          cameraInput;
 } // namespace Switches
 
-class Position{
-public:
-  Position(){ nullifyStruct(); }
-  // double x;
-  // double y;
-  // double z;
-  // double dist;
-  // double alpha1;
-  // double alpha2;
-  // double OffSetx;
-  // double speed;
-  // double turn;
-  // double gyro;
-  // double P;
-  // double I;
-  // double D;
-
-  double dist;
-  double robotAngle;
-  int    dataValid;
-
-  void nullifyStruct() {
-    // x         = 0;
-    // z         = 0;
-    // dist      = 0;
-    // alpha1    = 0;
-    // alpha2    = 0;
-    // OffSetx   = 0;
-    // speed     = 0;
-    // turn      = 0;
-    // gyro      = 0;
-    // P         = 0;
-    // I         = 0;
-    // D         = 0;
-    // dataValid = 0;
-
-    dist = 0;
-    robotAngle = 0;
-    dataValid = 0;
-  }
-};
 
 
-bool startThread(std::string name, void* params);
-// void initSolvePnP(const cv::Mat& img);
+bool startThread(std::string name, void* params = NULL);
 void initSolvePnP();
-void findAnglePnP(cv::Mat& img, Position position);
+void findAnglePnP(cv::Mat& img);

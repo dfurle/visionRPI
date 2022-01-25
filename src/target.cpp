@@ -1,5 +1,4 @@
 #include "clock.h"
-#include "drive.h"
 #include "variables.h"
 #include "parser.h"
 
@@ -29,7 +28,7 @@ void morphOps(cv::Mat& thresh) {
 }
 
 // int findTarget(const cv::Mat& original, const cv::Mat& thresholded, Target* targets) {
-int findTarget(const cv::Mat& original, const cv::Mat& thresholded) {
+int findTarget(const cv::Mat& img, const cv::Mat& thresholded) {
   Global::targets.clear();
   int targetsFound = 0;
   // Clock total, between;
@@ -69,20 +68,8 @@ int findTarget(const cv::Mat& original, const cv::Mat& thresholded) {
   timer.printTime(printTime," filter:Size");
 
   std::vector<cv::RotatedRect> minRect(contours.size());
-  std::vector<std::vector<cv::Point> > hull(contours.size());
   std::vector<std::vector<cv::Point> > art;
-  std::vector<cv::Point> approx;
-  // Target targets[Var::maxTargets];
   cv::Mat workingImage(Global::FrameHeight, Global::FrameWidth, CV_8UC1, cv::Scalar(0));
-  // cv::Mat workingImageSq; // useless with 2022
-  // int num = -1; // useless with 2022
-
-  int numTargetsToFind = 3;
-  std::pair<int,double> largestIDs[numTargetsToFind];
-  double hullAreas[3];
-  for(int i = 0; i < numTargetsToFind; i++){
-    largestIDs[i] = std::pair<int,double>(-1,-1.);
-  }
 
   if (!contours.empty() && !hierarchy.empty()) {
     for (int i = 0; i < (int)contours.size(); i++) {
@@ -116,8 +103,8 @@ int findTarget(const cv::Mat& original, const cv::Mat& thresholded) {
       }
 
       for (int j = 0; j < 4; j++) {
-        line(original, rect_points[j], rect_points[(j + 1) % 4], Global::BLUE, 1, 8);
-        circle(original, rect_points[j], 3, Global::RED, -1, 8, 0);
+        line(img, rect_points[j], rect_points[(j + 1) % 4], Global::BLUE, 1, 8);
+        circle(img, rect_points[j], 3, Global::RED, -1, 8, 0);
       }
       timer.printTime(printTime," drawRect");
 
@@ -125,9 +112,11 @@ int findTarget(const cv::Mat& original, const cv::Mat& thresholded) {
 
       // Might be useless? maybe good for differentiating between lights? idk
       // =========
-      // cv::convexHull(contours[i], hull[i]);
+      // // std::vector<std::vector<cv::Point> > hull(contours.size());
+      // <std::vector<cv::Point> hull;
+      // cv::convexHull(contours[i], hull);
       // timer.printTime(printTime," convexHull");
-      // double ratioTest = cv::contourArea(hull[i]) / cv::contourArea(contours[i]);
+      // double ratioTest = cv::contourArea(hull) / cv::contourArea(contours[i]);
       // // if (ratioTest < 3.25) { // TODO: before was 4 // for 2021
       // if (abs(ratioTest - 1) > 0.1) { // TODO: before was 4
       //   if (printTime){
@@ -141,21 +130,15 @@ int findTarget(const cv::Mat& original, const cv::Mat& thresholded) {
 
       // Probably useless, good with complex targets;
       // ========
+      // std::vector<cv::Point> approx;
       // approxPolyDP(hull[i], approx, cv::arcLength(hull[i], true) * 0.005, true); // 0.015
       // timer.printTime(printTime," afterPoly");
       // art.push_back(approx);
 
-      // num = i; // used to work in 2021 with one target
       targetsFound++;
       timer.printTime(printTime," passed");
 
     } //---end contour loop i
-
-    // printf("sizes: ");
-    // for(int i = 0; i < 3; i++){
-    //   printf("%d:%f, ",largestIDs[i].first,largestIDs[i].second);
-    // }
-    // printf("\n");
 
     if (printTime)
       printf("end: %d found\n",targetsFound);
@@ -163,7 +146,7 @@ int findTarget(const cv::Mat& original, const cv::Mat& thresholded) {
     //   // drawContours(workingImage, art, j, cv::Scalar(255));
     //   // drawContours(original, art, j, Global::BLUE, 2);
     // }
-    if(targetsFound >= numTargetsToFind){
+    if(targetsFound >= 3){
 
       std::sort(Global::targets.begin(), Global::targets.end(), 
       [ ](const Target& lhs, const Target& rhs){
@@ -181,18 +164,10 @@ int findTarget(const cv::Mat& original, const cv::Mat& thresholded) {
       // for(int i = 0; i < Global::targets.size(); i++){
       //   printf("[area:%7.2f, x:%6.2f, y:%6.2f], \n",Global::targets[i].area,Global::targets[i].points[0].x,Global::targets[i].points[0].y);
       // }
-      // printf("end\n");
-      // if(aaa > 1){
-      //   cv::waitKey(0);
-      // }
       return 3;
     } else {
       return -1;
     }
-
-    // imshow("workingImg",original);
-    // cv::waitKey(0);
-
 
 
     // Useful for a single target, here it's many rectangles which the previous algorithm already finds
@@ -217,29 +192,11 @@ int findTarget(const cv::Mat& original, const cv::Mat& thresholded) {
 
   }
 
-  // 2019
-  // if(targetsFound==2){
-  // line(original,tLeft->center, tRight->center, YELLOW, 1);
-  // line(original,tLeft->center, tLeft->center, RED, 3);
-  // line(original,tRight->center, tRight->center, RED, 3);
-  // }
   if (printTime)
     timer.PTotal();
 
 
   return targetsFound;
-}
-
-int currentLog = 0;
-int fourcc = cv::VideoWriter::fourcc('M','J','P','G');
-int prevTime = 30;
-
-void startSaving(cv::VideoWriter& out){
-  std::string name = "./output";
-  name += std::to_string(currentLog);
-  name += ".avi";
-  currentLog++;
-  out.open(name,fourcc,30.,cv::Size(Var::WIDTH,Var::HEIGHT));
 }
 
 int main(int argc, const char* argv[]) {
@@ -299,28 +256,18 @@ int main(int argc, const char* argv[]) {
     Var::maxB = std::round(colLims[1][2]);
     printf("cam: %d | pt: %d\n",Switches::cameraInput, Switches::printTime);
   }
-  cv::VideoWriter out;
-  if (Switches::SAVE)
-    startSaving(out);
     
   ClockTimer timer;
   Clock serverClock;
   Clock switchFrame;
-  Clock savingClock;
 
   // int aaa = 0;
   bool printTime = false;
-  // bool firstTime = true;
   int frameCounter = 0, frameCounter2 = 0, frameCounterPrev = 0, missedFrames = 0;
 
   if (Switches::printTime == 1)
     printTime = true;
   timer.printTime(printTime,"getting input");
-
-  // if(Switches::USESERVER && Global::videoSocket == 0){
-  //   Switches::USESERVER = false;
-  // }
-  
 
   // start i2c connection:
   // int addr = 0x04;
@@ -335,15 +282,10 @@ int main(int argc, const char* argv[]) {
   //     return false;
   // }
 
-  cv::Mat img, HSV, gray, thresholded;
-  Global::gyroAngle = 0;
-  Global::driveAngle = 0;
-  // int videoPort=4097;
-  Position position, positionAV;
-  std::vector<Position>::iterator it;
+  // cv::Mat img, HSV, gray, thresholded;
+  cv::Mat img, thresholded;
   std::vector<Position> posA;
-  // Target targets[Var::maxTargets];
-  // Init Threads--------------------
+  // int videoPort=4097;
 
 #ifdef RASPI
   // startThread("USB", NULL);
@@ -351,29 +293,21 @@ int main(int argc, const char* argv[]) {
   // stty -F /dev/ttyUSB0 115200
   // stty -F /dev/ttyUSB0 -hupcl
 #endif
-  startThread("VIDEO", NULL);
-  //int rc = pthread_create(&VideoCap_t, NULL, VideoCap, NULL);
-  //rc = pthread_setname_np(VideoCap_t, "MJPEG Thread");
-  
-  startThread("TCP", &positionAV);
-  
+
+  startThread("VIDEO");
+  startThread("TCP");
+  if (Switches::SAVE)
+    startThread("SAVE",&img);
+  if (Switches::USESERVER)
+    startThread("SERVER");
 
 
-  // startThread("DRIVE", &positionAV);
-
-  // startThread("PID", NULL);
-
-  if (Switches::USESERVER) {
-    startThread("SERVER", NULL);
-  }
-
-  // End Init Threads-----------------------------
   if (Switches::SHOWTRACK)
     createTrackbars();
   if (!img.isContinuous())
     img = img.clone();
-  position.nullifyStruct();
-  positionAV.nullifyStruct();
+  Global::position.nullifyStruct();
+  Global::positionAV.nullifyStruct();
   timer.printTime(printTime,"Init Threads");
 
   Global::FrameHeight = 480;
@@ -388,7 +322,7 @@ int main(int argc, const char* argv[]) {
   
   while (true) {
     timer.reset();
-    pthread_mutex_lock(&Global::frameMutex);
+    Global::muteFrame.lock();
 
     // if (Switches::cameraInput == 2) {
     //   // int num = (int(switchFrame.getTimeAsSecs() / 5.)) % 11 + 1;
@@ -406,13 +340,9 @@ int main(int argc, const char* argv[]) {
     // if(true){
     if ((!Global::frame.empty() && Global::newFrame) || Switches::cameraInput == 2) { // check for empty frame
       Global::frame.copyTo(img);
-      pthread_mutex_unlock(&Global::frameMutex);
+      Global::muteFrame.unlock();
       timer.printTime(printTime,"Get Frame");
       frameCounter++;
-
-      // cv::cvtColor(img, HSV, CV_BGR2HSV);
-      // timer.printTime(printTime," to HSV");
-      // thresholded = ThresholdImage(HSV); // switch between HSV or RGB, see what works
 
       //cv::cvtColor(img,gray,CV_BGR2GRAY);
       //timer.printTime(printTime," to gray");
@@ -437,32 +367,32 @@ int main(int argc, const char* argv[]) {
         //   initSolvePnP(img);
         //   firstTime = false;
         // }
-        findAnglePnP(img, position); // SOLVE FOR POSITION AND ROTATION
+        findAnglePnP(img); // SOLVE FOR POSITION AND ROTATION
         timer.printTime(printTime," solvePnP");
-        posA.push_back(position);
+        posA.push_back(Global::position);
         if (posA.size() > Var::avSize)
           posA.erase(posA.begin());
-        positionAV.nullifyStruct();
+        Global::positionAV.nullifyStruct();
 
         // avaraging--------
         int cntr = 0;
-        for (it = posA.end() - 3; it != posA.end(); it++) {
+        for (auto it = posA.end() - 3; it != posA.end(); it++) {
           cntr++;
-          positionAV.dist = (*it).dist;
-          positionAV.robotAngle = (*it).robotAngle;
-          positionAV.dataValid = (*it).dataValid;
+          Global::positionAV.dist = (*it).dist;
+          Global::positionAV.robotAngle = (*it).robotAngle;
+          Global::positionAV.dataValid = (*it).dataValid;
         }
-        positionAV.dist /= cntr;
-        positionAV.robotAngle /= cntr;
-        positionAV.dataValid /= cntr;
+        Global::positionAV.dist /= cntr;
+        Global::positionAV.robotAngle /= cntr;
+        Global::positionAV.dataValid /= cntr;
         //------------------
         timer.printTime(printTime," avaraging");
 
         if (Switches::DOPRINT) {
           printf("dist=%6.2f, robotAngle=%6.2f, dataValid: %d\n",
-                 positionAV.dist,
-                 positionAV.robotAngle,
-                 positionAV.dataValid);
+                 Global::positionAV.dist,
+                 Global::positionAV.robotAngle,
+                 Global::positionAV.dataValid);
         }
       } else {
         missedFrames++;
@@ -473,27 +403,9 @@ int main(int argc, const char* argv[]) {
         imshow("Original", img);
       if (Switches::SHOWTHRESH)
         imshow("Thresholded", thresholded);
-      if (Switches::SHOWHUE)
-        imshow("HSV", HSV);
       if(Switches::SHOWORIG || Switches::SHOWTHRESH || Switches::SHOWHUE)
         timer.printTime(printTime," finished imshow");
 
-      if (Switches::SAVE){
-        out.write(img);
-        if(savingClock.getTimeAsSecs() >= 30.){
-          printf("---SAVING---\n");
-          savingClock.restart();
-          out.release();
-          startSaving(out);
-        } else {
-          int time =  int(30.-savingClock.getTimeAsSecs());
-          if(time != prevTime){
-            printf("time till next save: %d\n",time);
-            prevTime = time;
-          }
-        }
-        timer.printTime(printTime," fin saving vid");
-      }
 
       if (printTime) {
         timer.printTime("End");
@@ -505,7 +417,7 @@ int main(int argc, const char* argv[]) {
       Global::newFrame = false;
     } // end check for new frame
     else
-      pthread_mutex_unlock(&Global::frameMutex);
+      Global::muteFrame.unlock();
 
 
     frameCounter2++;

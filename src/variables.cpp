@@ -10,10 +10,10 @@ int maxG = 255; // 255
 int minB = 0;   // 222
 int maxB = 180; // 241
 
-int          WIDTH          = 640; // 1920//1280//640
-int          HEIGHT         = 480; // 1080//720//480
+int          WIDTH          = 640; // 1920 //1280 //640
+int          HEIGHT         = 480; // 1080 //720  //480
 int          EXPOSURE       = 20;
-unsigned int waitAfterFrame = 1000;
+unsigned int waitAfterFrame = 33000; // 1000
 
 double fx = 600;
 double fy = 600;
@@ -42,23 +42,17 @@ bool             newFrame = false;
 double           FrameWidth, FrameHeight;
 bool             interupt     = false;
 bool             dataValid    = 0;
-double           gyroAngle    = 0;
-double           gyroVelocity = 0.0;
-double           driveAngle   = 0;
-double           turn         = 0.0;
-double           P = 0.0, I = 0.0, D = 0.0;
 std::vector<Target> targets;
-int              buttonPress = 0;
+Position         position, positionAV;
 bool             videoError  = false;
 int              videoSocket = 0;
 const cv::Scalar BLUE = cv::Scalar(255, 0, 0), RED = cv::Scalar(0, 0, 255), YELLOW = cv::Scalar(0, 255, 255), GREEN = cv::Scalar(0, 255, 0);
 
 cv::Mat frame;
 
-pthread_mutex_t frameMutex = PTHREAD_MUTEX_INITIALIZER;
-// pthread_mutex_t targetMutex = PTHREAD_MUTEX_INITIALIZER;
-// pthread_mutex_t positionMutex = PTHREAD_MUTEX_INITIALIZER;
-
+mMutex muteFrame;
+mMutex mutePos;
+mMutex muteImg;
 } // namespace Global
 
 namespace Switches {
