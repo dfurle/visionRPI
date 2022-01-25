@@ -205,7 +205,6 @@ int main(int argc, const char* argv[]) {
     double printTime_d, cameraInput_d;
     double colLims[2][3];
     p.add_Parameter("-o" ,"--orig",Switches::SHOWORIG,false,"displays original camera input w/ lines");
-    p.add_Parameter("-hu","--hue",Switches::SHOWHUE,false,"displays HSV of original image w/o lines");
     p.add_Parameter("-th","--threshold",Switches::SHOWTHRESH,false,"displays thresholded image (black & white)");
     p.add_Parameter("-tr","--track",Switches::SHOWTRACK,false,"displays sliders for RGB (or HSV depending on code)");
     p.add_Parameter("-s" ,"--server",Switches::USESERVER,false,"use server for reading image (B&W only. see below)");
@@ -259,9 +258,7 @@ int main(int argc, const char* argv[]) {
     
   ClockTimer timer;
   Clock serverClock;
-  Clock switchFrame;
 
-  // int aaa = 0;
   bool printTime = false;
   int frameCounter = 0, frameCounter2 = 0, frameCounterPrev = 0, missedFrames = 0;
 
@@ -282,7 +279,6 @@ int main(int argc, const char* argv[]) {
   //     return false;
   // }
 
-  // cv::Mat img, HSV, gray, thresholded;
   cv::Mat img, thresholded;
   std::vector<Position> posA;
   // int videoPort=4097;
@@ -316,32 +312,15 @@ int main(int argc, const char* argv[]) {
 
   serverClock.restart();
 
-  if(Switches::cameraInput == 2){
-    Global::frame = cv::imread("2022/BG1.jpg");
-  }
-  
   while (true) {
     timer.reset();
     Global::muteFrame.lock();
-
-    // if (Switches::cameraInput == 2) {
-    //   // int num = (int(switchFrame.getTimeAsSecs() / 5.)) % 11 + 1;
-    //   int num = 1;
-    //   if (num != aaa) {
-    //     std::string imgText = "2022/BG";
-    //     imgText.append(std::to_string(num));
-    //     imgText.append(".jpg");
-    //     aaa = num;
-    //     printf("%s\n", imgText.c_str());
-    //     Global::frame = cv::imread(imgText);
-    //   }
-    // }
-
-    // if(true){
-    if ((!Global::frame.empty() && Global::newFrame) || Switches::cameraInput == 2) { // check for empty frame
+    if (!Global::frame.empty() && (Global::newFrame || Switches::cameraInput == 2)) {
+      Global::muteImg.lock();
       Global::frame.copyTo(img);
       Global::muteFrame.unlock();
       timer.printTime(printTime,"Get Frame");
+      // Global::dataValid = 0;
       frameCounter++;
 
       //cv::cvtColor(img,gray,CV_BGR2GRAY);
@@ -359,7 +338,7 @@ int main(int argc, const char* argv[]) {
       timer.printTime(printTime," findTarget");
 
       if (targetsFound < 3)
-        printf("targetsFound: %d\n", targetsFound);
+        printf("  targetsFound: %d\n", targetsFound);
 
       // if (targetsFound == 1) { // TARGET HAS BEEN FOUND----============---------------------==========-------------
       if (targetsFound >= 3) {
@@ -380,11 +359,9 @@ int main(int argc, const char* argv[]) {
           cntr++;
           Global::positionAV.dist = (*it).dist;
           Global::positionAV.robotAngle = (*it).robotAngle;
-          Global::positionAV.dataValid = (*it).dataValid;
         }
         Global::positionAV.dist /= cntr;
         Global::positionAV.robotAngle /= cntr;
-        Global::positionAV.dataValid /= cntr;
         //------------------
         timer.printTime(printTime," avaraging");
 
@@ -392,7 +369,7 @@ int main(int argc, const char* argv[]) {
           printf("dist=%6.2f, robotAngle=%6.2f, dataValid: %d\n",
                  Global::positionAV.dist,
                  Global::positionAV.robotAngle,
-                 Global::positionAV.dataValid);
+                 Global::dataValid);
         }
       } else {
         missedFrames++;
@@ -403,22 +380,23 @@ int main(int argc, const char* argv[]) {
         imshow("Original", img);
       if (Switches::SHOWTHRESH)
         imshow("Thresholded", thresholded);
-      if(Switches::SHOWORIG || Switches::SHOWTHRESH || Switches::SHOWHUE)
-        timer.printTime(printTime," finished imshow");
 
+      if (Switches::SHOWORIG || Switches::SHOWTHRESH || Switches::SHOWTRACK) {
+        cv::waitKey(5);
+      }
+      if(Switches::SHOWORIG || Switches::SHOWTHRESH)
+        timer.printTime(printTime," finished imshow");
 
       if (printTime) {
         timer.printTime("End");
         printf("\n");
       }
-      if (Switches::SHOWORIG || Switches::SHOWHUE || Switches::SHOWTHRESH || Switches::SHOWTRACK) {
-        cv::waitKey(5);
-      }
       Global::newFrame = false;
+      // Global::dataValid = 1;
+      Global::muteImg.unlock();
     } // end check for new frame
     else
       Global::muteFrame.unlock();
-
 
     frameCounter2++;
     if (frameCounter % 10 == 0 && frameCounter != frameCounterPrev) {

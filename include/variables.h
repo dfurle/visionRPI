@@ -65,6 +65,8 @@ extern size_t avSize;
 extern double IRLOffset;
 
 extern unsigned int videoPort;
+extern int waitSeconds;
+extern int numImgs;
 } // namespace Var
 
 class Target {
@@ -93,11 +95,9 @@ public:
   Position(){ nullifyStruct(); }
   double dist;
   double robotAngle;
-  int    dataValid;
   void nullifyStruct() {
     dist = 0;
     robotAngle = 0;
-    dataValid = 0;
   }
 };
 

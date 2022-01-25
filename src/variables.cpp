@@ -13,7 +13,7 @@ int maxB = 180; // 241
 int          WIDTH          = 640; // 1920 //1280 //640
 int          HEIGHT         = 480; // 1080 //720  //480
 int          EXPOSURE       = 20;
-unsigned int waitAfterFrame = 33000; // 1000
+unsigned int waitAfterFrame = 1000;
 
 double fx = 600;
 double fy = 600;
@@ -35,6 +35,9 @@ size_t avSize     = 10;
 double IRLOffset = 0.;
 
 unsigned int videoPort = 4097;
+
+int waitSeconds = 10;
+int numImgs = 1;
 } // namespace Var
 
 namespace Global {

@@ -69,11 +69,10 @@ static void* client_thread(void* arg) {
     // bzero(to_client, MLEN);
 
     
-    // sprintf(to_client, "%.2f,%.2f,%d\n", pos->dist, pos->robotAngle, pos->dataValid);
-    // sprintf(to_client, "%.2f,%.2f,%d\n", Global::position->dist, Global::position->robotAngle, Global::position->dataValid);
+    // sprintf(to_client, "%.2f,%.2f,%d\n", Global::position->dist, Global::position->robotAngle, Global::dataValid);
     // mutex are most likely required, test performance
     Global::mutePos.lock();
-    snprintf(to_client, sizeof(to_client), "%.2f,%.2f,%d\n", Global::position.dist, Global::position.robotAngle, Global::position.dataValid);
+    snprintf(to_client, sizeof(to_client), "%.2f,%.2f,%d\n", Global::position.dist, Global::position.robotAngle, Global::dataValid);
     Global::mutePos.unlock();
     std::string send_to = to_client;
 

@@ -50,11 +50,6 @@ void initSolvePnP() {
     mod3d_center.push_back(cv::Point3d(radius*sin(tCenters[i]),-stripHeight/2.,radius*cos(tCenters[i])));
   }
 
-  for(int i = 0; i < mod3d.size(); i++){
-    printf("pt:%d [%5.2f,%5.2f,%5.2f]\n",i,mod3d[i].x,mod3d[i].y,mod3d[i].z);
-  }
-
-
 
   // 2021
   // mod3d.push_back(cv::Point3d(+tTop / 2.0, -tHeight, 0.0)); // top right
@@ -163,7 +158,6 @@ void findAnglePnP(cv::Mat& img) {
   Global::mutePos.lock();
   Global::position.dist = distance;
   Global::position.robotAngle = robotAngle;
-  Global::position.dataValid = 1;
   Global::mutePos.unlock();
   timer.printTime(printTime," maths");
   // printf("position: %f, %f\n",position.dist,position.robotAngle);

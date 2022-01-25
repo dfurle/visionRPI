@@ -46,7 +46,7 @@ bool startThread(std::string name, void* params) {
     return checkErr(rc, name);
   }
   if(!name.compare("SAVE")){
-    rc = pthread_create(&opentcp_t, NULL, opentcp, params);
+    rc = pthread_create(&videoSave_t, NULL, VideoSave, params);
     return checkErr(rc, name);
   }
   return false;
@@ -78,10 +78,6 @@ void* VideoCap(void* args) {
   vcap.set(cv::CAP_PROP_FRAME_HEIGHT, Var::HEIGHT);
   Global::FrameWidth = vcap.get(cv::CAP_PROP_FRAME_WIDTH);
   Global::FrameHeight = vcap.get(cv::CAP_PROP_FRAME_HEIGHT);
-  if(Switches::cameraInput == 2){
-    Global::FrameHeight = 480;
-    Global::FrameWidth = 640;
-  }
   // vcap.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('H','2','6','4'));
   int b = vcap.get(cv::CAP_PROP_FOURCC);
   char* fourcc = (char*) &b;
@@ -98,36 +94,68 @@ void* VideoCap(void* args) {
       }
       usleep(Var::waitAfterFrame);
     }
+  } else {
+    Global::FrameHeight = 480;
+    Global::FrameWidth = 640;
+    int num = 0;
+    while(true){
+      std::string imgText = "2022/BG";
+      imgText.append(std::to_string(num));
+      imgText.append(".jpg");
+      if(++num >= Var::numImgs){
+        num = 0;
+      }
+
+      Global::muteFrame.lock();
+      printf("loading %s\n",imgText.c_str());
+      Global::frame = cv::imread(imgText);
+      if(Global::frame.empty()){
+        printf("ERROR LOADING ABOVE FILE\n");
+      }
+      Global::newFrame = true;
+      Global::muteFrame.unlock();
+      sleep(Var::waitSeconds);
+    }
   }
 }
 
 void* VideoSave(void* arg){
+  printf("DO NOT USE SAVE FOR NOW, STILL WORKING ON IT\n");
+  exit(1);
+
   cv::Mat* img = (cv::Mat*) arg;
   int currentLog = 0;
   int fourcc = cv::VideoWriter::fourcc('M','J','P','G');
   int prevTime = 30;
   cv::VideoWriter out;
-  Clock savingClock;
+  Clock timer;
 
-  if (Switches::SAVE){
+  out.open("./output0.avi",fourcc,30.,cv::Size(Var::WIDTH,Var::HEIGHT));
+
+
+  while(true){
     Global::muteImg.lock();
     out.write(*img);
+    cv::imshow("debug",*img);
+    cv::waitKey(0);
     Global::muteImg.unlock();
-    if(savingClock.getTimeAsSecs() >= 30.){
+
+    if(timer.getTimeAsSecs() >= 30){
+      timer.restart();
       printf("---SAVING---\n");
-      savingClock.restart();
       out.release();
+
       std::string name = "./output";
-      name += std::to_string(currentLog);
+      name += std::to_string(currentLog++);
       name += ".avi";
-      currentLog++;
       out.open(name,fourcc,30.,cv::Size(Var::WIDTH,Var::HEIGHT));
     } else {
-      int time =  int(30.-savingClock.getTimeAsSecs());
+      int time =  int(30.-timer.getTimeAsSecs());
       if(time != prevTime){
-        printf("time till next save: %d\n",time);
+        printf("Next Save In: %ds\n",time);
         prevTime = time;
       }
     }
+    
   }
 }
