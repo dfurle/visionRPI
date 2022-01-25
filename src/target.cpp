@@ -30,6 +30,7 @@ void morphOps(cv::Mat& thresh) {
 
 // int findTarget(const cv::Mat& original, const cv::Mat& thresholded, Target* targets) {
 int findTarget(const cv::Mat& original, const cv::Mat& thresholded) {
+  Global::targets.clear();
   int targetsFound = 0;
   // Clock total, between;
   ClockTimer timer;
@@ -114,10 +115,10 @@ int findTarget(const cv::Mat& original, const cv::Mat& thresholded) {
         continue;
       }
 
-      // for (int j = 0; j < 4; j++) {
-      //   line(original, rect_points[j], rect_points[(j + 1) % 4], Global::BLUE, 1, 8);
-      //   circle(original, rect_points[j], 3, Global::RED, -1, 8, 0);
-      // }
+      for (int j = 0; j < 4; j++) {
+        line(original, rect_points[j], rect_points[(j + 1) % 4], Global::BLUE, 1, 8);
+        circle(original, rect_points[j], 3, Global::RED, -1, 8, 0);
+      }
       timer.printTime(printTime," drawRect");
 
       Global::targets.back().area = cv::contourArea(contours[i]);
@@ -181,6 +182,9 @@ int findTarget(const cv::Mat& original, const cv::Mat& thresholded) {
       //   printf("[area:%7.2f, x:%6.2f, y:%6.2f], \n",Global::targets[i].area,Global::targets[i].points[0].x,Global::targets[i].points[0].y);
       // }
       // printf("end\n");
+      // if(aaa > 1){
+      //   cv::waitKey(0);
+      // }
       return 3;
     } else {
       return -1;
@@ -304,7 +308,7 @@ int main(int argc, const char* argv[]) {
   Clock switchFrame;
   Clock savingClock;
 
-  int aaa = 0;
+  // int aaa = 0;
   bool printTime = false;
   // bool firstTime = true;
   int frameCounter = 0, frameCounter2 = 0, frameCounterPrev = 0, missedFrames = 0;
@@ -378,25 +382,14 @@ int main(int argc, const char* argv[]) {
 
   serverClock.restart();
 
-  // cv::VideoCapture vcap;
-  // while (!vcap.open(Switches::cameraInput)) {
-  //   std::cout << "cant connect" << std::endl;
-  //   usleep(10000000);
-  // }
-  // printf("  setting brightness\n");
-  // vcap.set(cv::CAP_PROP_BRIGHTNESS, 100);
-  // printf("  setting auto exposure\n");
-  // vcap.set(cv::CAP_PROP_AUTO_EXPOSURE, 1);
-  // printf("  setting exposure\n");
-  // vcap.set(cv::CAP_PROP_EXPOSURE, Var::EXPOSURE);
-  // usleep(1000);
-
+  if(Switches::cameraInput == 2){
+    Global::frame = cv::imread("2022/BG1.jpg");
+  }
   
   while (true) {
     timer.reset();
-    //printf("locking\n");
     pthread_mutex_lock(&Global::frameMutex);
-    Global::frame = cv::imread("2022/BG1.jpg");
+
     // if (Switches::cameraInput == 2) {
     //   // int num = (int(switchFrame.getTimeAsSecs() / 5.)) % 11 + 1;
     //   int num = 1;
@@ -409,9 +402,9 @@ int main(int argc, const char* argv[]) {
     //     Global::frame = cv::imread(imgText);
     //   }
     // }
-    if(true){
-    // if (vcap.read(Global::frame)) { // check for empty frame
-    // if (!Global::frame.empty() && Global::newFrame) { // check for empty frame
+
+    // if(true){
+    if ((!Global::frame.empty() && Global::newFrame) || Switches::cameraInput == 2) { // check for empty frame
       Global::frame.copyTo(img);
       pthread_mutex_unlock(&Global::frameMutex);
       timer.printTime(printTime,"Get Frame");
@@ -426,10 +419,6 @@ int main(int argc, const char* argv[]) {
       
       // TODO: lower resolution of thresholding
 
-      
-
-
-
       ThresholdImage(img,thresholded);
       timer.printTime(printTime," thresholded");
 
@@ -439,7 +428,7 @@ int main(int argc, const char* argv[]) {
       int targetsFound = findTarget(img, thresholded); // FIND THE TARGETS
       timer.printTime(printTime," findTarget");
 
-      //if (targetsFound != 1)
+      if (targetsFound < 3)
         printf("targetsFound: %d\n", targetsFound);
 
       // if (targetsFound == 1) { // TARGET HAS BEEN FOUND----============---------------------==========-------------
@@ -459,38 +448,21 @@ int main(int argc, const char* argv[]) {
         int cntr = 0;
         for (it = posA.end() - 3; it != posA.end(); it++) {
           cntr++;
-          positionAV.x += (*it).x;
-          positionAV.z += (*it).z;
-          positionAV.alpha1 += (*it).alpha1;
-          positionAV.alpha2 += (*it).alpha2;
-          positionAV.dist += (*it).dist;
-          positionAV.OffSetx += (*it).OffSetx;
+          positionAV.dist = (*it).dist;
+          positionAV.robotAngle = (*it).robotAngle;
+          positionAV.dataValid = (*it).dataValid;
         }
-        for (it = posA.begin(); it != posA.end(); it++) {
-          positionAV.alpha2 += (*it).alpha2;
-        }
-        positionAV.x /= cntr;
-        positionAV.z /= cntr;
-        positionAV.alpha1 /= cntr;
-        positionAV.alpha2 /= posA.size();
         positionAV.dist /= cntr;
-        positionAV.OffSetx /= cntr;
+        positionAV.robotAngle /= cntr;
+        positionAV.dataValid /= cntr;
         //------------------
         timer.printTime(printTime," avaraging");
 
         if (Switches::DOPRINT) {
-          printf("x=%6.2f, z=%6.2f, dist=%6.2f, alpha1=%6.2f, alpha2=%6.2f, speed=%4.2f, "
-                 "turn=%5.2f, gyro=%7.2f, dataValid: %d\n",
-                 positionAV.x,
-                 positionAV.z,
+          printf("dist=%6.2f, robotAngle=%6.2f, dataValid: %d\n",
                  positionAV.dist,
-                 positionAV.alpha1,
-                 positionAV.alpha2,
-                 positionAV.speed,
-                 positionAV.turn,
-                 positionAV.gyro,
+                 positionAV.robotAngle,
                  positionAV.dataValid);
-          // printf("P=%2.3f I=%2.3f D=%2.3f\n",Global::P, Global::I, Global::D);
         }
       } else {
         missedFrames++;

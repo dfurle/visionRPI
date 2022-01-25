@@ -47,7 +47,7 @@ bool startThread(std::string name, void* params) {
   // }
   if (!name.compare("SERVER")) {
     rc = pthread_create(&videoServer_t, NULL, videoServer, NULL);
-    int rc = pthread_setname_np(videoServer_t, "VideoThread");
+    // int rc = pthread_setname_np(videoServer_t, "VideoThread");
     return checkErr(rc, name);
   }
   // if (!name.compare("DRIVE")) {
@@ -62,12 +62,12 @@ bool startThread(std::string name, void* params) {
   // }
   if (!name.compare("VIDEO")) {
     rc = pthread_create(&VideoCap_t, NULL, VideoCap, NULL);
-    int rc = pthread_setname_np(VideoCap_t, "MJPEG Thread");
+    // int rc = pthread_setname_np(VideoCap_t, "MJPEG Thread");
     return checkErr(rc, name);
   }
   if (!name.compare("TCP")) {
     rc = pthread_create(&opentcp_t, NULL, opentcp, params);
-    int rc = pthread_setname_np(opentcp_t, "tcpserver");
+    // int rc = pthread_setname_np(opentcp_t, "tcpserver");
     return checkErr(rc, name);
   }
   return false;
@@ -93,7 +93,7 @@ void* VideoCap(void* args) {
   printf("  setting exposure\n");
   vcap.set(cv::CAP_PROP_EXPOSURE, Var::EXPOSURE);
   usleep(1000);
-  printf("  exposure at: %d\n",vcap.get(cv::CAP_PROP_EXPOSURE));
+  printf("  exposure at: %f\n",vcap.get(cv::CAP_PROP_EXPOSURE));
   vcap.set(cv::CAP_PROP_AUTOFOCUS, 0);
   vcap.set(cv::CAP_PROP_FRAME_WIDTH, Var::WIDTH);
   vcap.set(cv::CAP_PROP_FRAME_HEIGHT, Var::HEIGHT);

@@ -1,4 +1,5 @@
 #include "variables.h"
+#include "clock.h"
 #define PI 3.141592
 
 //double i2cm = 2.54;
@@ -107,6 +108,13 @@ void initSolvePnP() {
 
 void findAnglePnP(cv::Mat& img, Position position) {
   std::vector<cv::Point2f> img2dpoints;
+  ClockTimer timer;
+  bool printTime = false;
+  if (Switches::printTime == 3) {
+    printTime = true;
+    timer.reset();
+    printf("begin findTarget\n");
+  }
 
   // For 2021
   // =========
@@ -153,6 +161,13 @@ void findAnglePnP(cv::Mat& img, Position position) {
     //   }
     // }
   }
+  timer.printTime(printTime," added pts");
+
+  // for(int i = 0; i < img2dpoints.size(); i++){
+  //   printf("[%.2f,%.2f], ",img2dpoints[i].x,img2dpoints[i].y);
+  // }
+  // printf("\n");
+
 
   
   // debugging drawing
@@ -174,8 +189,10 @@ void findAnglePnP(cv::Mat& img, Position position) {
   cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec, false, cv::SOLVEPNP_ITERATIVE);
   // cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec, false, cv::SOLVEPNP_DLS);
   // cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec, false, cv::SOLVEPNP_UPNP);
+  timer.printTime(printTime," solvePnP");
 
   cv::Rodrigues(rvec, rMat);
+  timer.printTime(printTime," rodrig");
 
   /* since first param is input and were not using second param anywhere */
   // cv::Mat rotationVecTest;
@@ -208,6 +225,7 @@ void findAnglePnP(cv::Mat& img, Position position) {
   // position.dist = distance;
   // position.alpha1 = alpha1 * (180. / PI);
   // position.alpha2 = alpha2 * (180. / PI);
+  timer.printTime(printTime," maths");
 
   // TODO AXIS
   std::vector<cv::Point3f> axis3D;
@@ -222,9 +240,11 @@ void findAnglePnP(cv::Mat& img, Position position) {
   lines3D.push_back(mod3d_center[0]);
   lines3D.push_back(mod3d_center[1]);
   lines3D.push_back(mod3d_center[2]);
+  lines3D.push_back(cv::Point3d(0, 0, 0));
   
   cv::projectPoints(axis3D, rvec, tvec, camera_matrix, dist_coeffs, axis2D);
   cv::projectPoints(lines3D, rvec, tvec, camera_matrix, dist_coeffs, lines2D);
+  timer.printTime(printTime," projectPts");
 
 
   for (size_t i = 0; i < axis2D.size(); i++)
@@ -232,16 +252,18 @@ void findAnglePnP(cv::Mat& img, Position position) {
   cv::line(img, axis2D[3], axis2D[0], cv::Scalar(0, 0, 255), 2); // x-red
   cv::line(img, axis2D[3], axis2D[1], cv::Scalar(0, 255, 0), 2); // y-green
   cv::line(img, axis2D[3], axis2D[2], cv::Scalar(255, 0, 0), 2); // z-blue
+  timer.printTime(printTime," drew axis");
 
 
   for (size_t i = 0; i < lines2D.size(); i++)
-    circle(img, lines2D[i], 5, cv::Scalar(255, 0, 255), cv::FILLED, cv::LINE_8);
-  cv::line(img, lines2D[0], axis2D[3], cv::Scalar(255,255,255), 2);
-  cv::line(img, lines2D[1], axis2D[3], cv::Scalar(255,255,255), 2);
-  cv::line(img, lines2D[2], axis2D[3], cv::Scalar(255,255,255), 2);
+    cv::circle(img, lines2D[i], 5, cv::Scalar(255, 0, 255), cv::FILLED, cv::LINE_8);
+  timer.printTime(printTime," drew dots");
+  cv::line(img, lines2D[0], lines2D[3], cv::Scalar(255,255,255), 2);
+  cv::line(img, lines2D[1], lines2D[3], cv::Scalar(255,255,255), 2);
+  cv::line(img, lines2D[2], lines2D[3], cv::Scalar(255,255,255), 2);
+  timer.printTime(printTime," drew lines");
 
   cv::circle(img, axis2D[3], 5, cv::Scalar(255, 0, 255), cv::FILLED, cv::LINE_8);
+  timer.printTime(printTime," drew center");
 
-  imshow("debug",img);
-  cv::waitKey(0);
 }

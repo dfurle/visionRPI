@@ -155,34 +155,41 @@ extern int          cameraInput;
 class Position{
 public:
   Position(){ nullifyStruct(); }
-  double x;
-  double y;
-  double z;
+  // double x;
+  // double y;
+  // double z;
+  // double dist;
+  // double alpha1;
+  // double alpha2;
+  // double OffSetx;
+  // double speed;
+  // double turn;
+  // double gyro;
+  // double P;
+  // double I;
+  // double D;
+
   double dist;
-  double alpha1;
-  double alpha2;
-  double OffSetx;
-  double speed;
-  double turn;
-  double gyro;
-  double P;
-  double I;
-  double D;
+  double robotAngle;
   int    dataValid;
 
   void nullifyStruct() {
-    x         = 0;
-    z         = 0;
-    dist      = 0;
-    alpha1    = 0;
-    alpha2    = 0;
-    OffSetx   = 0;
-    speed     = 0;
-    turn      = 0;
-    gyro      = 0;
-    P         = 0;
-    I         = 0;
-    D         = 0;
+    // x         = 0;
+    // z         = 0;
+    // dist      = 0;
+    // alpha1    = 0;
+    // alpha2    = 0;
+    // OffSetx   = 0;
+    // speed     = 0;
+    // turn      = 0;
+    // gyro      = 0;
+    // P         = 0;
+    // I         = 0;
+    // D         = 0;
+    // dataValid = 0;
+
+    dist = 0;
+    robotAngle = 0;
     dataValid = 0;
   }
 };

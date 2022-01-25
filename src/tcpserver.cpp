@@ -48,7 +48,7 @@ void* opentcp(void* arg) {
     client.pos = pos;
     printf("connecting to client now\n");
     int ok = pthread_create(&client_thread_t[ID], 0, client_thread, &client);
-    int rc = pthread_setname_np(client_thread_t[ID], "client_thread");
+    // int rc = pthread_setname_np(client_thread_t[ID], "client_thread");
     ok = pthread_detach(client_thread_t[ID]);
     if (ok != 0)
       printf("clientThread error\n");
@@ -72,7 +72,7 @@ static void* client_thread(void* arg) {
     // Clear to_client message and get ready to send
     bzero(to_client, MLEN);
     // sprintf(to_client, "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", pos->x, pos->z, pos->dist, pos->alpha1, pos->alpha2, pos->OffSetx, pos->speed, pos->turn, pos->gyro, pos->P, pos->I, pos->D);
-    sprintf(to_client, "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", pos->x, pos->z, pos->dist, pos->alpha1, pos->alpha2, pos->OffSetx);
+    sprintf(to_client, "%.2f,%.2f,%d\n", pos->dist, pos->robotAngle, pos->dataValid);
     // sprintf(&to_client[strlen(to_client)], "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,", pos->x, pos->z, pos->dist, pos->alpha1, pos->alpha2, pos->OffSetx, pos->speed, pos->turn, pos->gyro, pos->P, pos->I, pos->D);
     // sprintf(&to_client[strlen(to_client)], "\n");
     int bytesSent = send(socket, to_client, sizeof(to_client), MSG_NOSIGNAL);
