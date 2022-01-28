@@ -2,16 +2,16 @@
 
 
 
-namespace Var {
-int minH = 150;   // 218
-int maxH = 255; // 255
-int minS = 195; // 209
-int maxS = 255; // 255
-int minV = 0;   // 222
-int maxV = 180;  // 241
+namespace Var {    //      2021
+int minR = 0;   // 218   // 150
+int maxR = 255; // 255
+int minG = 100; // 209   // 195
+int maxG = 255; // 255
+int minB = 0;   // 222
+int maxB = 180; // 241
 
-int          WIDTH          = 640; // 1920//1280//640
-int          HEIGHT         = 480; // 1080//720//480
+int          WIDTH          = 640; // 1920 //1280 //640
+int          HEIGHT         = 480; // 1080 //720  //480
 int          EXPOSURE       = 20;
 unsigned int waitAfterFrame = 1000;
 
@@ -35,6 +35,9 @@ size_t avSize     = 10;
 double IRLOffset = 0.;
 
 unsigned int videoPort = 4097;
+
+int waitSeconds = 10;
+int numImgs = 1;
 } // namespace Var
 
 namespace Global {
@@ -42,23 +45,17 @@ bool             newFrame = false;
 double           FrameWidth, FrameHeight;
 bool             interupt     = false;
 bool             dataValid    = 0;
-double           gyroAngle    = 0;
-double           gyroVelocity = 0.0;
-double           driveAngle   = 0;
-double           turn         = 0.0;
-double           P = 0.0, I = 0.0, D = 0.0;
-Targets          target;
-int              buttonPress = 0;
+std::vector<Target> targets;
+Position         position, positionAV;
 bool             videoError  = false;
 int              videoSocket = 0;
 const cv::Scalar BLUE = cv::Scalar(255, 0, 0), RED = cv::Scalar(0, 0, 255), YELLOW = cv::Scalar(0, 255, 255), GREEN = cv::Scalar(0, 255, 0);
 
 cv::Mat frame;
 
-pthread_mutex_t frameMutex = PTHREAD_MUTEX_INITIALIZER;
-// pthread_mutex_t targetMutex = PTHREAD_MUTEX_INITIALIZER;
-// pthread_mutex_t positionMutex = PTHREAD_MUTEX_INITIALIZER;
-
+mMutex muteFrame;
+mMutex mutePos;
+mMutex muteImg;
 } // namespace Global
 
 namespace Switches {
