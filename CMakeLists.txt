@@ -12,9 +12,6 @@ add_executable(vision ${VISION_SRC})
 
 target_include_directories(vision PRIVATE include)
 
-#target_include_directories(vision PRIVATE /home/pi/LIBS-e/opencv40/include/opencv4)
-#target_link_directories(vision PRIVATE /home/pi/LIBS-e/opencv40/lib)
-
 target_include_directories(vision PRIVATE /usr/local/include/opencv4)
 target_link_directories(vision PRIVATE /usr/local/lib/)
 

@@ -104,7 +104,7 @@ int findTarget(const cv::Mat& img, const cv::Mat& thresholded) {
 
       for (int j = 0; j < 4; j++) {
         line(img, rect_points[j], rect_points[(j + 1) % 4], Global::BLUE, 1, 8);
-        circle(img, rect_points[j], 3, Global::RED, -1, 8, 0);
+        //circle(img, rect_points[j], 3, Global::RED, -1, 8, 0);
       }
       timer.printTime(printTime," drawRect");
 
@@ -142,28 +142,21 @@ int findTarget(const cv::Mat& img, const cv::Mat& thresholded) {
 
     if (printTime)
       printf("end: %d found\n",targetsFound);
+
     // for (unsigned int j = 0; j < art.size(); j++) {
     //   // drawContours(workingImage, art, j, cv::Scalar(255));
     //   // drawContours(original, art, j, Global::BLUE, 2);
     // }
     if(targetsFound >= 3){
-
       std::sort(Global::targets.begin(), Global::targets.end(), 
       [ ](const Target& lhs, const Target& rhs){
         return lhs.area > rhs.area;
       });
-
       Global::targets.erase(Global::targets.begin()+3,Global::targets.end());
-
       std::sort(Global::targets.begin(), Global::targets.end(), 
       [ ](const Target& lhs, const Target& rhs){
         return lhs.points[0].x < rhs.points[0].x;
       });
-
-      // printf("largest1: \n");
-      // for(int i = 0; i < Global::targets.size(); i++){
-      //   printf("[area:%7.2f, x:%6.2f, y:%6.2f], \n",Global::targets[i].area,Global::targets[i].points[0].x,Global::targets[i].points[0].y);
-      // }
       return 3;
     } else {
       return -1;
@@ -262,11 +255,13 @@ int main(int argc, const char* argv[]) {
   bool printTime = false;
   int frameCounter = 0, frameCounter2 = 0, frameCounterPrev = 0, missedFrames = 0;
 
+  std::cout << CV_VERSION << std::endl;
+
   if (Switches::printTime == 1)
     printTime = true;
   timer.printTime(printTime,"getting input");
 
-  // start i2c connection:
+  /* ---=== Start I2C Connection ===--- */
   // int addr = 0x04;
   // int file_i2c;
   // char* filename = (char*)"/dev/i2c-1";
@@ -281,7 +276,6 @@ int main(int argc, const char* argv[]) {
 
   cv::Mat img, thresholded;
   std::vector<Position> posA;
-  // int videoPort=4097;
 
 #ifdef RASPI
   // startThread("USB", NULL);
@@ -306,8 +300,7 @@ int main(int argc, const char* argv[]) {
   Global::positionAV.nullifyStruct();
   timer.printTime(printTime,"Init Threads");
 
-  Global::FrameHeight = 480;
-  Global::FrameWidth = 640;
+  // might be best to wait until camera is up?
   initSolvePnP();
 
   serverClock.restart();
@@ -320,19 +313,12 @@ int main(int argc, const char* argv[]) {
       Global::frame.copyTo(img);
       Global::muteFrame.unlock();
       timer.printTime(printTime,"Get Frame");
-      // Global::dataValid = 0;
       frameCounter++;
 
-      //cv::cvtColor(img,gray,CV_BGR2GRAY);
-      //timer.printTime(printTime," to gray");
-      
       // TODO: lower resolution of thresholding
 
       ThresholdImage(img,thresholded);
       timer.printTime(printTime," thresholded");
-
-      // morphOps(thresholded);
-      // timer.printTime(printTime," apply morphs");
 
       int targetsFound = findTarget(img, thresholded); // FIND THE TARGETS
       timer.printTime(printTime," findTarget");
@@ -340,29 +326,24 @@ int main(int argc, const char* argv[]) {
       if (targetsFound < 3)
         printf("  targetsFound: %d\n", targetsFound);
 
-      // if (targetsFound == 1) { // TARGET HAS BEEN FOUND----============---------------------==========-------------
       if (targetsFound >= 3) {
-        // if (firstTime) {
-        //   initSolvePnP(img);
-        //   firstTime = false;
-        // }
-        findAnglePnP(img); // SOLVE FOR POSITION AND ROTATION
+        /* ---=== Getting Position and Rotation ===--- */
+        findAnglePnP(img);
         timer.printTime(printTime," solvePnP");
         posA.push_back(Global::position);
         if (posA.size() > Var::avSize)
           posA.erase(posA.begin());
         Global::positionAV.nullifyStruct();
 
-        // avaraging--------
+        /* ---=== Averaging ===--- */
         int cntr = 0;
-        for (auto it = posA.end() - 3; it != posA.end(); it++) {
+        for (auto it = posA.begin(); it != posA.end(); it++) {
           cntr++;
-          Global::positionAV.dist = (*it).dist;
-          Global::positionAV.robotAngle = (*it).robotAngle;
+          Global::positionAV.dist += (*it).dist;
+          Global::positionAV.robotAngle += (*it).robotAngle;
         }
         Global::positionAV.dist /= cntr;
         Global::positionAV.robotAngle /= cntr;
-        //------------------
         timer.printTime(printTime," avaraging");
 
         if (Switches::DOPRINT) {
@@ -375,7 +356,7 @@ int main(int argc, const char* argv[]) {
         missedFrames++;
       }
 
-      // finished calculating
+      /* ---=== Finished with frame, output it if needed ===--- */
       if (Switches::SHOWORIG)
         imshow("Original", img);
       if (Switches::SHOWTHRESH)

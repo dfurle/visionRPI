@@ -5,20 +5,20 @@
 namespace Var {    //      2021
 int minR = 0;   // 218   // 150
 int maxR = 255; // 255
-int minG = 100; // 209   // 195
+int minG = 200; // 209   // 195
 int maxG = 255; // 255
 int minB = 0;   // 222
-int maxB = 180; // 241
+int maxB = 120; // 241
 
 int          WIDTH          = 640; // 1920 //1280 //640
 int          HEIGHT         = 480; // 1080 //720  //480
-int          EXPOSURE       = 20;
+double       EXPOSURE       = 3; // edit in threads.cpp for now
 unsigned int waitAfterFrame = 1000;
 
-double fx = 600;
-double fy = 600;
-double cx = 250;
-double cy = 260;
+double fx = 640;
+double fy = 480;
+double cx = 320;
+double cy = 240;
 
 double dist_cof[5];
 
