@@ -12,7 +12,7 @@ int maxB = 120; // 241
 
 int          WIDTH          = 640; // 1920 //1280 //640
 int          HEIGHT         = 480; // 1080 //720  //480
-double       EXPOSURE       = 3; // edit in threads.cpp for now
+int          EXPOSURE       = 3; // edit in threads.cpp for now
 unsigned int waitAfterFrame = 1000;
 
 double fx = 640;
