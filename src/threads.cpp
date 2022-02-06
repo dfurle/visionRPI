@@ -17,6 +17,10 @@ void* opentcp(void* arg);
 pthread_t videoServer_t;
 void* videoServer(void* arg);
 
+// tcpserver.cpp
+pthread_t handleHttp_thread_t;
+void* handleHttp_thread(void* arg);
+
 inline bool checkErr(int rc, std::string name) {
   if (rc != 0) {
     printf("%s thread fail %d\n", name.c_str(), rc);
@@ -30,6 +34,7 @@ inline bool checkErr(int rc, std::string name) {
     "SERVER"
     "SAVE"
     "PID"
+    "HTTP"
 */
 bool startThread(std::string name, void* params) {
   int rc = 1;
@@ -47,6 +52,10 @@ bool startThread(std::string name, void* params) {
   }
   if(!name.compare("SAVE")){
     rc = pthread_create(&videoSave_t, NULL, VideoSave, params);
+    return checkErr(rc, name);
+  }
+  if(!name.compare("HTTP")){
+    rc = pthread_create(&handleHttp_thread_t, NULL, handleHttp_thread, NULL);
     return checkErr(rc, name);
   }
   return false;

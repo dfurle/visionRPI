@@ -52,6 +52,9 @@ int              videoSocket = 0;
 const cv::Scalar BLUE = cv::Scalar(255, 0, 0), RED = cv::Scalar(0, 0, 255), YELLOW = cv::Scalar(0, 255, 255), GREEN = cv::Scalar(0, 255, 0);
 
 cv::Mat frame;
+int sockets[2];
+std::vector<uchar> imgBuffer;
+std::vector<uchar> threshBuffer;
 
 mMutex muteFrame;
 mMutex mutePos;
@@ -63,6 +66,7 @@ bool         SHOWORIG                   = false;
 bool         SHOWHUE                    = false;
 bool         SHOWTHRESH                 = false;
 bool         SHOWTRACK                  = false;
+bool         USEHTTP                    = false;
 bool         USESERVER                  = false;
 bool         USECOLOR                   = false;
 bool         DOPRINT                    = false;

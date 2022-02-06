@@ -1,0 +1,100 @@
+<html>
+<head>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+
+</head>
+
+<body>
+
+  <div class="slidecontainer">
+    minR<input type="range" min="0" max="255" value="50" class="slider" id="minR"><output id="minRo">50</output><br>
+    maxR<input type="range" min="0" max="255" value="255" class="slider" id="maxR"><output id="maxRo">255</output><br>
+    minG<input type="range" min="0" max="255" value="50" class="slider" id="minG"><output id="minGo">50</output><br>
+    maxG<input type="range" min="0" max="255" value="255" class="slider" id="maxG"><output id="maxGo">255</output><br>
+    minB<input type="range" min="0" max="255" value="50" class="slider" id="minB"><output id="minBo">50</output><br>
+    maxB<input type="range" min="0" max="255" value="255" class="slider" id="maxB"><output id="maxBo">255</output><br>
+  </div>
+
+  <img src="video_stream1" width="400px">
+  <img src="video_stream2" width="400px">
+
+  <script type="text/javascript">
+    $(document).ready(function() {
+
+      $("#minR").on("input", onInput);
+      $("#maxR").on("input", onInput);
+      $("#minG").on("input", onInput);
+      $("#maxG").on("input", onInput);
+      $("#minB").on("input", onInput);
+      $("#maxB").on("input", onInput);
+
+      function onInput(e) {
+        // TODO: simplify this mess
+        // maybe also make max move with min and min with max if overlap so easier to notice?
+        var minRval = $("#minR").val();
+        var maxRval = $("#maxR").val();
+        var minGval = $("#minG").val();
+        var maxGval = $("#maxG").val();
+        var minBval = $("#minB").val();
+        var maxBval = $("#maxB").val();
+        $("#minRo").html(minRval);
+        $("#maxRo").html(maxRval);
+        $("#minGo").html(minGval);
+        $("#maxGo").html(maxGval);
+        $("#minBo").html(minBval);
+        $("#maxBo").html(maxBval);
+
+        let data = ""
+        data += minRval + ",";
+        data += maxRval + ",";
+        data += minGval + ",";
+        data += maxGval + ",";
+        data += minBval + ",";
+        data += maxBval;
+        // console.log(data);
+
+
+        $.ajax({
+          type: 'PUT',
+          url: 'data',
+          // contentType: 'application/json',
+          contentType: 'text/plain',
+          data: JSON.stringify(data),
+        }).fail(function (msg) {
+          console.log('FAIL');
+        })
+      }
+
+
+      $.ajax({
+        type: 'GET',
+        url: 'initialData',
+      }).fail(function (msg) {
+        console.log('FAIL');
+      }).then(function (msg) {
+        console.log("then!")
+        data = msg.split(',')
+        console.log(data)
+
+        $("#minR").val(data[0]);
+        $("#maxR").val(data[1]);
+        $("#minG").val(data[2]);
+        $("#maxG").val(data[3]);
+        $("#minB").val(data[4]);
+        $("#maxB").val(data[5]);
+
+        $("#minRo").html(data[0]);
+        $("#maxRo").html(data[1]);
+        $("#minGo").html(data[2]);
+        $("#maxGo").html(data[3]);
+        $("#minBo").html(data[4]);
+        $("#maxBo").html(data[5]);
+      })
+      
+
+
+    })
+  </script>	
+
+</body>
+</html>

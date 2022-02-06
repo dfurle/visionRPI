@@ -199,7 +199,8 @@ int main(int argc, const char* argv[]) {
     double colLims[2][3];
     p.add_Parameter("-o" ,"--orig",Switches::SHOWORIG,false,"displays original camera input w/ lines");
     p.add_Parameter("-th","--threshold",Switches::SHOWTHRESH,false,"displays thresholded image (black & white)");
-    p.add_Parameter("-tr","--track",Switches::SHOWTRACK,false,"displays sliders for RGB (or HSV depending on code)");
+    p.add_Parameter("-tr","--track",Switches::SHOWTRACK,false,"displays sliders for RGB");
+    p.add_Parameter("-http" ,"--http",Switches::USEHTTP,false,"use http server for streaming video");
     p.add_Parameter("-s" ,"--server",Switches::USESERVER,false,"use server for reading image (B&W only. see below)");
     p.add_Parameter("-c" ,"--color",Switches::USECOLOR,false,"use color for the server");
     p.add_Parameter("-p" ,"--print",Switches::DOPRINT,false,"prints basic data");
@@ -286,6 +287,7 @@ int main(int argc, const char* argv[]) {
 
   startThread("VIDEO");
   startThread("TCP");
+  startThread("HTTP");
   if (Switches::SAVE)
     startThread("SAVE",&img);
   if (Switches::USESERVER)
@@ -361,6 +363,9 @@ int main(int argc, const char* argv[]) {
         imshow("Original", img);
       if (Switches::SHOWTHRESH)
         imshow("Thresholded", thresholded);
+      
+      cv::imencode(".jpeg", img,Global::imgBuffer);
+      cv::imencode(".jpeg", thresholded,Global::threshBuffer);
 
       if (Switches::SHOWORIG || Switches::SHOWTHRESH || Switches::SHOWTRACK) {
         cv::waitKey(5);

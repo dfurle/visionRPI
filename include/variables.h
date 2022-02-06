@@ -27,6 +27,7 @@
 #include <sstream>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <fstream>
 #ifdef RASPI
   #include <linux/i2c-dev.h>
   #include <sys/types.h>
@@ -131,6 +132,9 @@ extern int              buttonPress;
 extern bool             videoError;
 extern int              videoSocket;
 extern const cv::Scalar BLUE, RED, YELLOW, GREEN;
+extern int sockets[2];
+extern std::vector<uchar> imgBuffer;
+extern std::vector<uchar> threshBuffer;
 
 extern cv::Mat frame;
 
@@ -148,6 +152,7 @@ extern bool         SHOWORIG;
 extern bool         SHOWHUE;
 extern bool         SHOWTHRESH;
 extern bool         SHOWTRACK;
+extern bool         USEHTTP;
 extern bool         USESERVER;
 extern bool         USECOLOR;
 extern bool         DOPRINT;
