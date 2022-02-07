@@ -201,8 +201,8 @@ int main(int argc, const char* argv[]) {
     p.add_Parameter("-th","--threshold",Switches::SHOWTHRESH,false,"displays thresholded image (black & white)");
     p.add_Parameter("-tr","--track",Switches::SHOWTRACK,false,"displays sliders for RGB");
     p.add_Parameter("-http" ,"--http",Switches::USEHTTP,false,"use http server for streaming video");
-    p.add_Parameter("-s" ,"--server",Switches::USESERVER,false,"use server for reading image (B&W only. see below)");
-    p.add_Parameter("-c" ,"--color",Switches::USECOLOR,false,"use color for the server");
+    // p.add_Parameter("-s" ,"--server",Switches::USESERVER,false,"use server for reading image (B&W only. see below)");
+    // p.add_Parameter("-c" ,"--color",Switches::USECOLOR,false,"use color for the server");
     p.add_Parameter("-p" ,"--print",Switches::DOPRINT,false,"prints basic data");
     p.add_Parameter("-f" ,"--frame",Switches::FRAME,true,"prints of frames found");
     p.add_Parameter("-sv","--save",Switches::SAVE,false,"saves output to .avi file every 30s");
@@ -290,8 +290,8 @@ int main(int argc, const char* argv[]) {
   startThread("HTTP");
   if (Switches::SAVE)
     startThread("SAVE",&img);
-  if (Switches::USESERVER)
-    startThread("SERVER");
+  // if (Switches::USESERVER)
+  //   startThread("SERVER");
 
 
   if (Switches::SHOWTRACK)
@@ -310,14 +310,16 @@ int main(int argc, const char* argv[]) {
   while (true) {
     timer.reset();
     Global::muteFrame.lock();
-    if (!Global::frame.empty() && (Global::newFrame || Switches::cameraInput == 2)) {
+    // if (!Global::frame.empty() && (Global::newFrame || Switches::cameraInput == 2)) {
+    if (!Global::frame.empty() && Global::newFrame) {
       Global::muteImg.lock();
       Global::frame.copyTo(img);
       Global::muteFrame.unlock();
       timer.printTime(printTime,"Get Frame");
       frameCounter++;
 
-      // TODO: lower resolution of thresholding
+      // TODO: lower resolution of thresholding, but do multiple times
+      // cv::resize(img,scaled,cv::Size(640/2,480/2),INTER_LINEAR);
 
       ThresholdImage(img,thresholded);
       timer.printTime(printTime," thresholded");
@@ -364,8 +366,11 @@ int main(int argc, const char* argv[]) {
       if (Switches::SHOWTHRESH)
         imshow("Thresholded", thresholded);
       
-      cv::imencode(".jpeg", img,Global::imgBuffer);
-      cv::imencode(".jpeg", thresholded,Global::threshBuffer);
+      if(Switches::USEHTTP){
+        cv::imencode(".jpeg", img,Global::imgBuffer);
+        cv::imencode(".jpeg", thresholded,Global::threshBuffer);
+        timer.printTime(printTime, " imencode");
+      }
 
       if (Switches::SHOWORIG || Switches::SHOWTHRESH || Switches::SHOWTRACK) {
         cv::waitKey(5);
@@ -378,7 +383,6 @@ int main(int argc, const char* argv[]) {
         printf("\n");
       }
       Global::newFrame = false;
-      // Global::dataValid = 1;
       Global::muteImg.unlock();
     } // end check for new frame
     else
@@ -396,26 +400,26 @@ int main(int argc, const char* argv[]) {
       frameCounter2 = 0;
       missedFrames = 0;
 
-      if (Switches::USESERVER && Global::videoSocket != 0 && !Global::videoError) {
-        int bytes = 0;
-        if (Switches::USECOLOR) {
-          int imgSize = img.total() * img.elemSize();
-          if (!img.isContinuous())
-            img = img.clone();
-          if ((bytes = send(Global::videoSocket, img.data, imgSize, MSG_NOSIGNAL)) < 0) {
-            Global::videoError = true;
-            printf("video error\n");
-          }
-        } else {
-          int imgSize = thresholded.total() * thresholded.elemSize();
-          // if (!thresholded.isContinuous())
-          //   thresholded = thresholded.clone();
-          if ((bytes = send(Global::videoSocket, thresholded.data, imgSize, MSG_NOSIGNAL)) < 0) {
-            Global::videoError = true;
-            printf("video error\n");
-          }
-        }
-      }
+      // if (Switches::USESERVER && Global::videoSocket != 0 && !Global::videoError) {
+      //   int bytes = 0;
+      //   if (Switches::USECOLOR) {
+      //     int imgSize = img.total() * img.elemSize();
+      //     if (!img.isContinuous())
+      //       img = img.clone();
+      //     if ((bytes = send(Global::videoSocket, img.data, imgSize, MSG_NOSIGNAL)) < 0) {
+      //       Global::videoError = true;
+      //       printf("video error\n");
+      //     }
+      //   } else {
+      //     int imgSize = thresholded.total() * thresholded.elemSize();
+      //     // if (!thresholded.isContinuous())
+      //     //   thresholded = thresholded.clone();
+      //     if ((bytes = send(Global::videoSocket, thresholded.data, imgSize, MSG_NOSIGNAL)) < 0) {
+      //       Global::videoError = true;
+      //       printf("video error\n");
+      //     }
+      //   }
+      // }
     }
     usleep(1000);
   }

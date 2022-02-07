@@ -34,7 +34,7 @@ size_t avSize     = 10;
 
 double IRLOffset = 0.;
 
-unsigned int videoPort = 4097;
+// unsigned int videoPort = 4097;
 
 int waitSeconds = 10;
 int numImgs = 1;
@@ -67,8 +67,8 @@ bool         SHOWHUE                    = false;
 bool         SHOWTHRESH                 = false;
 bool         SHOWTRACK                  = false;
 bool         USEHTTP                    = false;
-bool         USESERVER                  = false;
-bool         USECOLOR                   = false;
+// bool         USESERVER                  = false;
+// bool         USECOLOR                   = false;
 bool         DOPRINT                    = false;
 bool         FRAME                      = true;
 bool         SAVE                       = false;

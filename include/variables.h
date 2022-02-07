@@ -65,7 +65,7 @@ extern size_t avSize;
 
 extern double IRLOffset;
 
-extern unsigned int videoPort;
+// extern unsigned int videoPort;
 extern int waitSeconds;
 extern int numImgs;
 } // namespace Var
@@ -153,8 +153,8 @@ extern bool         SHOWHUE;
 extern bool         SHOWTHRESH;
 extern bool         SHOWTRACK;
 extern bool         USEHTTP;
-extern bool         USESERVER;
-extern bool         USECOLOR;
+// extern bool         USESERVER;
+// extern bool         USECOLOR;
 extern bool         DOPRINT;
 extern bool         FRAME;
 extern bool         SAVE;

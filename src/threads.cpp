@@ -1,4 +1,5 @@
 #include "variables.h"
+#include "httpserver.h"
 #include "clock.h"
 
 // threads.cpp
@@ -13,11 +14,11 @@ void* VideoSave(void* arg);
 pthread_t opentcp_t;
 void* opentcp(void* arg);
 
-// tcpserver.cpp
-pthread_t videoServer_t;
-void* videoServer(void* arg);
+// // tcpserver.cpp
+// pthread_t videoServer_t;
+// void* videoServer(void* arg);
 
-// tcpserver.cpp
+// httpserver.cpp
 pthread_t handleHttp_thread_t;
 void* handleHttp_thread(void* arg);
 
@@ -31,17 +32,16 @@ inline bool checkErr(int rc, std::string name) {
 
 /* valid names:
     "USB"
-    "SERVER"
     "SAVE"
     "PID"
     "HTTP"
 */
 bool startThread(std::string name, void* params) {
   int rc = 1;
-  if (!name.compare("SERVER")) {
-    rc = pthread_create(&videoServer_t, NULL, videoServer, NULL);
-    return checkErr(rc, name);
-  }
+  // if (!name.compare("SERVER")) {
+  //   rc = pthread_create(&videoServer_t, NULL, videoServer, NULL);
+  //   return checkErr(rc, name);
+  // }
   if (!name.compare("VIDEO")) {
     rc = pthread_create(&VideoCap_t, NULL, VideoCap, NULL);
     return checkErr(rc, name);
@@ -79,43 +79,44 @@ void* VideoCap(void* args) {
       usleep(10000000);
     }
     printf("Using Camera: %d\n",Switches::cameraInput);
+
+    printf("---===BEFORE===---\n");
+    printf("auto exposure: %f\n",vcap.get(cv::CAP_PROP_AUTO_EXPOSURE));
+    printf("exposure: %f\n",vcap.get(cv::CAP_PROP_EXPOSURE));
+    printf("brightness: %f\n",vcap.get(cv::CAP_PROP_BRIGHTNESS));
+    {
+    int b = vcap.get(cv::CAP_PROP_FOURCC);
+    char* fourcc = (char*) &b;
+    fourcc[4] = 0;
+    int cont = 0;
+    printf("fourcc: %d |%s|\n",b,fourcc);
+    }
+
+    printf("---===Setting===---\n");
+    printf("fourcc: %d\n",vcap.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('Y','U','Y','V')));
+    //printf("brightness: %d\n",vcap.set(cv::CAP_PROP_BRIGHTNESS, 100));
+    printf("auto exposure: %d\n",vcap.set(cv::CAP_PROP_AUTO_EXPOSURE, 1));
+    printf("exposure: %d\n",vcap.set(cv::CAP_PROP_EXPOSURE, 3));
+    printf("autofocus: %d\n",vcap.set(cv::CAP_PROP_AUTOFOCUS, 0));
+    printf("width: %d\n",vcap.set(cv::CAP_PROP_FRAME_WIDTH, Var::WIDTH));
+    printf("height: %d\n",vcap.set(cv::CAP_PROP_FRAME_HEIGHT, Var::HEIGHT));
+    Global::FrameWidth = vcap.get(cv::CAP_PROP_FRAME_WIDTH);
+    Global::FrameHeight = vcap.get(cv::CAP_PROP_FRAME_HEIGHT);
+
+
+    printf("---===AFTER===---\n");
+    printf("auto exposure: %f\n",vcap.get(cv::CAP_PROP_AUTO_EXPOSURE));
+    printf("exposure: %f\n",vcap.get(cv::CAP_PROP_EXPOSURE));
+    printf("brightness: %f\n",vcap.get(cv::CAP_PROP_BRIGHTNESS));
+    {
+    int b = vcap.get(cv::CAP_PROP_FOURCC);
+    char* fourcc = (char*) &b;
+    fourcc[4] = 0;
+    int cont = 0;
+    printf("fourcc: %d |%s|\n",b,fourcc);
+    }
   }
 
-  printf("---===BEFORE===---\n");
-  printf("auto exposure: %f\n",vcap.get(cv::CAP_PROP_AUTO_EXPOSURE));
-  printf("exposure: %f\n",vcap.get(cv::CAP_PROP_EXPOSURE));
-  printf("brightness: %f\n",vcap.get(cv::CAP_PROP_BRIGHTNESS));
-  {
-  int b = vcap.get(cv::CAP_PROP_FOURCC);
-  char* fourcc = (char*) &b;
-  fourcc[4] = 0;
-  int cont = 0;
-  printf("fourcc: %d |%s|\n",b,fourcc);
-  }
-
-  printf("---===Setting===---\n");
-  printf("fourcc: %d\n",vcap.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('Y','U','Y','V')));
-  //printf("brightness: %d\n",vcap.set(cv::CAP_PROP_BRIGHTNESS, 100));
-  printf("auto exposure: %d\n",vcap.set(cv::CAP_PROP_AUTO_EXPOSURE, 1));
-  printf("exposure: %d\n",vcap.set(cv::CAP_PROP_EXPOSURE, 3));
-  printf("autofocus: %d\n",vcap.set(cv::CAP_PROP_AUTOFOCUS, 0));
-  printf("width: %d\n",vcap.set(cv::CAP_PROP_FRAME_WIDTH, Var::WIDTH));
-  printf("height: %d\n",vcap.set(cv::CAP_PROP_FRAME_HEIGHT, Var::HEIGHT));
-  Global::FrameWidth = vcap.get(cv::CAP_PROP_FRAME_WIDTH);
-  Global::FrameHeight = vcap.get(cv::CAP_PROP_FRAME_HEIGHT);
-
-
-  printf("---===AFTER===---\n");
-  printf("auto exposure: %f\n",vcap.get(cv::CAP_PROP_AUTO_EXPOSURE));
-  printf("exposure: %f\n",vcap.get(cv::CAP_PROP_EXPOSURE));
-  printf("brightness: %f\n",vcap.get(cv::CAP_PROP_BRIGHTNESS));
-  {
-  int b = vcap.get(cv::CAP_PROP_FOURCC);
-  char* fourcc = (char*) &b;
-  fourcc[4] = 0;
-  int cont = 0;
-  printf("fourcc: %d |%s|\n",b,fourcc);
-  }
   if(Switches::cameraInput != 2){
     while (true) {
       if(vcap.grab()){
@@ -144,9 +145,16 @@ void* VideoCap(void* args) {
       if(Global::frame.empty()){
         printf("ERROR LOADING ABOVE FILE\n");
       }
-      Global::newFrame = true;
+      // Global::newFrame = true;
       Global::muteFrame.unlock();
-      sleep(Var::waitSeconds);
+      long total = 0;
+      while(Var::waitSeconds * long(1000000) > total){
+        Global::muteFrame.lock();
+        Global::newFrame = true;
+        Global::muteFrame.unlock();
+        usleep(33000);
+        total += 33000;
+      }
     }
   }
 }
