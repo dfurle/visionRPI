@@ -3,9 +3,9 @@
 
 
 namespace Var {    //      2021
-int minR = 0;   // 218   // 150
+int minR = 94;   // 218   // 150
 int maxR = 255; // 255
-int minG = 200; // 209   // 195
+int minG = 138; // 209   // 195
 int maxG = 255; // 255
 int minB = 0;   // 222
 int maxB = 120; // 241
@@ -52,6 +52,7 @@ int              videoSocket = 0;
 const cv::Scalar BLUE = cv::Scalar(255, 0, 0), RED = cv::Scalar(0, 0, 255), YELLOW = cv::Scalar(0, 255, 255), GREEN = cv::Scalar(0, 255, 0);
 
 cv::Mat frame;
+cv::Mat img, thresholded;
 int sockets[2];
 std::vector<uchar> imgBuffer;
 std::vector<uchar> threshBuffer;

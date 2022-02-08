@@ -275,7 +275,7 @@ int main(int argc, const char* argv[]) {
   //     return false;
   // }
 
-  cv::Mat img, thresholded;
+  //cv::Mat img, thresholded;
   std::vector<Position> posA;
 
 #ifdef RASPI
@@ -287,17 +287,18 @@ int main(int argc, const char* argv[]) {
 
   startThread("VIDEO");
   startThread("TCP");
-  startThread("HTTP");
+  if(Switches::USEHTTP)
+    startThread("HTTP");
   if (Switches::SAVE)
-    startThread("SAVE",&img);
+    startThread("SAVE",NULL);
   // if (Switches::USESERVER)
   //   startThread("SERVER");
 
 
   if (Switches::SHOWTRACK)
     createTrackbars();
-  if (!img.isContinuous())
-    img = img.clone();
+  if (!Global::img.isContinuous())
+    Global::img = Global::img.clone();
   Global::position.nullifyStruct();
   Global::positionAV.nullifyStruct();
   timer.printTime(printTime,"Init Threads");
@@ -313,7 +314,7 @@ int main(int argc, const char* argv[]) {
     // if (!Global::frame.empty() && (Global::newFrame || Switches::cameraInput == 2)) {
     if (!Global::frame.empty() && Global::newFrame) {
       Global::muteImg.lock();
-      Global::frame.copyTo(img);
+      Global::frame.copyTo(Global::img);
       Global::muteFrame.unlock();
       timer.printTime(printTime,"Get Frame");
       frameCounter++;
@@ -321,10 +322,10 @@ int main(int argc, const char* argv[]) {
       // TODO: lower resolution of thresholding, but do multiple times
       // cv::resize(img,scaled,cv::Size(640/2,480/2),INTER_LINEAR);
 
-      ThresholdImage(img,thresholded);
+      ThresholdImage(Global::img,Global::thresholded);
       timer.printTime(printTime," thresholded");
 
-      int targetsFound = findTarget(img, thresholded); // FIND THE TARGETS
+      int targetsFound = findTarget(Global::img, Global::thresholded); // FIND THE TARGETS
       timer.printTime(printTime," findTarget");
 
       if (targetsFound < 3)
@@ -332,7 +333,7 @@ int main(int argc, const char* argv[]) {
 
       if (targetsFound >= 3) {
         /* ---=== Getting Position and Rotation ===--- */
-        findAnglePnP(img);
+        findAnglePnP(Global::img);
         timer.printTime(printTime," solvePnP");
         posA.push_back(Global::position);
         if (posA.size() > Var::avSize)
@@ -362,15 +363,15 @@ int main(int argc, const char* argv[]) {
 
       /* ---=== Finished with frame, output it if needed ===--- */
       if (Switches::SHOWORIG)
-        imshow("Original", img);
+        imshow("Original", Global::img);
       if (Switches::SHOWTHRESH)
-        imshow("Thresholded", thresholded);
+        imshow("Thresholded", Global::thresholded);
       
-      if(Switches::USEHTTP){
-        cv::imencode(".jpeg", img,Global::imgBuffer);
-        cv::imencode(".jpeg", thresholded,Global::threshBuffer);
-        timer.printTime(printTime, " imencode");
-      }
+      //if(Switches::USEHTTP){
+      //  cv::imencode(".jpeg", img,Global::imgBuffer);
+      //  cv::imencode(".jpeg", thresholded,Global::threshBuffer);
+      //  timer.printTime(printTime, " imencode");
+      //}
 
       if (Switches::SHOWORIG || Switches::SHOWTHRESH || Switches::SHOWTRACK) {
         cv::waitKey(5);

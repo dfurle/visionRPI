@@ -137,7 +137,7 @@ extern std::vector<uchar> imgBuffer;
 extern std::vector<uchar> threshBuffer;
 
 extern cv::Mat frame;
-
+extern cv::Mat img, thresholded;
 // extern pthread_mutex_t muteFrame;
 // extern pthread_mutex_t mutePos;
 // extern pthread_mutex_t muteImg;

@@ -99,7 +99,8 @@ int Client::sendData(void* data, int length){
 void Client::sendAll(std::string mimetype, std::vector<char> data){
   printf("---===SEND(BEG)===---\n");
   int res = sendHeader(mimetype,data.size());
-  res = sendData((void*)data.data(), data.size());
+  if(data.size() != 0)
+    res = sendData((void*)data.data(), data.size());
   printf("---===SEND(END)===---\n");
 }
 
@@ -116,17 +117,20 @@ void Client::readRequest(std::string req){
     int dataPos = req.find("\r\n\r\n");
     std::string data;
     int vals[6];
+    double dvals[5];
     if(dataPos+4 == req.length()){
+      printf("data was not yet sent\n");
       char from_client[1024];
       bzero(from_client, 1024);
       read(socket, from_client, 1024);
       data = std::string(from_client);
     } else {
+      printf("data was already sent\n");
       data = substring(req,dataPos+5,req.length()-1);
     }
     sendAll("text/plain",std::vector<char>());
 
-    // std::cout << "|" << data << "|" << std::endl;
+    std::cout << "|" << data << "|" << std::endl;
     int prevPos = 0;
     for(int i = 0; i < 6; i++){
       int pos = data.find(',',prevPos);
@@ -134,12 +138,24 @@ void Client::readRequest(std::string req){
       vals[i] = std::atoi(substrStr.c_str());
       prevPos = pos+1;
     }
+    for(int i = 0; i < 5; i++){
+      int pos = data.find(',',prevPos);
+      std::string substrStr = substring(data,prevPos,pos);
+      dvals[i] = std::stod(substrStr);
+      prevPos = pos+1;
+    }
+
     Var::minR = vals[0];
     Var::maxR = vals[1];
     Var::minG = vals[2];
     Var::maxG = vals[3];
     Var::minB = vals[4];
     Var::maxB = vals[5];
+    Var::dist_cof[0] = dvals[0];
+    Var::dist_cof[1] = dvals[1];
+    Var::dist_cof[2] = dvals[2];
+    Var::dist_cof[3] = dvals[3];
+    Var::dist_cof[4] = dvals[4];
   }
 }
 
@@ -171,6 +187,9 @@ int Client::handleConnection(){
     } else if(req.compare("/favicon.ico") == 0){
       std::vector<char> data = getReqFile("../img.png",true);
       sendAll("image/png",data);
+    } else if(req.compare("/jquery.js") == 0){
+      std::vector<char> data = getReqFile("/home/pi/jquery.js");
+      sendAll("text/javascript",data);
     } else if(req.compare("/initialData") == 0){
       std::stringstream wss;
       wss << Var::minR << ',';
@@ -178,7 +197,12 @@ int Client::handleConnection(){
       wss << Var::minG << ',';
       wss << Var::maxG << ',';
       wss << Var::minB << ',';
-      wss << Var::maxB;
+      wss << Var::maxB << ',';
+      wss << Var::dist_cof[0] << ',';
+      wss << Var::dist_cof[1] << ',';
+      wss << Var::dist_cof[2] << ',';
+      wss << Var::dist_cof[3] << ',';
+      wss << Var::dist_cof[4];
       sendHeader("text/plain",wss.str().length());
       int res = sendData((void*)wss.str().data(), wss.str().length());
 
@@ -234,7 +258,17 @@ void* stream_thread(void* arg){
   std::string header;
   int res = 0;
   while(1){
+    if(Global::img.empty()){
+      usleep(33000);
+      continue;
+    }
     Global::muteImg.lock();
+
+    if(Switches::USEHTTP){
+      cv::imencode(".jpeg", Global::img,Global::imgBuffer);
+      cv::imencode(".jpeg", Global::thresholded,Global::threshBuffer);
+      //timer.printTime(printTime, " imencode");
+    }
     if(Global::sockets[0] != -1){
       ssheader.str("");
       ssheader.clear();

@@ -87,9 +87,9 @@ void initSolvePnP() {
 		  Var::fx, 0, Var::cx,
 		  0, Var::fy, Var::cy,
 		  0, 0, 1);
-  dist_coeffs = NULL;
+  // dist_coeffs = NULL;
   // dist_coeffs = cv::Mat::zeros(1, 5, cv::DataType<double>::type);
-  // dist_coeffs = (cv::Mat_<double>(1, 5) << Var::dist_cof[0],Var::dist_cof[1],Var::dist_cof[2],Var::dist_cof[3],Var::dist_cof[4]);
+  dist_coeffs = (cv::Mat_<double>(1, 5) << Var::dist_cof[0],Var::dist_cof[1],Var::dist_cof[2],Var::dist_cof[3],Var::dist_cof[4]);
 }
 
 bool pointsInBounds(std::vector<cv::Point2f> vec){
@@ -103,6 +103,7 @@ bool pointsInBounds(std::vector<cv::Point2f> vec){
 }
 
 void findAnglePnP(cv::Mat& img) {
+  dist_coeffs = (cv::Mat_<double>(1, 5) << Var::dist_cof[0],Var::dist_cof[1],Var::dist_cof[2],Var::dist_cof[3],Var::dist_cof[4]);
   std::vector<cv::Point2f> img2dpoints;
   ClockTimer timer;
   bool printTime = false;
