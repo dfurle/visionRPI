@@ -1,0 +1,6 @@
+minR 0
+maxR 255
+minG 151
+maxG 255
+minB 0
+maxB 119

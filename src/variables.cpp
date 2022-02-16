@@ -1,24 +1,20 @@
 #include "variables.h"
 
 
-
 namespace Var {    //      2021
-int minR = 94;   // 218   // 150
+int minR = 0;   // 218   // 150
 int maxR = 255; // 255
-int minG = 138; // 209   // 195
+int minG = 194; // 209   // 195
 int maxG = 255; // 255
 int minB = 0;   // 222
 int maxB = 120; // 241
 
 int          WIDTH          = 640; // 1920 //1280 //640
 int          HEIGHT         = 480; // 1080 //720  //480
+//int          WIDTH          = 1280; // 1920 //1280 //640
+//int          HEIGHT         = 720; // 1080 //720  //480
 int          EXPOSURE       = 3; // edit in threads.cpp for now
 unsigned int waitAfterFrame = 1000;
-
-double fx = 640;
-double fy = 480;
-double cx = 320;
-double cy = 240;
 
 double dist_cof[5];
 
@@ -34,10 +30,8 @@ size_t avSize     = 10;
 
 double IRLOffset = 0.;
 
-// unsigned int videoPort = 4097;
-
-int waitSeconds = 10;
-int numImgs = 1;
+int waitSeconds = 8;
+int numImgs = 4;
 } // namespace Var
 
 namespace Global {
@@ -52,10 +46,13 @@ int              videoSocket = 0;
 const cv::Scalar BLUE = cv::Scalar(255, 0, 0), RED = cv::Scalar(0, 0, 255), YELLOW = cv::Scalar(0, 255, 255), GREEN = cv::Scalar(0, 255, 0);
 
 cv::Mat frame;
-cv::Mat img, thresholded;
-int sockets[2];
-std::vector<uchar> imgBuffer;
-std::vector<uchar> threshBuffer;
+cv::Mat imgC, thresholdedC;
+// int sockets[2];
+
+std::vector<int> imgSocket;
+std::vector<int> thrSocket;
+
+int httpStatus = 0;
 
 mMutex muteFrame;
 mMutex mutePos;
@@ -73,6 +70,7 @@ bool         USEHTTP                    = false;
 bool         DOPRINT                    = false;
 bool         FRAME                      = true;
 bool         SAVE                       = false;
+bool         DRAW                       = true;
 int          printTime                  = 0;
 double       InitPID[]                  = {0, 0, 0};
 int          cameraInput                = 0;

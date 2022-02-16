@@ -56,17 +56,17 @@ std::vector<char> Client::getReqFile(std::string fname, bool binary){
 /**
  * Sends the header:
  * 
- * HTTP/1.1 200 OK
- * Cache-Control: no-cache, private
- * Pragma: no-cache
- * Content-Type: mimetype
- * Content-Length: size
+ *  HTTP/1.1 200 OK
+ *  Cache-Control: no-cache, private
+ *  Pragma: no-cache
+ *  Content-Type: mimetype
+ *  Content-Length: size
  * 
  * 
  * @param mimetype type of data to be sent, ex: "text/plain" or "image/png"
  * @param size size of the data to be sent
  * @param additional vector of strings, any additional headers added
- */
+ **/
 int Client::sendHeader(std::string mimetype, int size, std::vector<std::string> additional){
   std::stringstream wsss;
   wsss << "HTTP/1.1 200 OK\r\n"
@@ -131,10 +131,11 @@ void Client::readRequest(std::string req){
     sendAll("text/plain",std::vector<char>());
 
     std::cout << "|" << data << "|" << std::endl;
-    int prevPos = 0;
+    int prevPos = 1;
     for(int i = 0; i < 6; i++){
       int pos = data.find(',',prevPos);
       std::string substrStr = substring(data,prevPos,pos);
+      printf("%d:%s\n",i,substrStr.c_str());
       vals[i] = std::atoi(substrStr.c_str());
       prevPos = pos+1;
     }
@@ -224,14 +225,18 @@ int Client::handleConnection(){
       printf("%s",header.c_str());
       printf("success: %d\n",res);
     
-      if(req.compare("/video_stream1") == 0)
-        Global::sockets[0] = socket; 
-      if(req.compare("/video_stream2") == 0)
-        Global::sockets[1] = socket;
+      if(req.compare("/video_stream1") == 0){
+        printf("VIDEO STREAM ONE PUSH %d\n",socket);
+        Global::imgSocket.push_back(socket);
+      }
+      if(req.compare("/video_stream2") == 0){
+        printf("VIDEO STREAM TWO PUSH %d\n",socket);
+        Global::thrSocket.push_back(socket);
+      }
     }
 
     if(req.compare("/video_stream1") == 0 || req.compare("/video_stream2") == 0){
-    
+      
     } else {
       close(socket);
     }
@@ -257,57 +262,70 @@ void* stream_thread(void* arg){
   std::stringstream ssheader;
   std::string header;
   int res = 0;
+  std::vector<uchar> imgBuffer;
+  std::vector<uchar> threshBuffer;
   while(1){
-    if(Global::img.empty()){
+    if(Global::imgC.empty()){
       usleep(33000);
       continue;
     }
     Global::muteImg.lock();
-
-    if(Switches::USEHTTP){
-      cv::imencode(".jpeg", Global::img,Global::imgBuffer);
-      cv::imencode(".jpeg", Global::thresholded,Global::threshBuffer);
-      //timer.printTime(printTime, " imencode");
-    }
-    if(Global::sockets[0] != -1){
-      ssheader.str("");
-      ssheader.clear();
-      ssheader << "--frame\r\n";
-      ssheader << "Content-Type: " << "image/jpg" << "\r\n";
-      ssheader << "Content-Length: " << Global::imgBuffer.size() << "\r\n\r\n";
-      header = ssheader.str();
-      res = g_sendData((void*)header.data(), header.length(),Global::sockets[0]);
-
-      res = g_sendData((void*)Global::imgBuffer.data(), Global::imgBuffer.size(),Global::sockets[0]);
-      ssheader.str("");
-      ssheader.clear();
-      ssheader << "\r\n\r\n";
-      res = g_sendData((void*)header.data(), header.length(),Global::sockets[0]);
-
-      // printf("---===VideoStreamSent===---\n");
-      // std::cout << header << "<frame here>" << "\r\n\r\n";
-      // printf("---===VideoStreamEnd===---\n");
-    }
-    if(Global::sockets[1] != -1){
-      ssheader.str("");
-      ssheader.clear();
-      ssheader << "--frame\r\n";
-      ssheader << "Content-Type: " << "image/jpg" << "\r\n";
-      ssheader << "Content-Length: " << Global::threshBuffer.size() << "\r\n\r\n";
-      header = ssheader.str();
-      res = g_sendData((void*)header.data(), header.length(),Global::sockets[1]);
-
-      res = g_sendData((void*)Global::threshBuffer.data(), Global::threshBuffer.size(),Global::sockets[1]);
-      ssheader.str("");
-      ssheader.clear();
-      ssheader << "\r\n\r\n";
-      res = g_sendData((void*)header.data(), header.length(),Global::sockets[1]);
-
-      // printf("---===VideoStreamSent===---\n");
-      // std::cout << header << "<frame here>" << "\r\n\r\n";
-      // printf("---===VideoStreamEnd===---\n");
-    }
+    Global::httpStatus = 1;
     Global::muteImg.unlock();
+
+    cv::imencode(".jpeg", Global::imgC,imgBuffer);
+    cv::imencode(".jpeg", Global::thresholdedC,threshBuffer);
+
+    Global::muteImg.lock();
+    Global::httpStatus = 0;
+    Global::muteImg.unlock();
+    
+    if(!Global::imgSocket.empty()){
+      for(int s : Global::imgSocket){
+        try{
+          ssheader.str("");
+          ssheader.clear();
+          ssheader << "--frame\r\n";
+          ssheader << "Content-Type: " << "image/jpg" << "\r\n";
+          ssheader << "Content-Length: " << imgBuffer.size() << "\r\n\r\n";
+          header = ssheader.str();
+          res = g_sendData((void*)header.data(), header.length(),s);
+
+          res = g_sendData((void*)imgBuffer.data(), imgBuffer.size(),s);
+          ssheader.str("");
+          ssheader.clear();
+          ssheader << "\r\n\r\n";
+          res = g_sendData((void*)header.data(), header.length(),s);
+        } catch(const std::exception& e) {
+          std::cout << "ERROR" << e.what() << std::endl;
+        } catch(...){
+          std::cout << "some other error" << std::endl;
+        }
+      }
+    }
+    if(!Global::thrSocket.empty()){
+      for(int s : Global::thrSocket){
+        try{
+          ssheader.str("");
+          ssheader.clear();
+          ssheader << "--frame\r\n";
+          ssheader << "Content-Type: " << "image/jpg" << "\r\n";
+          ssheader << "Content-Length: " << threshBuffer.size() << "\r\n\r\n";
+          header = ssheader.str();
+          res = g_sendData((void*)header.data(), header.length(),s);
+
+          res = g_sendData((void*)threshBuffer.data(), threshBuffer.size(),s);
+          ssheader.str("");
+          ssheader.clear();
+          ssheader << "\r\n\r\n";
+          res = g_sendData((void*)header.data(), header.length(),s);
+        } catch(const std::exception& e) {
+          std::cout << "ERROR" << e.what() << std::endl;
+        } catch(...){
+          std::cout << "some other error" << std::endl;
+        }
+      }
+    }
 
     usleep(100000);
   }

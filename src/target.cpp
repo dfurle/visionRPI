@@ -3,8 +3,6 @@
 #include "parser.h"
 
 
-// cv::VideoWriter out("output1.mjpg", -1, 30., cv::Size(Global::FrameWidth,Global::FrameWidth));
-
 void createTrackbars() {
   const std::string trackbarWindowName = "Trackbars";
   cv::namedWindow(trackbarWindowName, 0);
@@ -27,8 +25,7 @@ void morphOps(cv::Mat& thresh) {
   // dilate(thresh,thresh,dilateElement);
 }
 
-// int findTarget(const cv::Mat& original, const cv::Mat& thresholded, Target* targets) {
-int findTarget(const cv::Mat& img, const cv::Mat& thresholded) {
+int findTarget(cv::Mat& img, cv::Mat& thresholded) {
   Global::targets.clear();
   int targetsFound = 0;
   // Clock total, between;
@@ -102,8 +99,10 @@ int findTarget(const cv::Mat& img, const cv::Mat& thresholded) {
         continue;
       }
 
-      for (int j = 0; j < 4; j++) {
-        line(img, rect_points[j], rect_points[(j + 1) % 4], Global::BLUE, 1, 8);
+      if(Switches::DRAW){
+        for (int j = 0; j < 4; j++) {
+          line(img, rect_points[j], rect_points[(j + 1) % 4], Global::BLUE, 1, 8);
+      }
         //circle(img, rect_points[j], 3, Global::RED, -1, 8, 0);
       }
       timer.printTime(printTime," drawRect");
@@ -192,7 +191,55 @@ int findTarget(const cv::Mat& img, const cv::Mat& thresholded) {
   return targetsFound;
 }
 
+bool cmp(std::string s, std::string c){
+  return s.compare(c) == 0;
+}
+
+void readParameters(){
+  std::ifstream file;
+  file.open("../settings.txt", std::ios::in);
+  if(file){
+    std::string line;
+    while(std::getline(file,line)){
+      int split = line.find(' ');
+      std::string param = line.substr(0,split);
+      std::string value = line.substr(split+1);
+      std::cout << param << std::endl;
+      std::cout << value << std::endl;
+             if(cmp(param,"minR")){
+        Var::minR = std::stoi(value);
+      } else if(cmp(param,"maxR")){
+        Var::maxR = std::stoi(value);
+      } else if(cmp(param,"minG")){
+        Var::minG = std::stoi(value);
+      } else if(cmp(param,"maxG")){
+        Var::maxG = std::stoi(value);
+      } else if(cmp(param,"minB")){
+        Var::minB = std::stoi(value);
+      } else if(cmp(param,"maxB")){
+        Var::maxB = std::stoi(value);
+      }
+    }
+  }
+  file.close();
+}
+
+void writeParameters(){
+  std::ofstream file;
+  file.open("../settings.txt", std::ios::out);
+  if(file){
+    file << "minR " + std::to_string(Var::minR) + "\n";
+    file << "maxR " + std::to_string(Var::maxR) + "\n";
+    file << "minG " + std::to_string(Var::minG) + "\n";
+    file << "maxG " + std::to_string(Var::maxG) + "\n";
+    file << "minB " + std::to_string(Var::minB) + "\n";
+    file << "maxB " + std::to_string(Var::maxB) + "\n";
+  }
+  file.close();
+}
+
 int main(int argc, const char* argv[]) {
+  readParameters();
   {
     Parser p(argc,argv);
     double printTime_d, cameraInput_d;
@@ -201,11 +248,9 @@ int main(int argc, const char* argv[]) {
     p.add_Parameter("-th","--threshold",Switches::SHOWTHRESH,false,"displays thresholded image (black & white)");
     p.add_Parameter("-tr","--track",Switches::SHOWTRACK,false,"displays sliders for RGB");
     p.add_Parameter("-http" ,"--http",Switches::USEHTTP,false,"use http server for streaming video");
-    // p.add_Parameter("-s" ,"--server",Switches::USESERVER,false,"use server for reading image (B&W only. see below)");
-    // p.add_Parameter("-c" ,"--color",Switches::USECOLOR,false,"use color for the server");
     p.add_Parameter("-p" ,"--print",Switches::DOPRINT,false,"prints basic data");
     p.add_Parameter("-f" ,"--frame",Switches::FRAME,true,"prints of frames found");
-    p.add_Parameter("-sv","--save",Switches::SAVE,false,"saves output to .avi file every 30s");
+    p.add_Parameter("-d","--draw",Switches::DRAW,true,"saves output to .avi file every 30s");
     p.add_Parameter("-pt","--ptime",printTime_d,0,"(1-2) prints time taken for each loop");
     p.add_Parameter("-P","--P",Switches::InitPID[0],0.0,"(0.0-1.0) Proportional value of PID");
     p.add_Parameter("-I","--I",Switches::InitPID[1],0.0,"(0.0-1.0) Integral     value of PID");
@@ -218,24 +263,11 @@ int main(int argc, const char* argv[]) {
     p.add_Parameter("-nB","--minBlue",colLims[0][2],Var::minB,"(0-255) low ^ ^ of Blue or Value");
     p.add_Parameter("-xB","--maxBlue",colLims[1][2],Var::maxB,"(0-255) up  ^ ^ of Blue or Value");
 
-    p.add_Parameter("-fx","--fx",Var::fx,Var::fx,"---");
-    p.add_Parameter("-fy","--fy",Var::fy,Var::fy,"---");
-    p.add_Parameter("-cx","--cx",Var::cx,Var::cx,"---");
-    p.add_Parameter("-cy","--cy",Var::cy,Var::cy,"---");
-
-
-    p.add_Parameter("-d1","--d1",Var::dist_cof[0],1.,"---");
-    p.add_Parameter("-d2","--d2",Var::dist_cof[1],1.,"---");
-    p.add_Parameter("-d3","--d3",Var::dist_cof[2],1.,"---");
-    p.add_Parameter("-d4","--d4",Var::dist_cof[3],1.,"---");
-    p.add_Parameter("-d5","--d5",Var::dist_cof[4],1.,"---");
-    printf("dist: %f\n",Var::dist_cof[0]);
-    Var::dist_cof[0] *=  0.05106937569;
-    Var::dist_cof[1] *= -0.0761728305;
-    Var::dist_cof[2] *= -0.0002898593;
-    Var::dist_cof[3] *= -0.0252227088;
-    Var::dist_cof[4] *=  0.05262168077;
-
+    Var::dist_cof[0] =  0.05106937569;
+    Var::dist_cof[1] = -0.0761728305;
+    Var::dist_cof[2] = -0.0002898593;
+    Var::dist_cof[3] = -0.0252227088;
+    Var::dist_cof[4] =  0.05262168077;
 
     if(p.checkParams(true))
       return 0;
@@ -275,8 +307,9 @@ int main(int argc, const char* argv[]) {
   //     return false;
   // }
 
-  //cv::Mat img, thresholded;
+  cv::Mat img, thresholded;
   std::vector<Position> posA;
+  int checkSum;
 
 #ifdef RASPI
   // startThread("USB", NULL);
@@ -297,8 +330,8 @@ int main(int argc, const char* argv[]) {
 
   if (Switches::SHOWTRACK)
     createTrackbars();
-  if (!Global::img.isContinuous())
-    Global::img = Global::img.clone();
+  if (!img.isContinuous())
+    img = img.clone();
   Global::position.nullifyStruct();
   Global::positionAV.nullifyStruct();
   timer.printTime(printTime,"Init Threads");
@@ -311,21 +344,20 @@ int main(int argc, const char* argv[]) {
   while (true) {
     timer.reset();
     Global::muteFrame.lock();
-    // if (!Global::frame.empty() && (Global::newFrame || Switches::cameraInput == 2)) {
     if (!Global::frame.empty() && Global::newFrame) {
-      Global::muteImg.lock();
-      Global::frame.copyTo(Global::img);
-      Global::muteFrame.unlock();
       timer.printTime(printTime,"Get Frame");
+      Global::frame.copyTo(img);
+      Global::muteFrame.unlock();
+      timer.printTime(printTime,"Copy Frame");
       frameCounter++;
 
       // TODO: lower resolution of thresholding, but do multiple times
       // cv::resize(img,scaled,cv::Size(640/2,480/2),INTER_LINEAR);
 
-      ThresholdImage(Global::img,Global::thresholded);
+      ThresholdImage(img,thresholded);
       timer.printTime(printTime," thresholded");
 
-      int targetsFound = findTarget(Global::img, Global::thresholded); // FIND THE TARGETS
+      int targetsFound = findTarget(img,thresholded); // FIND THE TARGETS
       timer.printTime(printTime," findTarget");
 
       if (targetsFound < 3)
@@ -333,7 +365,7 @@ int main(int argc, const char* argv[]) {
 
       if (targetsFound >= 3) {
         /* ---=== Getting Position and Rotation ===--- */
-        findAnglePnP(Global::img);
+        findAnglePnP(img);
         timer.printTime(printTime," solvePnP");
         posA.push_back(Global::position);
         if (posA.size() > Var::avSize)
@@ -361,18 +393,22 @@ int main(int argc, const char* argv[]) {
         missedFrames++;
       }
 
+      if(Switches::USEHTTP){
+        Global::muteImg.lock();
+        if(Global::httpStatus == 0){
+          img.copyTo(Global::imgC);
+          thresholded.copyTo(Global::thresholdedC);
+        }
+        Global::muteImg.unlock();
+      }
+      timer.printTime(printTime," copy to glob");
+
       /* ---=== Finished with frame, output it if needed ===--- */
       if (Switches::SHOWORIG)
-        imshow("Original", Global::img);
+        imshow("Original", img);
       if (Switches::SHOWTHRESH)
-        imshow("Thresholded", Global::thresholded);
+        imshow("Thresholded", thresholded);
       
-      //if(Switches::USEHTTP){
-      //  cv::imencode(".jpeg", img,Global::imgBuffer);
-      //  cv::imencode(".jpeg", thresholded,Global::threshBuffer);
-      //  timer.printTime(printTime, " imencode");
-      //}
-
       if (Switches::SHOWORIG || Switches::SHOWTHRESH || Switches::SHOWTRACK) {
         cv::waitKey(5);
       }
@@ -384,7 +420,6 @@ int main(int argc, const char* argv[]) {
         printf("\n");
       }
       Global::newFrame = false;
-      Global::muteImg.unlock();
     } // end check for new frame
     else
       Global::muteFrame.unlock();
@@ -396,31 +431,21 @@ int main(int argc, const char* argv[]) {
       if(Switches::FRAME){
         printf("------ Frame rate: %f fr/s (%f) \n", 10. / dt, frameCounter2 / dt);
         printf("------ Miss Frame: %d fr \n", missedFrames);
+        int checkSumLoc = 0;
+        checkSumLoc += Var::minR + Var::maxR;
+        checkSumLoc += Var::minG + Var::maxG;
+        checkSumLoc += Var::minB + Var::maxB;
+        if(checkSum != checkSumLoc){
+          writeParameters();
+          checkSum = 0;
+          checkSum += Var::minR + Var::maxR;
+          checkSum += Var::minG + Var::maxG;
+          checkSum += Var::minB + Var::maxB;
+        }
       }
       serverClock.restart();
       frameCounter2 = 0;
       missedFrames = 0;
-
-      // if (Switches::USESERVER && Global::videoSocket != 0 && !Global::videoError) {
-      //   int bytes = 0;
-      //   if (Switches::USECOLOR) {
-      //     int imgSize = img.total() * img.elemSize();
-      //     if (!img.isContinuous())
-      //       img = img.clone();
-      //     if ((bytes = send(Global::videoSocket, img.data, imgSize, MSG_NOSIGNAL)) < 0) {
-      //       Global::videoError = true;
-      //       printf("video error\n");
-      //     }
-      //   } else {
-      //     int imgSize = thresholded.total() * thresholded.elemSize();
-      //     // if (!thresholded.isContinuous())
-      //     //   thresholded = thresholded.clone();
-      //     if ((bytes = send(Global::videoSocket, thresholded.data, imgSize, MSG_NOSIGNAL)) < 0) {
-      //       Global::videoError = true;
-      //       printf("video error\n");
-      //     }
-      //   }
-      // }
     }
     usleep(1000);
   }

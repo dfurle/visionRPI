@@ -14,10 +14,6 @@ void* VideoSave(void* arg);
 pthread_t opentcp_t;
 void* opentcp(void* arg);
 
-// // tcpserver.cpp
-// pthread_t videoServer_t;
-// void* videoServer(void* arg);
-
 // httpserver.cpp
 pthread_t handleHttp_thread_t;
 void* handleHttp_thread(void* arg);
@@ -30,18 +26,15 @@ inline bool checkErr(int rc, std::string name) {
     return true;
 }
 
-/* valid names:
-    "USB"
-    "SAVE"
-    "PID"
-    "HTTP"
-*/
+/**
+ *  Valid Names:
+ *   "USB"
+ *   "SAVE"
+ *   "PID"
+ *   "HTTP"
+ **/
 bool startThread(std::string name, void* params) {
   int rc = 1;
-  // if (!name.compare("SERVER")) {
-  //   rc = pthread_create(&videoServer_t, NULL, videoServer, NULL);
-  //   return checkErr(rc, name);
-  // }
   if (!name.compare("VIDEO")) {
     rc = pthread_create(&VideoCap_t, NULL, VideoCap, NULL);
     return checkErr(rc, name);
@@ -94,7 +87,6 @@ void* VideoCap(void* args) {
 
     printf("---===Setting===---\n");
     printf("fourcc: %d\n",vcap.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('Y','U','Y','V')));
-    //printf("brightness: %d\n",vcap.set(cv::CAP_PROP_BRIGHTNESS, 100));
     printf("auto exposure: %d\n",vcap.set(cv::CAP_PROP_AUTO_EXPOSURE, 1));
     printf("exposure: %d\n",vcap.set(cv::CAP_PROP_EXPOSURE, 3));
     printf("autofocus: %d\n",vcap.set(cv::CAP_PROP_AUTOFOCUS, 0));
@@ -132,9 +124,9 @@ void* VideoCap(void* args) {
     Global::FrameWidth = 640;
     int num = 0;
     while(true){
-      std::string imgText = "2022/BG";
+      std::string imgText = "../2022/BG";
       imgText.append(std::to_string(num));
-      imgText.append(".jpg");
+      imgText.append(".jpeg");
       if(++num >= Var::numImgs){
         num = 0;
       }

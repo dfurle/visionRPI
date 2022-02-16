@@ -1,30 +1,86 @@
 <html>
 <head>
 
-  <!--<script type="text/javascript" src="http://code.jquery.com/jquery-1.10.1.min.js"></script>-->
-  <script type="text/javascript" src="jquery.js"></script>
-</head>
+ <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+ <!-- <script type="text/javascript" src="jquery.js"></script> -->
+<script async src='/cdn-cgi/bm/cv/669835187/api.js'></script></head>
 
 <body>
+	<style>
+		div.slidecontainer {
+			border-style: solid;
+			border-color: black;
+			border-radius: 5px;
+			background-color: #DDDDDD;
+			margin: auto;
+			width: 25%;
+			padding: 10px;
+			text-align: center;
+			display: none;
+		}
+	
+		div.label {
+			border-bottom-style: solid;
+			text-align: center;
+			font-size: 30;
+		}
+	</style>
+  
+	<input type="button" id="rgbbutton" value="Hide RGB" onClick="updateRGB()"></input>
+	<input type="button" id="distortionbutton" value="View Distortion" onClick="updateDistortion()"></input>
+	<br>
 
-  <div class="slidecontainer">
-    minR<input type="range" min="0" max="255" value="50" class="slider" id="minR"><output id="minRo">50</output><br>
-    maxR<input type="range" min="0" max="255" value="255" class="slider" id="maxR"><output id="maxRo">255</output><br>
-    minG<input type="range" min="0" max="255" value="50" class="slider" id="minG"><output id="minGo">50</output><br>
-    maxG<input type="range" min="0" max="255" value="255" class="slider" id="maxG"><output id="maxGo">255</output><br>
-    minB<input type="range" min="0" max="255" value="50" class="slider" id="minB"><output id="minBo">50</output><br>
-    maxB<input type="range" min="0" max="255" value="255" class="slider" id="maxB"><output id="maxBo">255</output><br>
-  </div>
-  <div class="slidecontainer">
-    d0<input type="range" min="-1" max="1" value="0" step=0.01 class="slider" id="d0"><output id="d0o">0</output><br>
-    d1<input type="range" min="-1" max="1" value="0" step=0.01 class="slider" id="d1"><output id="d1o">0</output><br>
-    d2<input type="range" min="-1" max="1" value="0" step=0.01 class="slider" id="d2"><output id="d2o">0</output><br>
-    d3<input type="range" min="-1" max="1" value="0" step=0.01 class="slider" id="d3"><output id="d3o">0</output><br>
-    d4<input type="range" min="-1" max="1" value="0" step=0.01 class="slider" id="d4"><output id="d4o">0</output><br>
-  </div>
+	<div class="slidecontainer" id="RGB" style="display: block">
+	<div class="label">RGB</div>
+		minR<input type="range" min="0" max="255" value="50" class="slider" id="minR"><output id="minRo" width=40px>50</output><br>
+		maxR<input type="range" min="0" max="255" value="255" class="slider" id="maxR"><output id="maxRo" width=40px>255</output><br>
+		minG<input type="range" min="0" max="255" value="50" class="slider" id="minG"><output id="minGo" width=40px>50</output><br>
+		maxG<input type="range" min="0" max="255" value="255" class="slider" id="maxG"><output id="maxGo" width=40px>255</output><br>
+		minB<input type="range" min="0" max="255" value="50" class="slider" id="minB"><output id="minBo" width=40px>50</output><br>
+		maxB<input type="range" min="0" max="255" value="255" class="slider" id="maxB"><output id="maxBo" width=40px>255</output><br>
+	</div>
+	<br>
+	<div class="slidecontainer" id="distortion">
+		<div class="label">Distortion</div>
+		<label for="d0">d0</label>
+		<input id="d0" type="number" min="-1" max="1" step="0.01" value="0"></output><br>
+		<label for="d1">d1</label>
+		<input id="d1" type="number" min="-1" max="1" step="0.01" value="0"></output><br>
+		<label for="d2">d2</label>
+		<input id="d2" type="number" min="-1" max="1" step="0.01" value="0"></output><br>
+		<label for="d3">d3</label>
+		<input id="d3" type="number" min="-1" max="1" step="0.01" value="0"></output><br>
+		<label for="d4">d4</label>
+		<input id="d4" type="number" min="-1" max="1" step="0.01" value="0"><br>
+	</div>
+	<div style="text-align: top">
+		<img src="video_stream1" width="80%">
+    <br>
+		<img src="video_stream2" width="80%">
+	</div>
 
-  <img src="video_stream1" width="49%">
-  <img src="video_stream2" width="49%">
+	<script>
+	
+		function updateRGB() {
+			if (document.getElementById("RGB").style.display != "block") {
+				document.getElementById("RGB").style.display = "block";
+				document.getElementById("rgbbutton").value = "Hide RGB";
+			} else {
+				document.getElementById("RGB").style.display = "none";
+				document.getElementById("rgbbutton").value = "Show RGB";
+			}
+		}
+		function updateDistortion() {
+			if (document.getElementById("distortion").style.display != "block") {
+				document.getElementById("distortion").style.display = "block";
+				document.getElementById("distortionbutton").value = "Hide Distortion";
+			} else {
+				document.getElementById("distortion").style.display = "none";
+				document.getElementById("distortionbutton").value = "Show Distortion";
+			}
+		}
+	
+	</script>
 
   <script type="text/javascript">
     $(document).ready(function() {
@@ -41,6 +97,11 @@
       $("#d2").on("input", onInput);
       $("#d3").on("input", onInput);
       $("#d4").on("input", onInput);
+      //$("#d0").on("change", onInput);
+      //$("#d1").on("change", onInput);
+      //$("#d2").on("change", onInput);
+      //$("#d3").on("change", onInput);
+      //$("#d4").on("change", onInput);
 
       function onInput(e) {
         // TODO: simplify this mess
@@ -62,11 +123,22 @@
         $("#maxGo").html(maxGval);
         $("#minBo").html(minBval);
         $("#maxBo").html(maxBval);
-        $("#d0o").html(d0val);
-        $("#d1o").html(d1val);
-        $("#d2o").html(d2val);
-        $("#d3o").html(d3val);
-        $("#d4o").html(d4val);
+        //$("#d0o").html(d0val);
+        //$("#d1o").html(d1val);
+        //$("#d2o").html(d2val);
+        //$("#d3o").html(d3val);
+        //$("#d4o").html(d4val);
+
+        if(d0val == "")
+          d0val = 0;
+        if(d1val == "")
+          d1val = 0;
+        if(d2val == "")
+          d2val = 0;
+        if(d3val == "")
+          d3val = 0;
+        if(d4val == "")
+          d4val = 0;
 
         let data = ""
         data += minRval + ",";
@@ -122,14 +194,12 @@
         $("#maxGo").html(data[3]);
         $("#minBo").html(data[4]);
         $("#maxBo").html(data[5]);
-        $("#d0o").html(data[6]);
-        $("#d1o").html(data[7]);
-        $("#d2o").html(data[8]);
-        $("#d3o").html(data[9]);
-        $("#d4o").html(data[10]);
+        //$("#d0o").html(data[6]);
+        //$("#d1o").html(data[7]);
+        //$("#d2o").html(data[8]);
+        //$("#d3o").html(data[9]);
+        //$("#d4o").html(data[10]);
       })
-      
-
 
     })
   </script>	

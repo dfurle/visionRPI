@@ -50,7 +50,6 @@ extern int          HEIGHT;
 extern int          EXPOSURE;
 extern unsigned int waitAfterFrame;
 
-extern double fx, fy, cx, cy;
 extern double dist_cof[5];
 
 extern double qualityLevel;
@@ -132,12 +131,15 @@ extern int              buttonPress;
 extern bool             videoError;
 extern int              videoSocket;
 extern const cv::Scalar BLUE, RED, YELLOW, GREEN;
-extern int sockets[2];
-extern std::vector<uchar> imgBuffer;
-extern std::vector<uchar> threshBuffer;
+// extern int sockets[2];
+extern std::vector<int> imgSocket;
+extern std::vector<int> thrSocket;
 
 extern cv::Mat frame;
-extern cv::Mat img, thresholded;
+extern cv::Mat imgC, thresholdedC;
+
+extern int httpStatus;
+
 // extern pthread_mutex_t muteFrame;
 // extern pthread_mutex_t mutePos;
 // extern pthread_mutex_t muteImg;
@@ -158,6 +160,7 @@ extern bool         USEHTTP;
 extern bool         DOPRINT;
 extern bool         FRAME;
 extern bool         SAVE;
+extern bool         DRAW;
 extern int          printTime;
 extern double       InitPID[];
 extern int          cameraInput;

@@ -53,19 +53,3 @@ void* opentcp(void* arg) {
   }
   return 0;
 }
-
-// void* videoServer(void* arg) {
-//   struct HOST host = TCPServer::create_socket(Var::videoPort);
-//   while(true){
-//     Global::videoSocket = TCPServer::getClient(host);
-//     printf("video socket: %d\n", Global::videoSocket);
-//     while (!Global::videoError)
-//       sleep(1);
-//     close(Global::videoSocket);
-//     Global::videoSocket = 0;
-//     Global::videoError = false;
-//     sleep(5);
-//   }
-//   printf("error videoServer\n");
-//   return 0;
-// }
