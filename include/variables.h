@@ -167,7 +167,20 @@ extern int          cameraInput;
 } // namespace Switches
 
 
-
+// In target.cpp
 bool startThread(std::string name, void* params = NULL);
 void initSolvePnP();
 void findAnglePnP(cv::Mat& img);
+
+// In variables.cpp
+namespace str{
+bool cmp(std::string& s, std::string c);
+std::string substring(std::string& s, int i, int f);
+std::string substring(std::string& s, int i);
+bool contains(std::string& s, std::string c);
+std::vector<std::string> split(std::string s, std::string delim);
+std::string containsParam(std::vector<std::string>& v, std::string search);
+std::string getParam(std::vector<std::string>& v, std::string search);
+std::vector<char> ss_to_vec(std::stringstream& ss);
+}
+

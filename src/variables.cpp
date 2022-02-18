@@ -18,16 +18,6 @@ unsigned int waitAfterFrame = 1000;
 
 double dist_cof[5];
 
-double qualityLevel     = 0.05;
-double minDistance      = 30;
-int    blockSize        = 3;
-bool   useHarisDetector = true;
-double k                = 0.04;
-int    maxCorners       = 4;
-
-size_t maxTargets = 50;
-size_t avSize     = 10;
-
 double IRLOffset = 0.;
 
 int waitSeconds = 8;
@@ -47,7 +37,6 @@ const cv::Scalar BLUE = cv::Scalar(255, 0, 0), RED = cv::Scalar(0, 0, 255), YELL
 
 cv::Mat frame;
 cv::Mat imgC, thresholdedC;
-// int sockets[2];
 
 std::vector<int> imgSocket;
 std::vector<int> thrSocket;
@@ -65,8 +54,6 @@ bool         SHOWHUE                    = false;
 bool         SHOWTHRESH                 = false;
 bool         SHOWTRACK                  = false;
 bool         USEHTTP                    = false;
-// bool         USESERVER                  = false;
-// bool         USECOLOR                   = false;
 bool         DOPRINT                    = false;
 bool         FRAME                      = true;
 bool         SAVE                       = false;
@@ -75,3 +62,60 @@ int          printTime                  = 0;
 double       InitPID[]                  = {0, 0, 0};
 int          cameraInput                = 0;
 } // namespace Switches
+
+
+namespace str{
+
+bool cmp(std::string& s, std::string c){
+  return s.compare(c) == 0;
+}
+
+/**
+ * Returns substring between [i,f)
+ */
+std::string substring(std::string& s, int i, int f){
+  return s.substr(i,f-i);
+}
+std::string substring(std::string& s, int i){
+  return s.substr(i);
+}
+
+bool contains(std::string& s, std::string c){
+  return s.find(c) != std::string::npos;
+}
+
+std::vector<std::string> split(std::string s, std::string delim){
+  std::vector<std::string> nStr;
+  int pos = s.find(delim);
+  while(pos != std::string::npos){
+    nStr.push_back(substring(s,0,pos));
+    s = str::substring(s,pos+1);
+    pos = s.find(delim);
+  }
+  if(s.length() != 0)
+    nStr.push_back(s);
+  return nStr;
+}
+
+std::string containsParam(std::vector<std::string>& v, std::string search){
+  for(std::string s : v){
+    if(contains(s,search))
+      return s;
+  }
+  return "";
+}
+
+std::string getParam(std::vector<std::string>& v, std::string search){
+  for(std::string s : v){
+    if(contains(s,search)){
+      return s.substr(s.find(' ')+1);
+    }
+  }
+  return "";
+}
+
+std::vector<char> ss_to_vec(std::stringstream& ss){
+  std::string s = ss.str();
+  return std::vector<char>(s.begin(),s.end());
+}
+}

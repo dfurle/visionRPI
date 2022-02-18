@@ -10,10 +10,15 @@ public:
 
   Client(){};
   int handleConnection();
-  std::string requestedFile(std::string str);
-  void readRequest(std::string req);
-  std::vector<char> getReqFile(std::string file, bool binary = false);
-  int sendHeader(std::string mimetype, int size, std::vector<std::string> additional = {});
-  int sendData(void* data, int length);
-  void sendAll(std::string mimetype, std::vector<char> data);
+
+  std::vector<char> getReqFile(std::string file);
+  int sendData(std::vector<char> data);
+  void sendAll(std::string mimetype, std::vector<char> data, bool silence = false);
+
+  void handleRequest(std::string req);
+  int  handleGET(std::vector<std::string> header);
+  void handlePUT(std::vector<std::string> header, std::vector<std::string> content);
 };
+
+int g_sendData(void* data, int length, int socket);
+void sendIMG(std::vector<uchar>& imgBuf, int socket);

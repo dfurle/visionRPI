@@ -20,22 +20,147 @@ void* handleHttp_thread(void* arg){
   return 0;
 }
 
+int Client::handleConnection(){
+  const int MAXLINE = 10000;
+  char from_client[MAXLINE];
+  // int counter = 0;
+  bool bIsFirstFrame = true;
+  while (true) {
+    // printf("waiting accept\n");
+    if((socket = accept(host.sockfd, (sockaddr*)&host.addr, (socklen_t*)&host.addrlen)) < 0){
+      printf("socket accept error\n");
+    }
+    // printf("accepted\n");
+    // printf("ID: %d c: %d\n",ID,counter++);
+    bzero(from_client, MAXLINE);
+    read(socket, from_client, MAXLINE);
 
-std::string Client::requestedFile(std::string str){
-  std::string HTTPHeader = str.substr(0,str.find('\n'));
-  int locDivider = str.find(' ');
-  std::string action = HTTPHeader.substr(0,locDivider);
-  std::string file = HTTPHeader.substr(0,str.find(' ',locDivider+1)).substr(locDivider+1);
-  // printf("action: |%s|\n",action.c_str());
-  // printf("file  : |%s|\n",file.c_str());
-  if(action.compare("GET") == 0){
-    return file;
+    // For Debugging
+    // printf("---===RECEIVED===---\n");
+    // printf("%s\n",from_client);
+
+    handleRequest(std::string(from_client));
+    // close socket?
+  }
+  return 0;
+}
+
+void Client::handleRequest(std::string req){
+  std::string action;
+  std::string hstr = str::substring(req,0,req.find("\r\n\r\n"));
+  std::string cstr = str::substring(req,req.find("\r\n\r\n")+4);
+
+  std::vector<std::string> header = str::split(hstr,"\n");
+
+  action = str::split(header[0]," ")[0];
+  // OR (less processing)
+  // action = substring(header,0,header.find(' '));
+
+  if(str::cmp(action,"GET")){
+    printf("---===RECEIVED===---\n");
+    std::cout << req << std::endl;
+    if(handleGET(header)){
+      close(socket);
+    }
+  } else if(str::cmp(action,"PUT")){
+    std::vector<std::string> content = str::split(cstr,"\n");
+    for(std::string s : content){
+      std::cout << s << std::endl;
+    }
+    int contentLength = std::stoi(str::getParam(header,"Content-Length"));
+    // printf("%d byte message\n",contentLength);
+    if(content.size() == 0){
+      // printf("reading again\n");
+      // read again, contentLength bytes
+      char from_client[1000];
+      read(socket, from_client, 1000);
+      content = str::split(std::string(from_client),"\n");
+    }
+    handlePUT(header,content);
+    close(socket);
   } else {
-    return "";
+    printf("Incorrect HTTP format or misunderstood.\n");
   }
 }
 
-std::vector<char> Client::getReqFile(std::string fname, bool binary){
+int Client::handleGET(std::vector<std::string> header){
+  std::string req = str::split(header[0]," ")[1];
+  int res;
+
+  if(str::cmp(req,"/")){
+    sendAll("text/html",getReqFile("../index.html"));
+  } else if(str::cmp(req,"/favicon.ico")){
+    sendAll("image/png",getReqFile("../img.png"));
+  } else if(str::cmp(req,"/jquery.js")){
+    sendAll("text/javascript",getReqFile("/home/pi/jquery.js"));
+  } else if(str::cmp(req,"/initialData")){
+    std::stringstream wss;
+    wss << Var::minR << ',' << Var::maxR << ',';
+    wss << Var::minG << ',' << Var::maxG << ',';
+    wss << Var::minB << ',' << Var::maxB << ',';
+    for(int i = 0; i < 5; i++){
+      wss << Var::dist_cof[i] << ',';
+    }
+    sendAll("text/plain",str::ss_to_vec(wss));
+  } else if(str::contains(req,"/video_stream")){
+    std::stringstream ssheader;
+    ssheader << "HTTP/1.1 200 OK\r\n" ;
+    ssheader << "Connection: keep-alive\r\n";
+    //ssheader << "Connection: close\r\n";
+    ssheader << "Max-Age: 0\r\n";
+    ssheader << "Expires: 0\r\n";
+    ssheader << "Cache-Control: no-cache, private\r\n";
+    ssheader << "Pragma: no-cache\r\n";
+    ssheader << "Content-Type: multipart/x-mixed-replace; boundary=--frame\r\n\r\n";
+    res = sendData(str::ss_to_vec(ssheader));
+    // printf("---===SENT===---\n");
+    // printf("%s",header.data());
+  
+    if(str::cmp(req,"/video_stream1")){
+      printf("VIDEO STREAM ONE PUSH %d\n",socket);
+      Global::imgSocket.push_back(socket);
+    }
+    if(str::cmp(req,"/video_stream2")){
+      printf("VIDEO STREAM TWO PUSH %d\n",socket);
+      Global::thrSocket.push_back(socket);
+    }
+  }
+  if(str::contains(req,"/video_stream")){
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
+void Client::handlePUT(std::vector<std::string> header, std::vector<std::string> content){
+  int vals[6];
+  double dvals[5];
+  sendAll("text/plain",std::vector<char>(),true);
+  if(content.size() != 2){
+    return;
+  }
+  std::vector<std::string> rgb_vals = str::split(content[0],",");
+  std::vector<std::string> dco_vals = str::split(content[1],",");
+  for(int i = 0; i < 6; i++){
+    vals[i] = std::stoi(rgb_vals[i]);
+  }
+  for(int i = 0; i < 5; i++){
+    dvals[i] = std::stod(dco_vals[i]);
+  }
+  Var::minR = vals[0];
+  Var::maxR = vals[1];
+  Var::minG = vals[2];
+  Var::maxG = vals[3];
+  Var::minB = vals[4];
+  Var::maxB = vals[5];
+  Var::dist_cof[0] = dvals[0];
+  Var::dist_cof[1] = dvals[1];
+  Var::dist_cof[2] = dvals[2];
+  Var::dist_cof[3] = dvals[3];
+  Var::dist_cof[4] = dvals[4];
+}
+
+std::vector<char> Client::getReqFile(std::string fname){
   std::ifstream file;
   file.open(fname,std::ios::binary | std::ios::in);
   std::vector<char> data;
@@ -53,200 +178,57 @@ std::vector<char> Client::getReqFile(std::string fname, bool binary){
   return data;
 }
 
-/**
- * Sends the header:
- * 
- *  HTTP/1.1 200 OK
- *  Cache-Control: no-cache, private
- *  Pragma: no-cache
- *  Content-Type: mimetype
- *  Content-Length: size
- * 
- * 
- * @param mimetype type of data to be sent, ex: "text/plain" or "image/png"
- * @param size size of the data to be sent
- * @param additional vector of strings, any additional headers added
- **/
-int Client::sendHeader(std::string mimetype, int size, std::vector<std::string> additional){
+int Client::sendData(std::vector<char> data){
+  char *pdata = (char *)data.data();
+  int length = data.size();
+  int numSent;
+  while (length > 0) {
+    numSent = send(socket, pdata, length, 0);
+    if (numSent == -1) return -1;
+    pdata += numSent;
+    length -= numSent;
+  }
+  return 0;
+}
+
+void Client::sendAll(std::string mimetype, std::vector<char> data, bool silence){
+  if(!silence)
+    printf("---===SEND(BEG)===---\n");
   std::stringstream wsss;
   wsss << "HTTP/1.1 200 OK\r\n"
        //<< "Connection: keep-alive\r\n"
        << "Cache-Control: no-cache, private\r\n"
        << "Pragma: no-cache\r\n"
        << "Content-Type: " << mimetype << "\r\n"
-       << "Content-Length: " << size << "\r\n";
-  for(std::string s : additional)
-    wsss << s << "\r\n";
+       << "Content-Length: " << data.size() << "\r\n";
+  // for(std::string s : additional)
+  //   wsss << s << "\r\n";
   wsss << "\r\n";
-  std::string headers = wsss.str();
-  printf("%s",headers.c_str());
-  return sendData((void*)headers.data(), headers.size());
-}
-
-int Client::sendData(void* data, int length){
-  char *pdata = (char *) data;
-  int numSent;
-  while (length > 0) {
-    numSent = send(socket, pdata, length, 0);
-    if (numSent == -1) return -1;
-    pdata += numSent;
-    length -= numSent;
-  }
-  printf("%s\n",pdata);
-  return 0;
-}
-
-void Client::sendAll(std::string mimetype, std::vector<char> data){
-  printf("---===SEND(BEG)===---\n");
-  int res = sendHeader(mimetype,data.size());
+  std::vector<char> header = str::ss_to_vec(wsss);
+  if(!silence)
+    printf("%s",header.data());
+  int res = sendData(header);
   if(data.size() != 0)
-    res = sendData((void*)data.data(), data.size());
-  printf("---===SEND(END)===---\n");
+    res = sendData(data);
+  if(!silence)
+    printf("---===SEND(END)===---\n");
 }
 
-/**
- * Returns substring between [i,f)
- */
-std::string substring(std::string s, int i, int f){
-  return s.substr(i,f-i);
-}
-
-void Client::readRequest(std::string req){
-  int wpos = req.find("PUT");
-  if(wpos != std::string::npos){
-    int dataPos = req.find("\r\n\r\n");
-    std::string data;
-    int vals[6];
-    double dvals[5];
-    if(dataPos+4 == req.length()){
-      printf("data was not yet sent\n");
-      char from_client[1024];
-      bzero(from_client, 1024);
-      read(socket, from_client, 1024);
-      data = std::string(from_client);
-    } else {
-      printf("data was already sent\n");
-      data = substring(req,dataPos+5,req.length()-1);
-    }
-    sendAll("text/plain",std::vector<char>());
-
-    std::cout << "|" << data << "|" << std::endl;
-    int prevPos = 1;
-    for(int i = 0; i < 6; i++){
-      int pos = data.find(',',prevPos);
-      std::string substrStr = substring(data,prevPos,pos);
-      printf("%d:%s\n",i,substrStr.c_str());
-      vals[i] = std::atoi(substrStr.c_str());
-      prevPos = pos+1;
-    }
-    for(int i = 0; i < 5; i++){
-      int pos = data.find(',',prevPos);
-      std::string substrStr = substring(data,prevPos,pos);
-      dvals[i] = std::stod(substrStr);
-      prevPos = pos+1;
-    }
-
-    Var::minR = vals[0];
-    Var::maxR = vals[1];
-    Var::minG = vals[2];
-    Var::maxG = vals[3];
-    Var::minB = vals[4];
-    Var::maxB = vals[5];
-    Var::dist_cof[0] = dvals[0];
-    Var::dist_cof[1] = dvals[1];
-    Var::dist_cof[2] = dvals[2];
-    Var::dist_cof[3] = dvals[3];
-    Var::dist_cof[4] = dvals[4];
-  }
-}
-
-
-int Client::handleConnection(){
-  const int MAXLINE = 10000;
-  char from_client[MAXLINE];
-  int counter = 0;
-  bool bIsFirstFrame = true;
-  while (true) {
-    printf("waiting accept\n");
-    if((socket = accept(host.sockfd, (sockaddr*)&host.addr, (socklen_t*)&host.addrlen)) < 0){
-      printf("socket accept error\n");
-    }
-    printf("accepted\n");
-    printf("ID: %d c: %d\n",ID,counter++);
-    bzero(from_client, MAXLINE);
-    read(socket, from_client, MAXLINE);
-    printf("---===RECEIVED===---\n");
-    printf("%s\n",from_client);
-    readRequest(std::string(from_client));
-
-    std::string req = requestedFile(std::string(from_client));
-    int res;
-
-    if(req.compare("/") == 0){
-      std::vector<char> data = getReqFile("../index.html");
-      sendAll("text/html",data);
-    } else if(req.compare("/favicon.ico") == 0){
-      std::vector<char> data = getReqFile("../img.png",true);
-      sendAll("image/png",data);
-    } else if(req.compare("/jquery.js") == 0){
-      std::vector<char> data = getReqFile("/home/pi/jquery.js");
-      sendAll("text/javascript",data);
-    } else if(req.compare("/initialData") == 0){
-      std::stringstream wss;
-      wss << Var::minR << ',';
-      wss << Var::maxR << ',';
-      wss << Var::minG << ',';
-      wss << Var::maxG << ',';
-      wss << Var::minB << ',';
-      wss << Var::maxB << ',';
-      wss << Var::dist_cof[0] << ',';
-      wss << Var::dist_cof[1] << ',';
-      wss << Var::dist_cof[2] << ',';
-      wss << Var::dist_cof[3] << ',';
-      wss << Var::dist_cof[4];
-      sendHeader("text/plain",wss.str().length());
-      int res = sendData((void*)wss.str().data(), wss.str().length());
-
-    } else if(req.compare("/video_stream1") == 0 || req.compare("/video_stream2") == 0){
-      std::string header;
-      std::stringstream ssheader;
-      ssheader << "HTTP/1.1 200 OK\r\n" ;
-      ssheader << "Connection: keep-alive\r\n";
-      //ssheader << "Connection: close\r\n";
-      ssheader << "Max-Age: 0\r\n";
-      ssheader << "Expires: 0\r\n";
-      ssheader << "Cache-Control: no-cache, private\r\n";
-      ssheader << "Pragma: no-cache\r\n";
-      ssheader << "Content-Type: multipart/x-mixed-replace; boundary=--frame\r\n\r\n";
-      header = ssheader.str();
-
-      res = sendData((void*)header.data(), header.length());
-      printf("---===SENT===---\n");
-      printf("%s",header.c_str());
-      printf("success: %d\n",res);
-    
-      if(req.compare("/video_stream1") == 0){
-        printf("VIDEO STREAM ONE PUSH %d\n",socket);
-        Global::imgSocket.push_back(socket);
-      }
-      if(req.compare("/video_stream2") == 0){
-        printf("VIDEO STREAM TWO PUSH %d\n",socket);
-        Global::thrSocket.push_back(socket);
-      }
-    }
-
-    if(req.compare("/video_stream1") == 0 || req.compare("/video_stream2") == 0){
-      
-    } else {
-      close(socket);
-    }
+int g_sendData(std::vector<char> data, int socket){
+  char *pdata = (char *)data.data();
+  int length = data.size();
+  int numSent;
+  while (length > 0) {
+    numSent = send(socket, pdata, length, 0);
+    if (numSent == -1) return -1;
+    pdata += numSent;
+    length -= numSent;
   }
   return 0;
 }
-
-
-int g_sendData(void* data, int length, int socket){
-  char *pdata = (char *) data;
+int g_sendData(std::vector<uchar> data, int socket){
+  char *pdata = (char *)data.data();
+  int length = data.size();
   int numSent;
   while (length > 0) {
     numSent = send(socket, pdata, length, 0);
@@ -257,11 +239,27 @@ int g_sendData(void* data, int length, int socket){
   return 0;
 }
 
+void sendIMG(std::vector<uchar>& imgBuf, int socket){
+  std::stringstream ssheader;
+  int res = 0;
+
+  ssheader.str("");
+  ssheader.clear();
+  ssheader << "--frame\r\n";
+  ssheader << "Content-Type: " << "image/jpg" << "\r\n";
+  ssheader << "Content-Length: " << imgBuf.size() << "\r\n\r\n";
+  std::vector<char> header = str::ss_to_vec(ssheader);
+  res = g_sendData(header,socket);
+
+  res = g_sendData(imgBuf, socket);
+  ssheader.str("");
+  ssheader.clear();
+  ssheader << "\r\n\r\n";
+  std::vector<char> footer = str::ss_to_vec(ssheader);
+  res = g_sendData(footer, socket);
+}
 
 void* stream_thread(void* arg){
-  std::stringstream ssheader;
-  std::string header;
-  int res = 0;
   std::vector<uchar> imgBuffer;
   std::vector<uchar> threshBuffer;
   while(1){
@@ -282,89 +280,14 @@ void* stream_thread(void* arg){
     
     if(!Global::imgSocket.empty()){
       for(int s : Global::imgSocket){
-        try{
-          ssheader.str("");
-          ssheader.clear();
-          ssheader << "--frame\r\n";
-          ssheader << "Content-Type: " << "image/jpg" << "\r\n";
-          ssheader << "Content-Length: " << imgBuffer.size() << "\r\n\r\n";
-          header = ssheader.str();
-          res = g_sendData((void*)header.data(), header.length(),s);
-
-          res = g_sendData((void*)imgBuffer.data(), imgBuffer.size(),s);
-          ssheader.str("");
-          ssheader.clear();
-          ssheader << "\r\n\r\n";
-          res = g_sendData((void*)header.data(), header.length(),s);
-        } catch(const std::exception& e) {
-          std::cout << "ERROR" << e.what() << std::endl;
-        } catch(...){
-          std::cout << "some other error" << std::endl;
-        }
+        sendIMG(imgBuffer,s);
       }
     }
     if(!Global::thrSocket.empty()){
       for(int s : Global::thrSocket){
-        try{
-          ssheader.str("");
-          ssheader.clear();
-          ssheader << "--frame\r\n";
-          ssheader << "Content-Type: " << "image/jpg" << "\r\n";
-          ssheader << "Content-Length: " << threshBuffer.size() << "\r\n\r\n";
-          header = ssheader.str();
-          res = g_sendData((void*)header.data(), header.length(),s);
-
-          res = g_sendData((void*)threshBuffer.data(), threshBuffer.size(),s);
-          ssheader.str("");
-          ssheader.clear();
-          ssheader << "\r\n\r\n";
-          res = g_sendData((void*)header.data(), header.length(),s);
-        } catch(const std::exception& e) {
-          std::cout << "ERROR" << e.what() << std::endl;
-        } catch(...){
-          std::cout << "some other error" << std::endl;
-        }
+        sendIMG(threshBuffer,s);
       }
     }
-
     usleep(100000);
   }
-}
-
-void* client_thread(void* arg) {
-  struct CLIENT* client = (CLIENT*)arg;
-
-  int socket = client->socket;
-
-  const int MAXLINE = 32; // random value for buffer just in case?
-  char from_client[MAXLINE];
-  const int MLEN = 1024;
-  char to_client[MLEN];
-  while (true) {
-    // Read from client
-    bzero(from_client, MAXLINE);
-    int lenbuf = read(socket, from_client, sizeof(from_client));
-    // bzero(to_client, MLEN);
-
-    
-    // sprintf(to_client, "%.2f,%.2f,%d\n", Global::position->dist, Global::position->robotAngle, Global::dataValid);
-    // mutex are most likely required, test performance
-    Global::mutePos.lock();
-    snprintf(to_client, sizeof(to_client), "%.2f,%.2f,%d\n", Global::position.dist, Global::position.robotAngle, Global::dataValid);
-    Global::mutePos.unlock();
-    std::string send_to = to_client;
-
-    // int bytesSent = send(socket, to_client, sizeof(to_client), MSG_NOSIGNAL);
-    int bytesSent = send(socket, send_to.c_str(), sizeof(send_to), MSG_NOSIGNAL);
-    if(bytesSent < 0){
-      printf("thread: %d failed\n",client->ID);
-      close(socket);
-      return 0;
-    }
-    // printf("message sent: %s",to_client);
-    // printf("Bytes sent: %d/%d, but only needed %d\n",bytesSent,sizeof(to_client), strlen(to_client));
-    usleep(100);
-  }
-  close(client->socket);
-  return 0;
 }

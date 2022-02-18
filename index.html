@@ -146,13 +146,14 @@
         data += minGval + ",";
         data += maxGval + ",";
         data += minBval + ",";
-        data += maxBval + ",";
+        data += maxBval;
+        data += "\n";
         data += d0val + ",";
         data += d1val + ",";
         data += d2val + ",";
         data += d3val + ",";
         data += d4val;
-        //console.log(data);
+        console.log(data);
 
 
         $.ajax({
@@ -160,7 +161,8 @@
           url: 'data',
           // contentType: 'application/json',
           contentType: 'text/plain',
-          data: JSON.stringify(data),
+          // data: JSON.stringify(data),
+          data: data,
         }).fail(function (msg) {
           console.log('FAIL');
         })

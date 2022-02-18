@@ -55,7 +55,7 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
   // }
 
   timer.printTime(printTime," filter:Perim");
-  if (contours.size() > Var::maxTargets) {
+  if (contours.size() > 50) {
     timer.printTime(printTime," many targets");
     return targetsFound;
   } else if (contours.size() < 1) {
@@ -164,6 +164,12 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
 
     // Useful for a single target, here it's many rectangles which the previous algorithm already finds
     // ====================
+    // double qualityLevel     = 0.05;
+    // double minDistance      = 30;
+    // int    blockSize        = 3;
+    // bool   useHarisDetector = true;
+    // double k                = 0.04;
+    // int    maxCorners       = 4;
     // if (num != -1)
     //   workingImage(targets[num].boundingRect).copyTo(workingImageSq);
     // timer.printTime(printTime," drawMat");
@@ -191,9 +197,6 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
   return targetsFound;
 }
 
-bool cmp(std::string s, std::string c){
-  return s.compare(c) == 0;
-}
 
 void readParameters(){
   std::ifstream file;
@@ -206,17 +209,17 @@ void readParameters(){
       std::string value = line.substr(split+1);
       std::cout << param << std::endl;
       std::cout << value << std::endl;
-             if(cmp(param,"minR")){
+             if(str::cmp(param,"minR")){
         Var::minR = std::stoi(value);
-      } else if(cmp(param,"maxR")){
+      } else if(str::cmp(param,"maxR")){
         Var::maxR = std::stoi(value);
-      } else if(cmp(param,"minG")){
+      } else if(str::cmp(param,"minG")){
         Var::minG = std::stoi(value);
-      } else if(cmp(param,"maxG")){
+      } else if(str::cmp(param,"maxG")){
         Var::maxG = std::stoi(value);
-      } else if(cmp(param,"minB")){
+      } else if(str::cmp(param,"minB")){
         Var::minB = std::stoi(value);
-      } else if(cmp(param,"maxB")){
+      } else if(str::cmp(param,"maxB")){
         Var::maxB = std::stoi(value);
       }
     }
@@ -243,25 +246,18 @@ int main(int argc, const char* argv[]) {
   {
     Parser p(argc,argv);
     double printTime_d, cameraInput_d;
-    double colLims[2][3];
     p.add_Parameter("-o" ,"--orig",Switches::SHOWORIG,false,"displays original camera input w/ lines");
     p.add_Parameter("-th","--threshold",Switches::SHOWTHRESH,false,"displays thresholded image (black & white)");
     p.add_Parameter("-tr","--track",Switches::SHOWTRACK,false,"displays sliders for RGB");
     p.add_Parameter("-http" ,"--http",Switches::USEHTTP,false,"use http server for streaming video");
     p.add_Parameter("-p" ,"--print",Switches::DOPRINT,false,"prints basic data");
     p.add_Parameter("-f" ,"--frame",Switches::FRAME,true,"prints of frames found");
-    p.add_Parameter("-d","--draw",Switches::DRAW,true,"saves output to .avi file every 30s");
+    p.add_Parameter("-d","--draw",Switches::DRAW,true,"draws the lines on original img file");
     p.add_Parameter("-pt","--ptime",printTime_d,0,"(1-2) prints time taken for each loop");
     p.add_Parameter("-P","--P",Switches::InitPID[0],0.0,"(0.0-1.0) Proportional value of PID");
     p.add_Parameter("-I","--I",Switches::InitPID[1],0.0,"(0.0-1.0) Integral     value of PID");
     p.add_Parameter("-D","--D",Switches::InitPID[2],0.0,"(0.0-1.0) Derivative   value of PID");
     p.add_Parameter("-cam","--camera",cameraInput_d,0,"(0-2) which camera port to use");
-    p.add_Parameter("-nR","--minRed",colLims[0][0],Var::minR,"(0-255) lower end of thresh of Red or Hue");
-    p.add_Parameter("-xR","--maxRed",colLims[1][0],Var::maxR,"(0-255) upper end of thresh of Red or Hue");
-    p.add_Parameter("-nG","--minGreen",colLims[0][1],Var::minG,"(0-255) low ^ ^ of Green or Saturation");
-    p.add_Parameter("-xG","--maxGreen",colLims[1][1],Var::maxG,"(0-255) up  ^ ^ of Green or Saturation");
-    p.add_Parameter("-nB","--minBlue",colLims[0][2],Var::minB,"(0-255) low ^ ^ of Blue or Value");
-    p.add_Parameter("-xB","--maxBlue",colLims[1][2],Var::maxB,"(0-255) up  ^ ^ of Blue or Value");
 
     Var::dist_cof[0] =  0.05106937569;
     Var::dist_cof[1] = -0.0761728305;
@@ -273,12 +269,6 @@ int main(int argc, const char* argv[]) {
       return 0;
     Switches::cameraInput = std::round(cameraInput_d);
     Switches::printTime = std::round(printTime_d);
-    Var::minR = std::round(colLims[0][0]);
-    Var::minG = std::round(colLims[0][1]);
-    Var::minB = std::round(colLims[0][2]);
-    Var::maxR = std::round(colLims[1][0]);
-    Var::maxG = std::round(colLims[1][1]);
-    Var::maxB = std::round(colLims[1][2]);
     printf("cam: %d | pt: %d\n",Switches::cameraInput, Switches::printTime);
   }
     
@@ -368,7 +358,7 @@ int main(int argc, const char* argv[]) {
         findAnglePnP(img);
         timer.printTime(printTime," solvePnP");
         posA.push_back(Global::position);
-        if (posA.size() > Var::avSize)
+        if (posA.size() > 10)
           posA.erase(posA.begin());
         Global::positionAV.nullifyStruct();
 
