@@ -2,14 +2,32 @@
 #include "clock.h"
 #define PI 3.141592
 
-double radius = 2.;
+double radius = 2.2239583;
+//double radius = (4+(5/12.)+((3/8.)/12.))/2.;
 // double radius = (4+(5/12.)+((3/8.)/12.))/2.;
+
+
+// height 8.4166
+// table 2.666
+// diff 5.75
+
+
 int numTargets = 16;
+
+double tape_size = 5./12.;
+double space_size = 5.5/12.;
+
 // double tCenters[3] = {-M_PI/8., 0, M_PI/8.};
 // double tCenters[3] = {-(2*M_PI/numTargets),0,(2*M_PI/numTargets)};
-double tAngleL = (5/12.)/(radius)/(2.);
-// double tCenters[3] = {-(tAngleL*2+(5.5/12./(radius))),0,(tAngleL*2+(5.5/12./(radius)))};
-double tCenters[3] = {-0.4375,0,0.4375};
+
+double tAngleL = (tape_size/2.)/(radius);
+// double tAngleL = 0.093677;
+
+double angleBetween = (tape_size+space_size)/radius;
+double tCenters[3] = {-angleBetween,0,angleBetween};
+//double tCenters[3] = {-(tAngleL*2+(5.5/12./(radius))),0,(tAngleL*2+(5.5/12./(radius)))};
+// double tCenters[3] = {-M_PI/8.,0,M_PI/8.};
+//double tCenters[3] = {-0.4375,0,0.4375};
 double stripHeight = (2/12.);
 
 std::vector<cv::Point3f> mod3d;
@@ -57,6 +75,10 @@ void initSolvePnP() {
   axis3D.push_back(cv::Point3f(0, 0.5f, 0));
   axis3D.push_back(cv::Point3f(0, 0, -0.5f));
   axis3D.push_back(cv::Point3f(0, 0, 0));
+  axis3D.push_back(cv::Point3f(0.5f, 0, 0+radius));
+  axis3D.push_back(cv::Point3f(0, 0.5f, 0+radius));
+  axis3D.push_back(cv::Point3f(0, 0, -0.5f+radius));
+  axis3D.push_back(cv::Point3f(0, 0, 0+radius));
   axis3D.push_back(mod3d_center[0]);
   axis3D.push_back(mod3d_center[1]);
   axis3D.push_back(mod3d_center[2]);
@@ -110,6 +132,14 @@ bool pointsInBounds(std::vector<cv::Point2f> vec){
 }
 
 void findAnglePnP(cv::Mat& img) {
+  center = cv::Point2d(Var::WIDTH / 2., Var::HEIGHT / 2.);
+  size = cv::Size(Var::WIDTH, Var::HEIGHT);
+
+  camera_matrix = (cv::Mat_<double>(3, 3) << 
+		  size.width, 0, center.x,
+		  0, size.height, center.y,
+		  0, 0, 1);
+  // dist_coeffs = NULL;
   dist_coeffs = (cv::Mat_<double>(1, 5) << Var::dist_cof[0],Var::dist_cof[1],Var::dist_cof[2],Var::dist_cof[3],Var::dist_cof[4]);
   // dist_coeffs = NULL;
   std::vector<cv::Point2f> img2dpoints;
@@ -121,7 +151,7 @@ void findAnglePnP(cv::Mat& img) {
     printf("begin findTarget\n");
   }
 
-  // For 2022, placeholder
+  // For 2022
   for(int t = 0; t < 3; t++){
 
     std::vector<cv::Point2d> pts;
@@ -154,10 +184,17 @@ void findAnglePnP(cv::Mat& img) {
   timer.printTime(printTime," added pts");
 
   /* ---===debugging drawing===--- */
-  // for(int i=0; i < (int) mod3d.size(); i++) {
-  //   circle(img, img2dpoints[i], i, cv::Scalar(0,255,0), 2);
-  //   circle(img, cv::Point2d(mod3d[i].x*100+center.x,(-mod3d[i].y+8)*100+center.y), i, cv::Scalar(255,255,0), 2);
-  // }
+  /*
+  for(int i=0; i < (int) mod3d.size(); i++) {
+    cv::circle(img, img2dpoints[i], i, cv::Scalar(0,255,0), 2);
+    //printf("\n: x:%f\n",mod3d[i].x);
+    //printf(": y:%f\n",mod3d[i].y);
+    //printf(": z:%f\n",mod3d[i].z);
+    //cv::circle(img, cv::Point2d((mod3d[i].x)*100+center.x,(-mod3d[i].y)*100+center.y), i, cv::Scalar(255,255,255), 2);
+    //cv::circle(img, cv::Point2d((mod3d[i].z-2)*100+center.x,(-mod3d[i].y)*100+center.y*1.25), 1, cv::Scalar(255,255,0), 2);
+    //cv::circle(img, cv::Point2d((mod3d[i].x)*100+center.x,(mod3d[i].z-2)*100+center.y*1.5), i, cv::Scalar(255,255,0), 2);
+  }
+  */
 
   cv::Mat rvec;
   cv::Mat tvec;
@@ -205,30 +242,33 @@ void findAnglePnP(cv::Mat& img) {
   circle2D.clear();
   base2D.clear();
 
-  // std::vector<cv::Point2f> reprojectedPoints;
-  // cv::projectPoints(mod3d, rvec, tvec, camera_matrix, dist_coeffs, reprojectedPoints);
+  std::vector<cv::Point2f> reprojectedPoints;
+  cv::projectPoints(mod3d, rvec, tvec, camera_matrix, dist_coeffs, reprojectedPoints);
 
   cv::projectPoints(axis3D, rvec, tvec, camera_matrix, dist_coeffs, axis2D);
   cv::projectPoints(circle3D, rvec, tvec, camera_matrix, dist_coeffs, circle2D);
-  cv::projectPoints(base3D, rvec, tvec, camera_matrix, dist_coeffs,base2D);
+  //cv::projectPoints(base3D, rvec, tvec, camera_matrix, dist_coeffs,base2D);
   timer.printTime(printTime," projectPts");
 
   if(Switches::DRAW){
     if(pointsInBounds(axis2D)){
-      // for(int i = 0; i < reprojectedPoints.size(); i++)
-      //   cv::circle(img, reprojectedPoints[i], 3, cv::Scalar(255,255,255),cv::FILLED, cv::LINE_8);
+      for(int i = 0; i < reprojectedPoints.size(); i++)
+        cv::circle(img, reprojectedPoints[i], 3, cv::Scalar(255,255,255),cv::FILLED, cv::LINE_8);
 
       cv::line(img, axis2D[3], axis2D[2], cv::Scalar(255, 0, 0), 2); // z-blue
       cv::line(img, axis2D[3], axis2D[0], cv::Scalar(0, 0, 255), 2); // x-red
       cv::line(img, axis2D[3], axis2D[1], cv::Scalar(0, 255, 0), 2); // y-green
+      cv::line(img, axis2D[7], axis2D[6], cv::Scalar(255, 0, 0), 2); // z-blue
+      cv::line(img, axis2D[7], axis2D[4], cv::Scalar(0, 0, 255), 2); // x-red
+      cv::line(img, axis2D[7], axis2D[5], cv::Scalar(0, 255, 0), 2); // y-green
       for (size_t i = 0; i < axis2D.size(); i++)
         cv::circle(img, axis2D[i], 3, cv::Scalar(255, 0, 255), cv::FILLED, cv::LINE_8);
       
-      for(int i = 0; i < base2D.size(); i+=2){
-        cv::line(img, base2D[i], base2D[(i+2)%base2D.size()], cv::Scalar(0,100,100), 1);
-        cv::line(img, base2D[i], base2D[i+1], cv::Scalar(0,100,100), 1);
-        cv::line(img, base2D[i+1], base2D[(i+1+2)%base2D.size()], cv::Scalar(0,100,100), 1);
-      }
+      //for(int i = 0; i < base2D.size(); i+=2){
+      //  cv::line(img, base2D[i], base2D[(i+2)%base2D.size()], cv::Scalar(0,100,100), 1);
+      //  cv::line(img, base2D[i], base2D[i+1], cv::Scalar(0,100,100), 1);
+      //  cv::line(img, base2D[i+1], base2D[(i+1+2)%base2D.size()], cv::Scalar(0,100,100), 1);
+      //}
       for(int i = circle2D.size()/4+3; i < 3*circle2D.size()/4-3; i+=3){
         cv::line(img, circle2D[i], circle2D[(i+0+3)%circle2D.size()], cv::Scalar(0,100,100), 1);
         cv::line(img, circle2D[i], circle2D[i+1], cv::Scalar(0,100,100), 1);

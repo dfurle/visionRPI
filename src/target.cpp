@@ -33,7 +33,6 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
   bool printTime = false;
   std::vector<cv::Vec4i> hierarchy;
   std::vector<std::vector<cv::Point> > contours;
-  std::vector<cv::Point2f> corners;
   if (Switches::printTime == 2) {
     printTime = true;
     timer.reset();
@@ -45,14 +44,14 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
   cv::findContours(thresholded, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
   timer.printTime(printTime," finding Contours");
 
-  // for (std::vector<std::vector<cv::Point> >::iterator it = contours.begin(); it != contours.end();) {
-  //   if (it->size() < 100) { // min contour
-  //     it++;
-  //     // it = contours.erase(it);
-  //     // timer.printTime(printTime," removing contour");
-  //   } else
-  //     it++;
-  // }
+  for (auto it = contours.begin(); it != contours.end();) {
+    // printf("size: %f\n",cv::contourArea(*it));
+    if (cv::contourArea(*it) < 100) { // min contour
+      it = contours.erase(it);
+      timer.printTime(printTime," removing contour");
+    } else
+      it++;
+  }
 
   timer.printTime(printTime," filter:Perim");
   if (contours.size() > 50) {
@@ -81,9 +80,14 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
       minRect[i] = cv::minAreaRect(cv::Mat(contours[i]));
       cv::Point2f rect_points[4];
       minRect[i].points(rect_points);
-      std::copy(rect_points, rect_points + 4, Global::targets.back().points);
+      // std::copy(rect_points, rect_points + 4, Global::targets.back().points);
       Global::targets.back().rect = minRect[i];
-      Global::targets.back().boundingRect = minRect[i].boundingRect();
+      cv::Rect mRect = minRect[i].boundingRect();
+      mRect.x -= 3;
+      mRect.y -= 3;
+      mRect.height += 6;
+      mRect.width += 6;
+      Global::targets.back().boundingRect = mRect;
       timer.printTime(printTime, " findRect");
 
       bool flag = false;
@@ -96,43 +100,66 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
       if (flag) {
         if (printTime)
           printf("  SKIP: edge too close\n");
+        Global::targets.erase(Global::targets.end()-1);
         continue;
       }
 
+      /*
       if(Switches::DRAW){
         for (int j = 0; j < 4; j++) {
-          line(img, rect_points[j], rect_points[(j + 1) % 4], Global::BLUE, 1, 8);
-      }
+          cv::line(img, rect_points[j], rect_points[(j + 1) % 4], Global::BLUE, 1, 8);
+        }
         //circle(img, rect_points[j], 3, Global::RED, -1, 8, 0);
       }
+      */
       timer.printTime(printTime," drawRect");
 
       Global::targets.back().area = cv::contourArea(contours[i]);
 
       // Might be useless? maybe good for differentiating between lights? idk
       // =========
-      // // std::vector<std::vector<cv::Point> > hull(contours.size());
-      // <std::vector<cv::Point> hull;
-      // cv::convexHull(contours[i], hull);
-      // timer.printTime(printTime," convexHull");
-      // double ratioTest = cv::contourArea(hull) / cv::contourArea(contours[i]);
-      // // if (ratioTest < 3.25) { // TODO: before was 4 // for 2021
-      // if (abs(ratioTest - 1) > 0.1) { // TODO: before was 4
-      //   if (printTime){
-      //     printf("  SKIP: Area-Ratio: %.2f\n", ratioTest);
-	    //     printf("  x:%d, y:%d\n",contours[i][0].x,contours[i][0].y);
-	    //   }
-	    //   continue;
-      // }
-      // timer.printTime(printTime," ratioTest");
-
-
+      /*
+      std::vector<cv::Point> hull;
+      cv::convexHull(contours[i], hull);
+      timer.printTime(printTime," convexHull");
+      double ratioTest = cv::contourArea(hull) / cv::contourArea(contours[i]);
+      //if (ratioTest < 3.25) { // TODO: before was 4 // for 2021
+      if (abs(ratioTest - 1) > 0.1) { // TODO: before was 4
+        if (printTime){
+          printf("  SKIP: Area-Ratio: %.2f\n", ratioTest);
+	        printf("  x:%d, y:%d\n",contours[i][0].x,contours[i][0].y);
+	      }
+	      continue;
+      }
+      printf("hull: %d\n",hull.size());
+      for(cv::Point p : hull){
+        std::cout << p << std::endl;
+        cv::circle(img, p, 2, Global::RED, -1, 8, 0);
+      }
+      timer.printTime(printTime," ratioTest");
+      */
+      
       // Probably useless, good with complex targets;
       // ========
-      // std::vector<cv::Point> approx;
-      // approxPolyDP(hull[i], approx, cv::arcLength(hull[i], true) * 0.005, true); // 0.015
-      // timer.printTime(printTime," afterPoly");
-      // art.push_back(approx);
+      /*
+      std::vector<cv::Point> approx;
+      //cv::approxPolyDP(hull, approx, cv::arcLength(hull, true) * 0.005, true); // 0.015
+      //cv::approxPolyDP(hull, approx, 3, true);
+      cv::approxPolyDP(contours[i], approx, 5, true);
+      timer.printTime(printTime," afterPoly");
+      //printf("approx: %d\n",approx.size());
+      //for(cv::Point p : approx){
+        //cv::circle(img, p, 2, Global::RED, -1, 8, 0);
+        //std::cout << p << std::endl;
+      //}
+      art.push_back(approx);
+      //
+      if(approx.size() == 4){
+        for(int i = 0; i < 4; i++){
+          Global::targets.back().points[i] = approx[i];
+        }
+      }
+      */
 
       targetsFound++;
       timer.printTime(printTime," passed");
@@ -142,10 +169,56 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
     if (printTime)
       printf("end: %d found\n",targetsFound);
 
-    // for (unsigned int j = 0; j < art.size(); j++) {
-    //   // drawContours(workingImage, art, j, cv::Scalar(255));
-    //   // drawContours(original, art, j, Global::BLUE, 2);
-    // }
+    /*
+    if(Switches::DRAW){
+      for (int j = 0; j < 3; j++) {
+        drawContours(img, art, j, Global::BLUE, 2);
+      }
+      //circle(img, rect_points[j], 3, Global::RED, -1, 8, 0);
+    }
+    */
+
+    /*
+    for (unsigned int j = 0; j < art.size(); j++) {
+      drawContours(img, art, j, cv::Scalar(255));
+      //drawContours(img, art, j, Global::BLUE, 2);
+    }
+    */
+
+
+    // Useful for a single target, here it's many rectangles which the previous algorithm already finds
+    // ====================
+    ///*
+    double qualityLevel     = 0.05;
+    double minDistance      = 5;
+    int    blockSize        = 3;
+    bool   useHarisDetector = true;
+    double k                = 0.04;
+    int    maxCorners       = 4;
+    cv::Mat workingImageSq[3];
+    thresholded(Global::targets[0].boundingRect).copyTo(workingImageSq[0]);
+    thresholded(Global::targets[1].boundingRect).copyTo(workingImageSq[1]);
+    thresholded(Global::targets[2].boundingRect).copyTo(workingImageSq[2]);
+
+    timer.printTime(printTime," drawMat");
+    if (targetsFound == 3) {
+      for(int mi = 0; mi < 3; mi++){
+        std::vector<cv::Point> corners;
+        cv::goodFeaturesToTrack(workingImageSq[mi], corners, maxCorners, qualityLevel, minDistance, cv::Mat(), blockSize, useHarisDetector, k);
+        // printf("corners: %d\n",corners.size());
+        if(corners.size() == 4){
+          for(int i = 0; i < 4; i++){
+            // std::cout << corners[i] << std::endl;
+            corners[i].x = corners[i].x + Global::targets[mi].boundingRect.x;
+            corners[i].y = corners[i].y + Global::targets[mi].boundingRect.y;
+            Global::targets[mi].points[i] = corners[i];
+            cv::circle(img, corners[i], 2, Global::RED, -1, 8, 0);
+          }
+        }
+      }
+      timer.printTime(printTime," goodFeaturesTrack");
+    }
+    //*/
     if(targetsFound >= 3){
       std::sort(Global::targets.begin(), Global::targets.end(), 
       [ ](const Target& lhs, const Target& rhs){
@@ -160,33 +233,6 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
     } else {
       return -1;
     }
-
-
-    // Useful for a single target, here it's many rectangles which the previous algorithm already finds
-    // ====================
-    // double qualityLevel     = 0.05;
-    // double minDistance      = 30;
-    // int    blockSize        = 3;
-    // bool   useHarisDetector = true;
-    // double k                = 0.04;
-    // int    maxCorners       = 4;
-    // if (num != -1)
-    //   workingImage(targets[num].boundingRect).copyTo(workingImageSq);
-    // timer.printTime(printTime," drawMat");
-    // if (targetsFound == 1) {
-    //   cv::goodFeaturesToTrack(workingImageSq, corners, Var::maxCorners, Var::qualityLevel, Var::minDistance, cv::Mat(), Var::blockSize, Var::useHarisDetector, Var::k);
-    //   for (unsigned int i = 0; i < corners.size(); i++) {
-    //     corners[i].x = corners[i].x + targets[num].boundingRect.x;
-    //     corners[i].y = corners[i].y + targets[num].boundingRect.y;
-    //   }
-    //   timer.printTime(printTime," goodFeaturesTrack");
-    //   // OffSetX = 320-(corners[0].x+corners[1].x+corners[2].x+corners[3].x)/4.;
-    //   Global::target.corners.clear();
-    //   Global::target.corners.push_back(corners[0]);
-    //   Global::target.corners.push_back(corners[1]);
-    //   Global::target.corners.push_back(corners[2]);
-    //   Global::target.corners.push_back(corners[3]);
-    // }
 
   }
 

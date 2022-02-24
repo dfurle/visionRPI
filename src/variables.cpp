@@ -11,17 +11,14 @@ int maxB = 120; // 241
 
 int          WIDTH          = 640; // 1920 //1280 //640
 int          HEIGHT         = 480; // 1080 //720  //480
-//int          WIDTH          = 1280; // 1920 //1280 //640
-//int          HEIGHT         = 720; // 1080 //720  //480
+// int          WIDTH          = 1280; // 1920 //1280 //640
+// int          HEIGHT         = 720; // 1080 //720  //480
 int          EXPOSURE       = 3; // edit in threads.cpp for now
 unsigned int waitAfterFrame = 1000;
 
 double dist_cof[5];
 
 double IRLOffset = 0.;
-
-int waitSeconds = 8;
-int numImgs = 4;
 } // namespace Var
 
 namespace Global {

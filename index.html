@@ -30,7 +30,7 @@
 	<input type="button" id="distortionbutton" value="View Distortion" onClick="updateDistortion()"></input>
 	<br>
 
-	<div class="slidecontainer" id="RGB" style="display: block">
+	<div class="slidecontainer" id="RGB">
 	<div class="label">RGB</div>
 		minR<input type="range" min="0" max="255" value="50" class="slider" id="minR"><output id="minRo" width=40px>50</output><br>
 		maxR<input type="range" min="0" max="255" value="255" class="slider" id="maxR"><output id="maxRo" width=40px>255</output><br>
@@ -52,6 +52,8 @@
 		<input id="d3" type="number" min="-1" max="1" step="0.01" value="0"></output><br>
 		<label for="d4">d4</label>
 		<input id="d4" type="number" min="-1" max="1" step="0.01" value="0"><br>
+    <label for="res">High-Res</label>
+    <input id="res" type="checkbox", values="1"><br>
 	</div>
 	<div style="text-align: top">
 		<img src="video_stream1" width="80%">
@@ -97,11 +99,7 @@
       $("#d2").on("input", onInput);
       $("#d3").on("input", onInput);
       $("#d4").on("input", onInput);
-      //$("#d0").on("change", onInput);
-      //$("#d1").on("change", onInput);
-      //$("#d2").on("change", onInput);
-      //$("#d3").on("change", onInput);
-      //$("#d4").on("change", onInput);
+      $('#res').click(onInput)
 
       function onInput(e) {
         // TODO: simplify this mess
@@ -117,6 +115,7 @@
         var d2val = $("#d2").val();
         var d3val = $("#d3").val();
         var d4val = $("#d4").val();
+        var resval = $("#res").prop("checked") ? 1 : 0;
         $("#minRo").html(minRval);
         $("#maxRo").html(maxRval);
         $("#minGo").html(minGval);
@@ -153,6 +152,8 @@
         data += d2val + ",";
         data += d3val + ",";
         data += d4val;
+        data += "\n";
+        data += resval;
         console.log(data);
 
 
@@ -189,6 +190,7 @@
         $("#d2").val(data[8]);
         $("#d3").val(data[9]);
         $("#d4").val(data[10]);
+        $("#res").prop('checked', Boolean(parseInt(data[11])));
 
         $("#minRo").html(data[0]);
         $("#maxRo").html(data[1]);

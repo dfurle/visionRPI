@@ -120,27 +120,31 @@ void* VideoCap(void* args) {
       usleep(Var::waitAfterFrame);
     }
   } else {
-    Global::FrameHeight = 480;
-    Global::FrameWidth = 640;
+    Global::FrameHeight = Var::HEIGHT;
+    Global::FrameWidth = Var::WIDTH;
     int num = 0;
     while(true){
-      std::string imgText = "../2022/BG";
-      imgText.append(std::to_string(num));
+      std::string imgText;
+      if(Var::WIDTH == 1280)
+        imgText = "../2022-720p/BG";
+      else
+        imgText = "../2022/BG";
+      imgText.append(std::to_string(num++));
       imgText.append(".jpeg");
-      if(++num >= Var::numImgs){
-        num = 0;
-      }
 
       Global::muteFrame.lock();
       printf("loading %s\n",imgText.c_str());
       Global::frame = cv::imread(imgText);
       if(Global::frame.empty()){
         printf("ERROR LOADING ABOVE FILE\n");
+        num = 0;
+        Global::muteFrame.unlock();
+        continue;
       }
-      // Global::newFrame = true;
       Global::muteFrame.unlock();
       long total = 0;
-      while(Var::waitSeconds * long(1000000) > total){
+      int waitSeconds = 4;
+      while(waitSeconds * 1000000 > total){
         Global::muteFrame.lock();
         Global::newFrame = true;
         Global::muteFrame.unlock();

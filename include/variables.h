@@ -64,9 +64,6 @@ extern size_t avSize;
 
 extern double IRLOffset;
 
-// extern unsigned int videoPort;
-extern int waitSeconds;
-extern int numImgs;
 } // namespace Var
 
 class Target {

@@ -101,6 +101,11 @@ int Client::handleGET(std::vector<std::string> header){
     for(int i = 0; i < 5; i++){
       wss << Var::dist_cof[i] << ',';
     }
+    if(Var::WIDTH == 1280){
+      wss << "1";
+    } else {
+      wss << "0";
+    }
     sendAll("text/plain",str::ss_to_vec(wss));
   } else if(str::contains(req,"/video_stream")){
     std::stringstream ssheader;
@@ -136,7 +141,7 @@ void Client::handlePUT(std::vector<std::string> header, std::vector<std::string>
   int vals[6];
   double dvals[5];
   sendAll("text/plain",std::vector<char>(),true);
-  if(content.size() != 2){
+  if(content.size() != 3){
     return;
   }
   std::vector<std::string> rgb_vals = str::split(content[0],",");
@@ -158,6 +163,15 @@ void Client::handlePUT(std::vector<std::string> header, std::vector<std::string>
   Var::dist_cof[2] = dvals[2];
   Var::dist_cof[3] = dvals[3];
   Var::dist_cof[4] = dvals[4];
+  if(content[2] == "1"){
+    Var::WIDTH = 1280;
+    Var::HEIGHT = 720;
+  } else {
+    Var::WIDTH = 640;
+    Var::HEIGHT = 480;
+  }
+  Global::FrameWidth = Var::WIDTH;
+  Global::FrameHeight = Var::HEIGHT;
 }
 
 std::vector<char> Client::getReqFile(std::string fname){
