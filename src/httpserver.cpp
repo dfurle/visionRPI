@@ -56,6 +56,7 @@ void Client::handleRequest(std::string req){
   // OR (less processing)
   // action = substring(header,0,header.find(' '));
 
+
   if(str::cmp(action,"GET")){
     printf("---===RECEIVED===---\n");
     std::cout << req << std::endl;
@@ -64,16 +65,13 @@ void Client::handleRequest(std::string req){
     }
   } else if(str::cmp(action,"PUT")){
     std::vector<std::string> content = str::split(cstr,"\n");
-    for(std::string s : content){
-      std::cout << s << std::endl;
-    }
     int contentLength = std::stoi(str::getParam(header,"Content-Length"));
     // printf("%d byte message\n",contentLength);
     if(content.size() == 0){
       // printf("reading again\n");
       // read again, contentLength bytes
-      char from_client[1000];
-      read(socket, from_client, 1000);
+      char from_client[contentLength];
+      read(socket, from_client, contentLength);
       content = str::split(std::string(from_client),"\n");
     }
     handlePUT(header,content);
@@ -129,6 +127,10 @@ int Client::handleGET(std::vector<std::string> header){
       printf("VIDEO STREAM TWO PUSH %d\n",socket);
       Global::thrSocket.push_back(socket);
     }
+    if(str::cmp(req,"/video_stream3")){
+      printf("VIDEO STREAM THREE PUSH %d\n",socket);
+      Global::rPosSocket.push_back(socket);
+    }
   }
   if(str::contains(req,"/video_stream")){
     return 0;
@@ -163,7 +165,8 @@ void Client::handlePUT(std::vector<std::string> header, std::vector<std::string>
   Var::dist_cof[2] = dvals[2];
   Var::dist_cof[3] = dvals[3];
   Var::dist_cof[4] = dvals[4];
-  if(content[2] == "1"){
+  int resval = std::stoi(content[2]);
+  if(resval){
     Var::WIDTH = 1280;
     Var::HEIGHT = 720;
   } else {
@@ -276,6 +279,7 @@ void sendIMG(std::vector<uchar>& imgBuf, int socket){
 void* stream_thread(void* arg){
   std::vector<uchar> imgBuffer;
   std::vector<uchar> threshBuffer;
+  std::vector<uchar> rPosBuffer;
   while(1){
     if(Global::imgC.empty()){
       usleep(33000);
@@ -287,6 +291,7 @@ void* stream_thread(void* arg){
 
     cv::imencode(".jpeg", Global::imgC,imgBuffer);
     cv::imencode(".jpeg", Global::thresholdedC,threshBuffer);
+    cv::imencode(".jpeg", Global::rPosC,rPosBuffer);
 
     Global::muteImg.lock();
     Global::httpStatus = 0;
@@ -300,6 +305,11 @@ void* stream_thread(void* arg){
     if(!Global::thrSocket.empty()){
       for(int s : Global::thrSocket){
         sendIMG(threshBuffer,s);
+      }
+    }
+    if(!Global::rPosSocket.empty()){
+      for(int s : Global::rPosSocket){
+        sendIMG(rPosBuffer,s);
       }
     }
     usleep(100000);

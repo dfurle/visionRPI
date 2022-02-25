@@ -128,12 +128,13 @@ extern int              buttonPress;
 extern bool             videoError;
 extern int              videoSocket;
 extern const cv::Scalar BLUE, RED, YELLOW, GREEN;
-// extern int sockets[2];
+
 extern std::vector<int> imgSocket;
 extern std::vector<int> thrSocket;
+extern std::vector<int> rPosSocket;
 
 extern cv::Mat frame;
-extern cv::Mat imgC, thresholdedC;
+extern cv::Mat imgC, thresholdedC, rPosC;
 
 extern int httpStatus;
 
@@ -167,7 +168,7 @@ extern int          cameraInput;
 // In target.cpp
 bool startThread(std::string name, void* params = NULL);
 void initSolvePnP();
-void findAnglePnP(cv::Mat& img);
+void findAnglePnP(cv::Mat& img, cv::Mat& rPos);
 
 // In variables.cpp
 namespace str{

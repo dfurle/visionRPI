@@ -344,6 +344,7 @@ int main(int argc, const char* argv[]) {
   // }
 
   cv::Mat img, thresholded;
+  cv::Mat rPos(cv::Size(500,1000),CV_8UC3);
   std::vector<Position> posA;
   int checkSum;
 
@@ -401,7 +402,7 @@ int main(int argc, const char* argv[]) {
 
       if (targetsFound >= 3) {
         /* ---=== Getting Position and Rotation ===--- */
-        findAnglePnP(img);
+        findAnglePnP(img,rPos);
         timer.printTime(printTime," solvePnP");
         posA.push_back(Global::position);
         if (posA.size() > 10)
@@ -434,6 +435,7 @@ int main(int argc, const char* argv[]) {
         if(Global::httpStatus == 0){
           img.copyTo(Global::imgC);
           thresholded.copyTo(Global::thresholdedC);
+          rPos.copyTo(Global::rPosC);
         }
         Global::muteImg.unlock();
       }

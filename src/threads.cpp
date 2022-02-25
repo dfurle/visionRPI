@@ -133,10 +133,10 @@ void* VideoCap(void* args) {
       imgText.append(".jpeg");
 
       Global::muteFrame.lock();
-      printf("loading %s\n",imgText.c_str());
+      // printf("loading %s\n",imgText.c_str());
       Global::frame = cv::imread(imgText);
       if(Global::frame.empty()){
-        printf("ERROR LOADING ABOVE FILE\n");
+        // printf("ERROR LOADING ABOVE FILE\n");
         num = 0;
         Global::muteFrame.unlock();
         continue;

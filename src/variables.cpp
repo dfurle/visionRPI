@@ -33,10 +33,11 @@ int              videoSocket = 0;
 const cv::Scalar BLUE = cv::Scalar(255, 0, 0), RED = cv::Scalar(0, 0, 255), YELLOW = cv::Scalar(0, 255, 255), GREEN = cv::Scalar(0, 255, 0);
 
 cv::Mat frame;
-cv::Mat imgC, thresholdedC;
+cv::Mat imgC, thresholdedC, rPosC;
 
 std::vector<int> imgSocket;
 std::vector<int> thrSocket;
+std::vector<int> rPosSocket;
 
 int httpStatus = 0;
 

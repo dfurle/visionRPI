@@ -3,32 +3,18 @@
 #define PI 3.141592
 
 double radius = 2.2239583;
-//double radius = (4+(5/12.)+((3/8.)/12.))/2.;
-// double radius = (4+(5/12.)+((3/8.)/12.))/2.;
-
-
-// height 8.4166
-// table 2.666
-// diff 5.75
-
 
 int numTargets = 16;
 
-double tape_size = 5./12.;
-double space_size = 5.5/12.;
-
-// double tCenters[3] = {-M_PI/8., 0, M_PI/8.};
-// double tCenters[3] = {-(2*M_PI/numTargets),0,(2*M_PI/numTargets)};
+double tape_size  = 5.0  /12.;
+double space_size = 5.5 /12.;
 
 double tAngleL = (tape_size/2.)/(radius);
-// double tAngleL = 0.093677;
 
 double angleBetween = (tape_size+space_size)/radius;
 double tCenters[3] = {-angleBetween,0,angleBetween};
-//double tCenters[3] = {-(tAngleL*2+(5.5/12./(radius))),0,(tAngleL*2+(5.5/12./(radius)))};
-// double tCenters[3] = {-M_PI/8.,0,M_PI/8.};
-//double tCenters[3] = {-0.4375,0,0.4375};
-double stripHeight = (2/12.);
+
+double stripHeight = (2.2/12.);
 
 std::vector<cv::Point3f> mod3d;
 std::vector<cv::Point3f> mod3d_center;
@@ -62,6 +48,26 @@ void initSolvePnP() {
     mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]+tAngleL),0,           radius*cos(tCenters[i]+tAngleL)));
     mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]+tAngleL),-stripHeight,radius*cos(tCenters[i]+tAngleL)));
   }
+
+  // double setback = 2;
+  // double mult = 0.5;
+  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[0]-tAngleL),0,           radius*cos(tCenters[0]-tAngleL)-(setback/12.*mult)));
+  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[0]-tAngleL),-stripHeight,radius*cos(tCenters[0]-tAngleL)-(setback/12.*mult)));
+  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[0]+tAngleL),0,           radius*cos(tCenters[0]+tAngleL)-(setback/12.)));
+  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[0]+tAngleL),-stripHeight,radius*cos(tCenters[0]+tAngleL)-(setback/12.)));
+
+  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[1]-tAngleL),0,           radius*cos(tCenters[1]-tAngleL)));
+  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[1]-tAngleL),-stripHeight,radius*cos(tCenters[1]-tAngleL)));
+  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[1]+tAngleL),0,           radius*cos(tCenters[1]+tAngleL)));
+  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[1]+tAngleL),-stripHeight,radius*cos(tCenters[1]+tAngleL)));
+
+  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[2]-tAngleL),0,           radius*cos(tCenters[2]-tAngleL)-(setback/12.)));
+  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[2]-tAngleL),-stripHeight,radius*cos(tCenters[2]-tAngleL)-(setback/12.)));
+  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[2]+tAngleL),0,           radius*cos(tCenters[2]+tAngleL)-(setback/12.*mult)));
+  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[2]+tAngleL),-stripHeight,radius*cos(tCenters[2]+tAngleL)-(setback/12.*mult)));
+
+
+
 
   mod3d_center.clear();
   for(int i = 0; i < 3; i++){
@@ -131,7 +137,7 @@ bool pointsInBounds(std::vector<cv::Point2f> vec){
   return true;
 }
 
-void findAnglePnP(cv::Mat& img) {
+void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   center = cv::Point2d(Var::WIDTH / 2., Var::HEIGHT / 2.);
   size = cv::Size(Var::WIDTH, Var::HEIGHT);
 
@@ -139,6 +145,9 @@ void findAnglePnP(cv::Mat& img) {
 		  size.width, 0, center.x,
 		  0, size.height, center.y,
 		  0, 0, 1);
+
+  // std::cout << "cam: " << std::endl;
+  // std::cout << camera_matrix << std::endl;
   // dist_coeffs = NULL;
   dist_coeffs = (cv::Mat_<double>(1, 5) << Var::dist_cof[0],Var::dist_cof[1],Var::dist_cof[2],Var::dist_cof[3],Var::dist_cof[4]);
   // dist_coeffs = NULL;
@@ -212,15 +221,34 @@ void findAnglePnP(cv::Mat& img) {
   // 2022
   // transvec is the transposing vector of target, x=0 y=1 z=2; x=dir y=height z=depth; rotation of robot matters
   double* transvec = tvec.ptr<double>();
-  // printf("tv: %5.2f %5.2f %5.2f\n",transvec[0],transvec[1],transvec[2]);
+  printf("tv: %5.2f %5.2f %5.2f\n",transvec[0],transvec[1],transvec[2]);
 
   cv::Mat tmp = cv::Mat(-rMat.t() * tvec);
   cv::Point3d xWorld = cv::Point3d(tmp.at<double>(0), tmp.at<double>(1), tmp.at<double>(2));
 
-  // printf("wx: %5.2f %5.2f %5.2f\n",xWorld.x,xWorld.y,xWorld.z);
+  printf("wx: %5.2f %5.2f %5.2f\n",xWorld.x,xWorld.y,xWorld.z);
   // transvec[0] -= Var::IRLOffset;
   double distance = sqrt(xWorld.x * xWorld.x + xWorld.z * xWorld.z);
   double robotAngle = atan2(transvec[0], transvec[2]);
+
+
+  cv::Size res(500,1000);
+  rPos.setTo(cv::Scalar(0,0,0));
+  double relative_size = 100./radius;
+  cv::Point center(res.width/2.,0);
+  cv::circle(rPos,center,radius*relative_size,cv::Scalar(255,255,255),0.08*relative_size);
+  cv::line(rPos, center, cv::Point(center.x,res.height), cv::Scalar(255,255,255));
+  for(int i = 0; i < 18; i++){
+    if(i%5==0)
+      cv::line(rPos, cv::Point(center.x-(center.x*0.05),center.y+(i*relative_size)), cv::Point(center.x+(center.x*0.05),center.y+(i*relative_size)), cv::Scalar(255,255,0),0.07*relative_size);
+    else
+      cv::line(rPos, cv::Point(center.x-(center.x*0.05),center.y+(i*relative_size)), cv::Point(center.x+(center.x*0.05),center.y+(i*relative_size)), cv::Scalar(255,255,255),0.09*relative_size);
+  }
+  cv::Point robot_rPos(center.x+(xWorld.x*relative_size),center.y+xWorld.z*relative_size);
+  cv::circle(rPos,robot_rPos, 0.5*relative_size, cv::Scalar(0,0,255),cv::FILLED);
+  double alpha = atan2(xWorld.x, xWorld.z) - robotAngle;
+  cv::line(rPos,robot_rPos,cv::Point(robot_rPos.x+(relative_size*sin(alpha)),robot_rPos.y-(relative_size*cos(alpha))), cv::Scalar(120,120,255),0.07*relative_size);
+  cv::line(rPos,robot_rPos,cv::Point(robot_rPos.x+(15*relative_size*sin(alpha)),robot_rPos.y-(15*relative_size*cos(alpha))), cv::Scalar(120,120,255),0.04*relative_size);
 
   //distance += (1-0.904)*distance - 0.433;
   //distance += (1-0.992)*distance - 0.0327;
@@ -231,10 +259,15 @@ void findAnglePnP(cv::Mat& img) {
   Global::mutePos.unlock();
   timer.printTime(printTime," maths");
 
-  std::stringstream stream;
-  stream << std::fixed << std::setprecision(2) << distance << "ft";
-  std::string s = stream.str();
-  cv::putText(img,s,cv::Point(Global::FrameWidth*0.75,Global::FrameHeight*0.95),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
+  std::stringstream streamDist;
+  streamDist << std::fixed << std::setprecision(2) << distance << "ft";
+  std::string sD = streamDist.str();
+
+  std::stringstream streamAng;
+  streamAng << std::fixed << std::setprecision(2) << robotAngle * (180./PI) << "deg";
+  std::string sA = streamAng.str();
+  cv::putText(rPos,sD,cv::Point(res.width*0.75,res.height*0.90),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
+  cv::putText(rPos,sA,cv::Point(res.width*0.65,res.height*0.95),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
 
   // TODO AXIS
 
