@@ -142,9 +142,9 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   size = cv::Size(Var::WIDTH, Var::HEIGHT);
 
   camera_matrix = (cv::Mat_<double>(3, 3) << 
-		  size.width, 0, center.x,
-		  0, size.height, center.y,
-		  0, 0, 1);
+      size.width, 0, center.x,
+      0, size.height, center.y,
+      0, 0, 1);
 
   // std::cout << "cam: " << std::endl;
   // std::cout << camera_matrix << std::endl;
@@ -221,18 +221,18 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   // 2022
   // transvec is the transposing vector of target, x=0 y=1 z=2; x=dir y=height z=depth; rotation of robot matters
   double* transvec = tvec.ptr<double>();
-  printf("tv: %5.2f %5.2f %5.2f\n",transvec[0],transvec[1],transvec[2]);
+  // printf("tv: %5.2f %5.2f %5.2f\n",transvec[0],transvec[1],transvec[2]);
 
   cv::Mat tmp = cv::Mat(-rMat.t() * tvec);
   cv::Point3d xWorld = cv::Point3d(tmp.at<double>(0), tmp.at<double>(1), tmp.at<double>(2));
 
-  printf("wx: %5.2f %5.2f %5.2f\n",xWorld.x,xWorld.y,xWorld.z);
+  // printf("wx: %5.2f %5.2f %5.2f\n",xWorld.x,xWorld.y,xWorld.z);
   // transvec[0] -= Var::IRLOffset;
   double distance = sqrt(xWorld.x * xWorld.x + xWorld.z * xWorld.z);
   double robotAngle = atan2(transvec[0], transvec[2]);
 
 
-  cv::Size res(500,1000);
+  cv::Size res(250,1000);
   rPos.setTo(cv::Scalar(0,0,0));
   double relative_size = 100./radius;
   cv::Point center(res.width/2.,0);
@@ -246,7 +246,7 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   }
   cv::Point robot_rPos(center.x+(xWorld.x*relative_size),center.y+xWorld.z*relative_size);
   cv::circle(rPos,robot_rPos, 0.5*relative_size, cv::Scalar(0,0,255),cv::FILLED);
-  double alpha = atan2(xWorld.x, xWorld.z) - robotAngle;
+  double alpha = robotAngle - atan2(xWorld.x, xWorld.z);
   cv::line(rPos,robot_rPos,cv::Point(robot_rPos.x+(relative_size*sin(alpha)),robot_rPos.y-(relative_size*cos(alpha))), cv::Scalar(120,120,255),0.07*relative_size);
   cv::line(rPos,robot_rPos,cv::Point(robot_rPos.x+(15*relative_size*sin(alpha)),robot_rPos.y-(15*relative_size*cos(alpha))), cv::Scalar(120,120,255),0.04*relative_size);
 
@@ -266,8 +266,8 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   std::stringstream streamAng;
   streamAng << std::fixed << std::setprecision(2) << robotAngle * (180./PI) << "deg";
   std::string sA = streamAng.str();
-  cv::putText(rPos,sD,cv::Point(res.width*0.75,res.height*0.90),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
-  cv::putText(rPos,sA,cv::Point(res.width*0.65,res.height*0.95),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
+  cv::putText(rPos,sD,cv::Point(res.width*0.6,res.height*0.94),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
+  cv::putText(rPos,sA,cv::Point(res.width*0.5,res.height*0.98),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
 
   // TODO AXIS
 

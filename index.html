@@ -1,213 +1,138 @@
 <html>
 <head>
-
  <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
  <!-- <script type="text/javascript" src="jquery.js"></script> -->
-<script async src='/cdn-cgi/bm/cv/669835187/api.js'></script></head>
+</head>
 
 <body>
-	<style>
-		div.slidecontainer {
-			border-style: solid;
-			border-color: black;
-			border-radius: 5px;
-			background-color: #DDDDDD;
-			margin: auto;
-			width: 25%;
-			padding: 10px;
-			text-align: center;
-			display: none;
-		}
-	
-		div.label {
-			border-bottom-style: solid;
-			text-align: center;
-			font-size: 30;
-		}
-	</style>
-  
-	<input type="button" id="rgbbutton" value="Hide RGB" onClick="updateRGB()"></input>
-	<input type="button" id="distortionbutton" value="View Distortion" onClick="updateDistortion()"></input>
-	<br>
-
-	<div class="slidecontainer" id="RGB">
-	<div class="label">RGB</div>
-		minR<input type="range" min="0" max="255" value="50" class="slider" id="minR"><output id="minRo" width=40px>50</output><br>
-		maxR<input type="range" min="0" max="255" value="255" class="slider" id="maxR"><output id="maxRo" width=40px>255</output><br>
-		minG<input type="range" min="0" max="255" value="50" class="slider" id="minG"><output id="minGo" width=40px>50</output><br>
-		maxG<input type="range" min="0" max="255" value="255" class="slider" id="maxG"><output id="maxGo" width=40px>255</output><br>
-		minB<input type="range" min="0" max="255" value="50" class="slider" id="minB"><output id="minBo" width=40px>50</output><br>
-		maxB<input type="range" min="0" max="255" value="255" class="slider" id="maxB"><output id="maxBo" width=40px>255</output><br>
-	</div>
-	<br>
-	<div class="slidecontainer" id="distortion">
-		<div class="label">Distortion</div>
-		<label for="d0">d0</label>
-		<input id="d0" type="number" min="-1" max="1" step="0.01" value="0"></output><br>
-		<label for="d1">d1</label>
-		<input id="d1" type="number" min="-1" max="1" step="0.01" value="0"></output><br>
-		<label for="d2">d2</label>
-		<input id="d2" type="number" min="-1" max="1" step="0.01" value="0"></output><br>
-		<label for="d3">d3</label>
-		<input id="d3" type="number" min="-1" max="1" step="0.01" value="0"></output><br>
-		<label for="d4">d4</label>
-		<input id="d4" type="number" min="-1" max="1" step="0.01" value="0"><br>
-    <label for="res">High-Res</label>
-    <input id="res" type="checkbox"><br>
-	</div>
-	<div style="text-align: top">
-		<img src="video_stream1" width="50%">
-		<img src="video_stream3" width="20%">
+  <div id="left" style="width: 15%; float: left; border: solid black 3px; overflow: scroll; height: 100%; padding: 2px">
+    <div class="slidecontainer">
+      <div class="label" id="rgb">RGB</div>
+      minR<input type="range" min="0" max="255" value="50" class="slider" id="minR"><output id="minRo" width=40px>50</output><br>
+      maxR<input type="range" min="0" max="255" value="255" class="slider" id="maxR"><output id="maxRo" width=40px>255</output><br>
+      minG<input type="range" min="0" max="255" value="50" class="slider" id="minG"><output id="minGo" width=40px>50</output><br>
+      maxG<input type="range" min="0" max="255" value="255" class="slider" id="maxG"><output id="maxGo" width=40px>255</output><br>
+      minB<input type="range" min="0" max="255" value="50" class="slider" id="minB"><output id="minBo" width=40px>50</output><br>
+      maxB<input type="range" min="0" max="255" value="255" class="slider" id="maxB"><output id="maxBo" width=40px>255</output>
+    </div>
     <br>
-		<img src="video_stream2" width="80%">
-	</div>
+    <div class="slidecontainer">
+      <div class="label" id="distortion">Distortion</div>
+      <button id="clear" type="button">Clear</button><br>
+      d0<input id="d0" type="number" min="-1" max="1" step="0.01" value="0"><br>
+      d1<input id="d1" type="number" min="-1" max="1" step="0.01" value="0"><br>
+      d2<input id="d2" type="number" min="-1" max="1" step="0.01" value="0"><br>
+      d3<input id="d3" type="number" min="-1" max="1" step="0.01" value="0"><br>
+      d4<input id="d4" type="number" min="-1" max="1" step="0.01" value="0"><br>
+      High-Res<input id="res" type="checkbox">
+    </div>
+  </div>
+  <div id="right" style="float: left; border: solid black 3px; overflow: scroll; height: 100%;">
+    <div id="images" style="float: left; border: solid red 2px;">
+      <div><img id="video_stream1" src="video_stream1" style="float: left; width: 100%"></div>
+      <br>
+      <div><img id="video_stream2" src="video_stream2" style="float: left; width: 100%"></div>
+    </div>
+    <div id="rpos" style="float: left; border: solid red 2px;">
+      <img id="video_stream3" src="video_stream3" style="height: 100%">
+    </div>
+  </div>
+</body>
 
-	<script>
-	
-		function updateRGB() {
-			if (document.getElementById("RGB").style.display != "block") {
-				document.getElementById("RGB").style.display = "block";
-				document.getElementById("rgbbutton").value = "Hide RGB";
-			} else {
-				document.getElementById("RGB").style.display = "none";
-				document.getElementById("rgbbutton").value = "Show RGB";
-			}
-		}
-		function updateDistortion() {
-			if (document.getElementById("distortion").style.display != "block") {
-				document.getElementById("distortion").style.display = "block";
-				document.getElementById("distortionbutton").value = "Hide Distortion";
-			} else {
-				document.getElementById("distortion").style.display = "none";
-				document.getElementById("distortionbutton").value = "Show Distortion";
-			}
-		}
-	
-	</script>
+<script type="text/javascript">
+  $(document).ready(function() {
 
-  <script type="text/javascript">
-    $(document).ready(function() {
+    $("#right").outerWidth($("body").width() - $("#left").outerWidth(true) - 1);
+    var maxWidth = $("#right").width();
+    
+    setInterval(function(){
+      $("#rpos").height($("#images").height());
+      $("#rpos").width($("#video_stream3").width());
+      let widthSum = $("#images").outerWidth()+$("#rpos").outerWidth();
+      $("#images").outerWidth($("#images").outerWidth()/widthSum*maxWidth);
+      $("#rpos").outerWidth($("#rpos").outerWidth()/widthSum*maxWidth);
+    }, 1000);
 
-      $("#minR").on("input", onInput);
-      $("#maxR").on("input", onInput);
-      $("#minG").on("input", onInput);
-      $("#maxG").on("input", onInput);
-      $("#minB").on("input", onInput);
-      $("#maxB").on("input", onInput);
-
-      $("#d0").on("input", onInput);
-      $("#d1").on("input", onInput);
-      $("#d2").on("input", onInput);
-      $("#d3").on("input", onInput);
-      $("#d4").on("input", onInput);
-      $('#res').click(onInput)
-
-      function onInput(e) {
-        // TODO: simplify this mess
-        // maybe also make max move with min and min with max if overlap so easier to notice?
-        var minRval = $("#minR").val();
-        var maxRval = $("#maxR").val();
-        var minGval = $("#minG").val();
-        var maxGval = $("#maxG").val();
-        var minBval = $("#minB").val();
-        var maxBval = $("#maxB").val();
-        var d0val = $("#d0").val();
-        var d1val = $("#d1").val();
-        var d2val = $("#d2").val();
-        var d3val = $("#d3").val();
-        var d4val = $("#d4").val();
-        var resval = $("#res").prop("checked") ? "1" : "0";
-        $("#minRo").html(minRval);
-        $("#maxRo").html(maxRval);
-        $("#minGo").html(minGval);
-        $("#maxGo").html(maxGval);
-        $("#minBo").html(minBval);
-        $("#maxBo").html(maxBval);
-        //$("#d0o").html(d0val);
-        //$("#d1o").html(d1val);
-        //$("#d2o").html(d2val);
-        //$("#d3o").html(d3val);
-        //$("#d4o").html(d4val);
-
-        if(d0val == "")
-          d0val = 0;
-        if(d1val == "")
-          d1val = 0;
-        if(d2val == "")
-          d2val = 0;
-        if(d3val == "")
-          d3val = 0;
-        if(d4val == "")
-          d4val = 0;
-
-        let data = ""
-        data += minRval + ",";
-        data += maxRval + ",";
-        data += minGval + ",";
-        data += maxGval + ",";
-        data += minBval + ",";
-        data += maxBval;
-        data += "\n";
-        data += d0val + ",";
-        data += d1val + ",";
-        data += d2val + ",";
-        data += d3val + ",";
-        data += d4val;
-        data += "\n";
-        data += resval;
-        console.log(data);
-
-
-        $.ajax({
-          type: 'PUT',
-          url: 'data',
-          // contentType: 'application/json',
-          contentType: 'text/plain',
-          // data: JSON.stringify(data),
-          data: data,
-        }).fail(function (msg) {
-          console.log('FAIL');
-        })
+    let element = $("#rgb").next();
+    for(let i = 0; i < 6; i++){
+      element.on("input", onInput);
+      element = element.next().next().next();
+    }
+    element = $("#distortion").next();
+    for(let i = 0; i < 5; i++){
+      element.on("input", onInput);
+      element = element.next().next();
+    }
+    $("#res").click(onInput)
+    $("#clear").click(function(){
+      element = $("#distortion").next();
+      for(let i = 0; i < 5; i++){
+        element.val(0);
+        element = element.next().next();
       }
+      onInput();
+    });
 
+    function onInput(e) {
+      let rgb = [];
+      let dist = [];
+      let element = $("#rgb").next();
+      for(let i = 0; i < 6; i++){
+        rgb.push(element.val());
+        element = element.next();
+        element.html(rgb[rgb.length-1]);
+        element = element.next().next();
+      }
+      element = $("#distortion").next();
+      for(let i = 0; i < 5; i++){
+        let v = element.val();
+        if(v=="")
+          dist.push(0);
+        else
+          dist.push(v);
+        element = element.next().next();
+      }
+      var resval = $("#res").prop("checked") ? "1" : "0";
+
+      let data = "";
+      data += rgb.join(",") + "\n";
+      data += dist.join(",") + "\n";
+      data += resval;
+      console.log(data);
 
       $.ajax({
-        type: 'GET',
-        url: 'initialData',
+        type: 'PUT',
+        url: 'data',
+        contentType: 'text/plain',
+        data: data,
       }).fail(function (msg) {
         console.log('FAIL');
-      }).then(function (msg) {
-        data = msg.split(',')
-        console.log(data)
-
-        $("#minR").val(data[0]);
-        $("#maxR").val(data[1]);
-        $("#minG").val(data[2]);
-        $("#maxG").val(data[3]);
-        $("#minB").val(data[4]);
-        $("#maxB").val(data[5]);
-        $("#d0").val(data[6]);
-        $("#d1").val(data[7]);
-        $("#d2").val(data[8]);
-        $("#d3").val(data[9]);
-        $("#d4").val(data[10]);
-        $("#res").prop('checked', Boolean(parseInt(data[11])));
-
-        $("#minRo").html(data[0]);
-        $("#maxRo").html(data[1]);
-        $("#minGo").html(data[2]);
-        $("#maxGo").html(data[3]);
-        $("#minBo").html(data[4]);
-        $("#maxBo").html(data[5]);
-        //$("#d0o").html(data[6]);
-        //$("#d1o").html(data[7]);
-        //$("#d2o").html(data[8]);
-        //$("#d3o").html(data[9]);
-        //$("#d4o").html(data[10]);
       })
+    }
 
+    $.ajax({
+      type: 'GET',
+      url: 'initialData',
+    }).fail(function (msg) {
+      console.log('FAIL');
+    }).then(function (msg) {
+      data = msg.split(',')
+      console.log(data)
+
+      let element = $("#rgb").next();
+      for(let i = 0; i < 6; i++){
+        element.val(data[i]);
+        element = element.next();
+        element.html(data[i]);
+        element = element.next().next();
+      }
+      element = $("#distortion").next();
+      for(let i = 0; i < 5; i++){
+        element.val(data[i+6]);
+        element = element.next().next();
+      }
+      $("#res").prop('checked', Boolean(parseInt(data[6+5])));
     })
-  </script>	
-
-</body>
+  })
+</script>	
 </html>

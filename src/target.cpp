@@ -344,7 +344,7 @@ int main(int argc, const char* argv[]) {
   // }
 
   cv::Mat img, thresholded;
-  cv::Mat rPos(cv::Size(500,1000),CV_8UC3);
+  cv::Mat rPos(cv::Size(250,1000),CV_8UC3);
   std::vector<Position> posA;
   int checkSum;
 
