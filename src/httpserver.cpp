@@ -143,17 +143,26 @@ void Client::handlePUT(std::vector<std::string> header, std::vector<std::string>
   int vals[6];
   double dvals[5];
   sendAll("text/plain",std::vector<char>(),true);
-  if(content.size() != 3){
+  if(content.size() == 0){
     return;
   }
   std::vector<std::string> rgb_vals = str::split(content[0],",");
   std::vector<std::string> dco_vals = str::split(content[1],",");
+  std::vector<std::string> tvec_vals = str::split(content[3],",");
+  std::vector<std::string> rvec_vals = str::split(content[4],",");
   for(int i = 0; i < 6; i++){
     vals[i] = std::stoi(rgb_vals[i]);
   }
   for(int i = 0; i < 5; i++){
     dvals[i] = std::stod(dco_vals[i]);
   }
+  for(int i = 0; i < 3; i++){
+    Global::tvec_g.at<double>(i) = std::stod(tvec_vals[i]);
+  }
+  for(int i = 0; i < 3; i++){
+    Global::rvec_g.at<double>(i) = std::stod(rvec_vals[i]);
+  }
+  Global::muteHTTP.lock();
   Var::minR = vals[0];
   Var::maxR = vals[1];
   Var::minG = vals[2];
@@ -173,8 +182,8 @@ void Client::handlePUT(std::vector<std::string> header, std::vector<std::string>
     Var::WIDTH = 640;
     Var::HEIGHT = 480;
   }
-  Global::FrameWidth = Var::WIDTH;
-  Global::FrameHeight = Var::HEIGHT;
+  Global::useTR = std::stoi(content[5]);
+  Global::muteHTTP.unlock();
 }
 
 std::vector<char> Client::getReqFile(std::string fname){

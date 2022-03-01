@@ -1,7 +1,5 @@
 #pragma once
 
-// #define RASPI
-
 #include <ctime>
 #include <iostream>
 #include <pthread.h>
@@ -28,13 +26,6 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <fstream>
-#ifdef RASPI
-  #include <linux/i2c-dev.h>
-  #include <sys/types.h>
-#endif
-
-
-
 
 
 namespace Var {
@@ -136,6 +127,9 @@ extern std::vector<int> rPosSocket;
 extern cv::Mat frame;
 extern cv::Mat imgC, thresholdedC, rPosC;
 
+extern cv::Mat tvec_g, rvec_g;
+extern bool useTR;
+
 extern int httpStatus;
 
 // extern pthread_mutex_t muteFrame;
@@ -144,6 +138,7 @@ extern int httpStatus;
 extern mMutex muteFrame;
 extern mMutex mutePos;
 extern mMutex muteImg;
+extern mMutex muteHTTP;
 
 } // namespace Global
 

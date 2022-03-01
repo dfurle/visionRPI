@@ -26,8 +26,19 @@
       d4<input id="d4" type="number" min="-1" max="1" step="0.01" value="0"><br>
       High-Res<input id="res" type="checkbox">
     </div>
+    <br>
+    <div class="slidecontainer">
+      <div class="label" id="TRvec">T&R Vec</div>
+      Use These<input id="trvec-box" type="checkbox"><br>
+      tvec<br><input id="tvec0" type="number" min="-20" max="20" step="0.5" value="0">
+      <input id="tvec1" type="number" min="-20" max="20" step="0.5" value="0">
+      <input id="tvec2" type="number" min="-20" max="20" step="0.5" value="0"><br>
+      rvec<br><input id="rvec0" type="number" min="-3.14" max="3.14" step="0.01" value="0.1">
+      <input id="rvec1" type="number" min="-3.14" max="3.14" step="0.01" value="0.1">
+      <input id="rvec2" type="number" min="-3.14" max="3.14" step="0.01" value="0.1">
+    </div>
   </div>
-  <div id="right" style="float: left; border: solid black 3px; overflow: scroll; height: 100%;">
+  <div id="right" style="width: 60%; float: right; border: solid black 3px; overflow: scroll; height: 100%;">
     <div id="images" style="float: left; border: solid red 2px;">
       <div><img id="video_stream1" src="video_stream1" style="float: left; width: 100%"></div>
       <br>
@@ -43,7 +54,7 @@
   $(document).ready(function() {
 
     $("#right").outerWidth($("body").width() - $("#left").outerWidth(true) - 1);
-    var maxWidth = $("#right").width();
+    var maxWidth = $("#right").width()-10;
     
     setInterval(function(){
       $("#rpos").height($("#images").height());
@@ -53,19 +64,30 @@
       $("#rpos").outerWidth($("#rpos").outerWidth()/widthSum*maxWidth);
     }, 1000);
 
-    let element = $("#rgb").next();
+    let element = $("#minR");
     for(let i = 0; i < 6; i++){
       element.on("input", onInput);
       element = element.next().next().next();
     }
-    element = $("#distortion").next();
+    element = $("#d0");
     for(let i = 0; i < 5; i++){
       element.on("input", onInput);
       element = element.next().next();
     }
+    element = $("#tvec0");
+    for(let i = 0; i < 3; i++){
+      element.on("input", onInput);
+      element = element.next();
+    }
+    element = $("#rvec0");
+    for(let i = 0; i < 3; i++){
+      element.on("input", onInput);
+      element = element.next();
+    }
     $("#res").click(onInput)
+    $("#trvec-box").click(onInput)
     $("#clear").click(function(){
-      element = $("#distortion").next();
+      element = $("#d0");
       for(let i = 0; i < 5; i++){
         element.val(0);
         element = element.next().next();
@@ -76,14 +98,16 @@
     function onInput(e) {
       let rgb = [];
       let dist = [];
-      let element = $("#rgb").next();
+      let tvec = [];
+      let rvec = [];
+      let element = $("#minR");
       for(let i = 0; i < 6; i++){
         rgb.push(element.val());
         element = element.next();
         element.html(rgb[rgb.length-1]);
         element = element.next().next();
       }
-      element = $("#distortion").next();
+      element = $("#d0");
       for(let i = 0; i < 5; i++){
         let v = element.val();
         if(v=="")
@@ -92,12 +116,34 @@
           dist.push(v);
         element = element.next().next();
       }
+      element = $("#tvec0");
+      for(let i = 0; i < 3; i++){
+        let v = element.val();
+        if(v=="")
+          tvec.push(0);
+        else
+          tvec.push(v);
+        element = element.next();
+      }
+      element = $("#rvec0");
+      for(let i = 0; i < 3; i++){
+        let v = element.val();
+        if(v=="")
+          rvec.push(0);
+        else
+          rvec.push(v);
+        element = element.next();
+      }
       var resval = $("#res").prop("checked") ? "1" : "0";
+      var usetr = $("#trvec-box").prop("checked") ? "1" : "0";
 
       let data = "";
       data += rgb.join(",") + "\n";
       data += dist.join(",") + "\n";
-      data += resval;
+      data += resval + "\n";
+      data += tvec.join(",") + "\n";
+      data += rvec.join(",") + "\n";
+      data += usetr + "\n";
       console.log(data);
 
       $.ajax({
@@ -119,14 +165,14 @@
       data = msg.split(',')
       console.log(data)
 
-      let element = $("#rgb").next();
+      let element = $("#minR");
       for(let i = 0; i < 6; i++){
         element.val(data[i]);
         element = element.next();
         element.html(data[i]);
         element = element.next().next();
       }
-      element = $("#distortion").next();
+      element = $("#d0");
       for(let i = 0; i < 5; i++){
         element.val(data[i+6]);
         element = element.next().next();

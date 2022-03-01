@@ -9,10 +9,10 @@ int maxG = 255; // 255
 int minB = 0;   // 222
 int maxB = 120; // 241
 
-int          WIDTH          = 640; // 1920 //1280 //640
-int          HEIGHT         = 480; // 1080 //720  //480
-// int          WIDTH          = 1280; // 1920 //1280 //640
-// int          HEIGHT         = 720; // 1080 //720  //480
+//int          WIDTH          = 640; // 1920 //1280 //640
+//int          HEIGHT         = 480; // 1080 //720  //480
+int          WIDTH          = 1280; // 1920 //1280 //640
+int          HEIGHT         = 720; // 1080 //720  //480
 int          EXPOSURE       = 3; // edit in threads.cpp for now
 unsigned int waitAfterFrame = 1000;
 
@@ -35,6 +35,10 @@ const cv::Scalar BLUE = cv::Scalar(255, 0, 0), RED = cv::Scalar(0, 0, 255), YELL
 cv::Mat frame;
 cv::Mat imgC, thresholdedC, rPosC;
 
+cv::Mat tvec_g(cv::Size(1,3),6);
+cv::Mat rvec_g(cv::Size(1,3),6);
+bool useTR;
+
 std::vector<int> imgSocket;
 std::vector<int> thrSocket;
 std::vector<int> rPosSocket;
@@ -44,6 +48,7 @@ int httpStatus = 0;
 mMutex muteFrame;
 mMutex mutePos;
 mMutex muteImg;
+mMutex muteHTTP;
 } // namespace Global
 
 namespace Switches {

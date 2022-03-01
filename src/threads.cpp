@@ -90,6 +90,7 @@ void* VideoCap(void* args) {
     printf("auto exposure: %d\n",vcap.set(cv::CAP_PROP_AUTO_EXPOSURE, 1));
     printf("exposure: %d\n",vcap.set(cv::CAP_PROP_EXPOSURE, 3));
     printf("autofocus: %d\n",vcap.set(cv::CAP_PROP_AUTOFOCUS, 0));
+    printf("Frame: %f, %d\n",Global::FrameWidth,Var::WIDTH);
     printf("width: %d\n",vcap.set(cv::CAP_PROP_FRAME_WIDTH, Var::WIDTH));
     printf("height: %d\n",vcap.set(cv::CAP_PROP_FRAME_HEIGHT, Var::HEIGHT));
     Global::FrameWidth = vcap.get(cv::CAP_PROP_FRAME_WIDTH);
@@ -117,6 +118,12 @@ void* VideoCap(void* args) {
         Global::newFrame = true;
         Global::muteFrame.unlock();
       }
+      if(int(Global::FrameWidth) != Var::WIDTH){
+        printf("width: %d\n",vcap.set(cv::CAP_PROP_FRAME_WIDTH, Var::WIDTH));
+        printf("height: %d\n",vcap.set(cv::CAP_PROP_FRAME_HEIGHT, Var::HEIGHT));
+        Global::FrameWidth = Var::WIDTH;
+        Global::FrameHeight = Var::HEIGHT;
+      }
       usleep(Var::waitAfterFrame);
     }
   } else {
@@ -130,6 +137,7 @@ void* VideoCap(void* args) {
       else
         imgText = "../2022/BG";
       imgText.append(std::to_string(num++));
+      //imgText.append(std::to_string(1));
       imgText.append(".jpeg");
 
       Global::muteFrame.lock();

@@ -21,8 +21,11 @@ void ThresholdImage(const cv::Mat& original, cv::Mat& thresholded) {
 void morphOps(cv::Mat& thresh) {
   cv::Mat erodeElement = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
   cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(8, 8));
-  // dilate(thresh,thresh,dilateElement);
-  // dilate(thresh,thresh,dilateElement);
+  // cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+  cv::erode(thresh,thresh,erodeElement);
+  cv::dilate(thresh,thresh,dilateElement);
+  cv::erode(thresh,thresh,erodeElement);
+  cv::erode(thresh,thresh,erodeElement);
 }
 
 int findTarget(cv::Mat& img, cv::Mat& thresholded) {
@@ -45,8 +48,8 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
   timer.printTime(printTime," finding Contours");
 
   for (auto it = contours.begin(); it != contours.end();) {
-    // printf("size: %f\n",cv::contourArea(*it));
-    if (cv::contourArea(*it) < 100) { // min contour
+    //printf("size: %f\n",cv::contourArea(*it));
+    if (cv::contourArea(*it) < 45) { // min contour
       it = contours.erase(it);
       timer.printTime(printTime," removing contour");
     } else
@@ -104,14 +107,14 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
         continue;
       }
 
-      /*
-      if(Switches::DRAW){
-        for (int j = 0; j < 4; j++) {
-          cv::line(img, rect_points[j], rect_points[(j + 1) % 4], Global::BLUE, 1, 8);
-        }
-        //circle(img, rect_points[j], 3, Global::RED, -1, 8, 0);
-      }
-      */
+      
+      // if(Switches::DRAW){
+      //   for (int j = 0; j < 4; j++) {
+      //     cv::line(img, rect_points[j], rect_points[(j + 1) % 4], Global::BLUE, 1, 8);
+      //     circle(img, rect_points[j], 3, Global::RED, -1, 8, 0);
+      //   }
+      // }
+      
       timer.printTime(printTime," drawRect");
 
       Global::targets.back().area = cv::contourArea(contours[i]);
@@ -186,53 +189,69 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
     */
 
 
-    // Useful for a single target, here it's many rectangles which the previous algorithm already finds
-    // ====================
-    ///*
-    double qualityLevel     = 0.05;
-    double minDistance      = 5;
-    int    blockSize        = 3;
-    bool   useHarisDetector = true;
-    double k                = 0.04;
-    int    maxCorners       = 4;
-    cv::Mat workingImageSq[3];
-    thresholded(Global::targets[0].boundingRect).copyTo(workingImageSq[0]);
-    thresholded(Global::targets[1].boundingRect).copyTo(workingImageSq[1]);
-    thresholded(Global::targets[2].boundingRect).copyTo(workingImageSq[2]);
-
-    timer.printTime(printTime," drawMat");
-    if (targetsFound == 3) {
-      for(int mi = 0; mi < 3; mi++){
-        std::vector<cv::Point> corners;
-        cv::goodFeaturesToTrack(workingImageSq[mi], corners, maxCorners, qualityLevel, minDistance, cv::Mat(), blockSize, useHarisDetector, k);
-        // printf("corners: %d\n",corners.size());
-        if(corners.size() == 4){
-          for(int i = 0; i < 4; i++){
-            // std::cout << corners[i] << std::endl;
-            corners[i].x = corners[i].x + Global::targets[mi].boundingRect.x;
-            corners[i].y = corners[i].y + Global::targets[mi].boundingRect.y;
-            Global::targets[mi].points[i] = corners[i];
-            cv::circle(img, corners[i], 2, Global::RED, -1, 8, 0);
-          }
-        }
-      }
-      timer.printTime(printTime," goodFeaturesTrack");
-    }
-    //*/
     if(targetsFound >= 3){
       std::sort(Global::targets.begin(), Global::targets.end(), 
       [ ](const Target& lhs, const Target& rhs){
         return lhs.area > rhs.area;
       });
       Global::targets.erase(Global::targets.begin()+3,Global::targets.end());
-      std::sort(Global::targets.begin(), Global::targets.end(), 
-      [ ](const Target& lhs, const Target& rhs){
-        return lhs.points[0].x < rhs.points[0].x;
-      });
-      return 3;
-    } else {
-      return -1;
+      // std::sort(Global::targets.begin(), Global::targets.end(), 
+      // [ ](const Target& lhs, const Target& rhs){
+      //   return lhs.points[0].x < rhs.points[0].x;
+      // });
+      targetsFound = 3;
     }
+
+
+    // Useful for a single target, here it's many rectangles which the previous algorithm already finds
+    // ====================
+    // /*
+    double qualityLevel     = 0.05;
+    double minDistance      = 5;
+    int    blockSize        = 5;
+    bool   useHarisDetector = false;
+    double k                = 0.04;
+    int    maxCorners       = 4;
+
+    if (targetsFound == 3) {
+      cv::Mat workingImageSq[3];
+      thresholded(Global::targets[0].boundingRect).copyTo(workingImageSq[0]);
+      thresholded(Global::targets[1].boundingRect).copyTo(workingImageSq[1]);
+      thresholded(Global::targets[2].boundingRect).copyTo(workingImageSq[2]);
+
+      timer.printTime(printTime," drawMat");
+      for(int mi = 0; mi < 3; mi++){
+        // minDistance = Global::targets[mi].area / 5. * 0.8; // * (2./(2*5))
+        // printf("dist: %f * %f\n",Global::targets[mi].area,  1 / 5. * 0.8);
+        std::vector<cv::Point> corners;
+        cv::goodFeaturesToTrack(workingImageSq[mi], corners, maxCorners, qualityLevel, minDistance, cv::Mat(), blockSize, useHarisDetector, k);
+        // cv::Mat rgbThresh;
+        // cv::cvtColor(thresholded,rgbThresh,cv::COLOR_GRAY2BGR);
+        // printf("corners: %d\n",corners.size());
+        if(corners.size() >= 4){
+          for(int i = 0; i < 4; i++){
+            // std::cout << corners[i] << std::endl;
+            corners[i].x = corners[i].x + Global::targets[mi].boundingRect.x;
+            corners[i].y = corners[i].y + Global::targets[mi].boundingRect.y;
+            Global::targets[mi].points[i] = corners[i];
+            if(Switches::DRAW){
+              // cv::circle(rgbThresh, corners[i], 2, Global::RED, -1, 8, 0);
+              cv::circle(img, corners[i], 2, Global::RED, -1, 8, 0);
+            }
+          }
+        }
+        // cv::imshow("rgb",rgbThresh);
+        // cv::imshow("img",img);
+        // cv::waitKey(0);
+      }
+      timer.printTime(printTime," goodFeaturesTrack");
+    }
+
+    std::sort(Global::targets.begin(), Global::targets.end(), 
+    [ ](const Target& lhs, const Target& rhs){
+      return lhs.points[0].x < rhs.points[0].x;
+    });
+    // */
 
   }
 
@@ -393,6 +412,9 @@ int main(int argc, const char* argv[]) {
 
       ThresholdImage(img,thresholded);
       timer.printTime(printTime," thresholded");
+
+      morphOps(thresholded);
+      timer.printTime(printTime," morphOps");
 
       int targetsFound = findTarget(img,thresholded); // FIND THE TARGETS
       timer.printTime(printTime," findTarget");

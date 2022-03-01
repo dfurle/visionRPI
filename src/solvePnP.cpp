@@ -14,7 +14,7 @@ double tAngleL = (tape_size/2.)/(radius);
 double angleBetween = (tape_size+space_size)/radius;
 double tCenters[3] = {-angleBetween,0,angleBetween};
 
-double stripHeight = (2.2/12.);
+double stripHeight = (2./12.);
 
 std::vector<cv::Point3f> mod3d;
 std::vector<cv::Point3f> mod3d_center;
@@ -49,29 +49,9 @@ void initSolvePnP() {
     mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]+tAngleL),-stripHeight,radius*cos(tCenters[i]+tAngleL)));
   }
 
-  // double setback = 2;
-  // double mult = 0.5;
-  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[0]-tAngleL),0,           radius*cos(tCenters[0]-tAngleL)-(setback/12.*mult)));
-  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[0]-tAngleL),-stripHeight,radius*cos(tCenters[0]-tAngleL)-(setback/12.*mult)));
-  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[0]+tAngleL),0,           radius*cos(tCenters[0]+tAngleL)-(setback/12.)));
-  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[0]+tAngleL),-stripHeight,radius*cos(tCenters[0]+tAngleL)-(setback/12.)));
-
-  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[1]-tAngleL),0,           radius*cos(tCenters[1]-tAngleL)));
-  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[1]-tAngleL),-stripHeight,radius*cos(tCenters[1]-tAngleL)));
-  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[1]+tAngleL),0,           radius*cos(tCenters[1]+tAngleL)));
-  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[1]+tAngleL),-stripHeight,radius*cos(tCenters[1]+tAngleL)));
-
-  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[2]-tAngleL),0,           radius*cos(tCenters[2]-tAngleL)-(setback/12.)));
-  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[2]-tAngleL),-stripHeight,radius*cos(tCenters[2]-tAngleL)-(setback/12.)));
-  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[2]+tAngleL),0,           radius*cos(tCenters[2]+tAngleL)-(setback/12.*mult)));
-  // mod3d.push_back(cv::Point3f(radius*sin(tCenters[2]+tAngleL),-stripHeight,radius*cos(tCenters[2]+tAngleL)-(setback/12.*mult)));
-
-
-
 
   mod3d_center.clear();
   for(int i = 0; i < 3; i++){
-    // mod3d_center.push_back(cv::Point3d(radius*sin(tCenters[i]),-stripHeight/2.,radius*cos(tCenters[i])));
     mod3d_center.push_back(cv::Point3f(radius*sin(tCenters[i]),0,radius*cos(tCenters[i])));
   }
 
@@ -124,7 +104,34 @@ void initSolvePnP() {
 		  0, 0, 1);
   // dist_coeffs = NULL;
   // dist_coeffs = cv::Mat::zeros(1, 5, cv::DataType<double>::type);
+  
+
   dist_coeffs = (cv::Mat_<double>(1, 5) << Var::dist_cof[0],Var::dist_cof[1],Var::dist_cof[2],Var::dist_cof[3],Var::dist_cof[4]);
+  camera_matrix = (cv::Mat_<double>(3, 3) << 
+    580.4984062368188, 0, 325.3680926895594,
+    0, 580.4542213657525, 267.8603909876159,
+    0, 0, 1);
+    
+  dist_coeffs = (cv::Mat_<double>(1, 5) << 
+    -0.02884002148680569,
+    0.08108439904507091,
+    0.009277215393240128,
+    0.000317625197072589,
+    -0.4184398847498976);
+
+
+  camera_matrix = (cv::Mat_<double>(3, 3) << 
+    1122.668685412353, 0, 631.338038581117,
+    0, 1072.878260659514, 308.0890669710171,
+    0, 0, 1);
+    
+  dist_coeffs = (cv::Mat_<double>(1, 5) << 
+    0.5288239655258603,
+    -7.815535053795306,
+    0.04467497612220633,
+    0.004964838135067267,
+    25.12841292762858);
+
 }
 
 bool pointsInBounds(std::vector<cv::Point2f> vec){
@@ -138,6 +145,7 @@ bool pointsInBounds(std::vector<cv::Point2f> vec){
 }
 
 void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
+  /*
   center = cv::Point2d(Var::WIDTH / 2., Var::HEIGHT / 2.);
   size = cv::Size(Var::WIDTH, Var::HEIGHT);
 
@@ -151,6 +159,8 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   // dist_coeffs = NULL;
   dist_coeffs = (cv::Mat_<double>(1, 5) << Var::dist_cof[0],Var::dist_cof[1],Var::dist_cof[2],Var::dist_cof[3],Var::dist_cof[4]);
   // dist_coeffs = NULL;
+  
+  */
   std::vector<cv::Point2f> img2dpoints;
   ClockTimer timer;
   bool printTime = false;
@@ -211,17 +221,43 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
 
   // cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec);
   // cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec, true); //test this out!? plug in old r and t vec values
-  cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec, false, cv::SOLVEPNP_ITERATIVE);
+  Global::muteHTTP.lock();
+  // printf("tr: %d\n",Global::useTR);
+  if(Global::useTR){
+    rvec = Global::rvec_g;
+    tvec = Global::tvec_g;
+  } else {
+    cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec, false, cv::SOLVEPNP_ITERATIVE);
+  }
+  Global::muteHTTP.unlock();
+
+  // std::cout << "cam_mat" << std::endl;
+  // std::cout << camera_matrix << std::endl;
+  // std::cout << "dist" << std::endl;
+  // std::cout << dist_coeffs << std::endl;
+  // std::cout << "tvec" << std::endl;
+  // std::cout << tvec << std::endl;
+  // std::cout << "rvec" << std::endl;
+  // std::cout << rvec << std::endl;
+
+
   // cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec, false, cv::SOLVEPNP_EPNP);
   timer.printTime(printTime," solvePnP");
 
+  // std::cout << rvec << std::endl;
+  // rvec.at<double>(2) = rvec.at<double>(2)-20*(M_PI/180.);
+  // rvec.at<double>(1) = rvec.at<double>(1)-20*(M_PI/180.);
+  // rvec.at<double>(0) = rvec.at<double>(0)-20*(M_PI/180.);
+  // std::cout << rvec << std::endl;
   cv::Rodrigues(rvec, rMat);
   timer.printTime(printTime," rodrig");
 
   // 2022
   // transvec is the transposing vector of target, x=0 y=1 z=2; x=dir y=height z=depth; rotation of robot matters
   double* transvec = tvec.ptr<double>();
+  double* rotvec = rvec.ptr<double>();
   // printf("tv: %5.2f %5.2f %5.2f\n",transvec[0],transvec[1],transvec[2]);
+  printf("rv: %5.2f %5.2f %5.2f\n",rotvec[0]*(180./M_PI),rotvec[1]*(180./M_PI),rotvec[2]*(180./M_PI));
 
   cv::Mat tmp = cv::Mat(-rMat.t() * tvec);
   cv::Point3d xWorld = cv::Point3d(tmp.at<double>(0), tmp.at<double>(1), tmp.at<double>(2));
@@ -252,7 +288,7 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
 
   //distance += (1-0.904)*distance - 0.433;
   //distance += (1-0.992)*distance - 0.0327;
-
+  distance += (1-1.07)*distance-0.423;
   Global::mutePos.lock();
   Global::position.dist = distance;
   Global::position.robotAngle = robotAngle * (180. / PI);
@@ -268,6 +304,10 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   std::string sA = streamAng.str();
   cv::putText(rPos,sD,cv::Point(res.width*0.6,res.height*0.94),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
   cv::putText(rPos,sA,cv::Point(res.width*0.5,res.height*0.98),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
+  if(Switches::DRAW){
+    cv::putText(img,sD,cv::Point(Var::WIDTH*0.8,Var::HEIGHT*0.9),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
+    cv::putText(img,sA,cv::Point(Var::WIDTH*0.75,Var::HEIGHT*0.95),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
+  }
 
   // TODO AXIS
 
@@ -285,8 +325,8 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
 
   if(Switches::DRAW){
     if(pointsInBounds(axis2D)){
-      for(int i = 0; i < reprojectedPoints.size(); i++)
-        cv::circle(img, reprojectedPoints[i], 3, cv::Scalar(255,255,255),cv::FILLED, cv::LINE_8);
+      //for(int i = 0; i < reprojectedPoints.size(); i++)
+        //cv::circle(img, reprojectedPoints[i], 3, cv::Scalar(255,255,255),cv::FILLED, cv::LINE_8);
 
       cv::line(img, axis2D[3], axis2D[2], cv::Scalar(255, 0, 0), 2); // z-blue
       cv::line(img, axis2D[3], axis2D[0], cv::Scalar(0, 0, 255), 2); // x-red
