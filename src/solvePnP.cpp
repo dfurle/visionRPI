@@ -1,6 +1,5 @@
 #include "variables.h"
 #include "clock.h"
-#define PI 3.141592
 
 double radius = 2.2239583;
 
@@ -162,6 +161,7 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   
   */
   std::vector<cv::Point2f> img2dpoints;
+  #ifndef OPTIMIZE
   ClockTimer timer;
   bool printTime = false;
   if (Switches::printTime == 3) {
@@ -169,6 +169,7 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
     timer.reset();
     printf("begin findTarget\n");
   }
+  #endif
 
   for(int t = 0; t < 3; t++){
     img2dpoints.push_back(Global::targets[t].points[0]);
@@ -219,7 +220,9 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
     // }
   }
   */
+  #ifndef OPTIMIZE
   timer.printTime(printTime," added pts");
+  #endif
 
   /* ---===debugging drawing===--- */
   /*
@@ -240,6 +243,9 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
 
   // cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec);
   // cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec, true); //test this out!? plug in old r and t vec values
+  #ifdef OPTIMIZE
+  cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec, false, cv::SOLVEPNP_ITERATIVE);
+  #else
   Global::muteHTTP.lock();
   // printf("tr: %d\n",Global::useTR);
   if(Global::useTR){
@@ -249,44 +255,35 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
     cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec, false, cv::SOLVEPNP_ITERATIVE);
   }
   Global::muteHTTP.unlock();
-
-  // std::cout << "cam_mat" << std::endl;
-  // std::cout << camera_matrix << std::endl;
-  // std::cout << "dist" << std::endl;
-  // std::cout << dist_coeffs << std::endl;
-  // std::cout << "tvec" << std::endl;
-  // std::cout << tvec << std::endl;
-  // std::cout << "rvec" << std::endl;
-  // std::cout << rvec << std::endl;
+  #endif
 
 
-  // cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec, false, cv::SOLVEPNP_EPNP);
+  #ifndef OPTIMIZE
   timer.printTime(printTime," solvePnP");
+  #endif
 
-  // std::cout << rvec << std::endl;
-  // rvec.at<double>(2) = rvec.at<double>(2)-20*(M_PI/180.);
-  // rvec.at<double>(1) = rvec.at<double>(1)-20*(M_PI/180.);
-  // rvec.at<double>(0) = rvec.at<double>(0)-20*(M_PI/180.);
-  // std::cout << rvec << std::endl;
   cv::Rodrigues(rvec, rMat);
+  #ifndef OPTIMIZE
   timer.printTime(printTime," rodrig");
+  #endif
 
   // 2022
   // transvec is the transposing vector of target, x=0 y=1 z=2; x=dir y=height z=depth; rotation of robot matters
   double* transvec = tvec.ptr<double>();
   double* rotvec = rvec.ptr<double>();
-  // printf("tv: %5.2f %5.2f %5.2f\n",transvec[0],transvec[1],transvec[2]);
-  // printf("rv: %5.2f %5.2f %5.2f\n",rotvec[0]*(180./M_PI),rotvec[1]*(180./M_PI),rotvec[2]*(180./M_PI));
-
   cv::Mat tmp = cv::Mat(-rMat.t() * tvec);
   cv::Point3d xWorld = cv::Point3d(tmp.at<double>(0), tmp.at<double>(1), tmp.at<double>(2));
 
+  // printf("tv: %5.2f %5.2f %5.2f\n",transvec[0],transvec[1],transvec[2]);
+  // printf("rv: %5.2f %5.2f %5.2f\n",rotvec[0]*(180./M_PI),rotvec[1]*(180./M_PI),rotvec[2]*(180./M_PI));
   // printf("wx: %5.2f %5.2f %5.2f\n",xWorld.x,xWorld.y,xWorld.z);
+  
   // transvec[0] -= Var::IRLOffset;
   double distance = sqrt(xWorld.x * xWorld.x + xWorld.z * xWorld.z);
   double robotAngle = atan2(transvec[0], transvec[2]);
 
 
+  #ifndef OPTIMIZE
   cv::Size res(250,1000);
   rPos.setTo(cv::Scalar(0,0,0));
   double relative_size = 100./radius;
@@ -301,25 +298,29 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   }
   cv::Point robot_rPos(center.x+(xWorld.x*relative_size),center.y+xWorld.z*relative_size);
   cv::circle(rPos,robot_rPos, 0.5*relative_size, cv::Scalar(0,0,255),cv::FILLED);
-  double alpha = robotAngle - atan2(xWorld.x, xWorld.z);
-  cv::line(rPos,robot_rPos,cv::Point(robot_rPos.x+(relative_size*sin(alpha)),robot_rPos.y-(relative_size*cos(alpha))), cv::Scalar(120,120,255),0.07*relative_size);
-  cv::line(rPos,robot_rPos,cv::Point(robot_rPos.x+(15*relative_size*sin(alpha)),robot_rPos.y-(15*relative_size*cos(alpha))), cv::Scalar(120,120,255),0.04*relative_size);
+  double alpha = robotAngle + atan2(xWorld.x, xWorld.z);
+  cv::line(rPos,robot_rPos,cv::Point(robot_rPos.x-(relative_size*sin(alpha)),robot_rPos.y-(relative_size*cos(alpha))), cv::Scalar(120,120,255),0.07*relative_size);
+  cv::line(rPos,robot_rPos,cv::Point(robot_rPos.x-(15*relative_size*sin(alpha)),robot_rPos.y-(15*relative_size*cos(alpha))), cv::Scalar(120,120,255),0.04*relative_size);
+  #endif
 
   //distance += (1-0.904)*distance - 0.433;
   //distance += (1-0.992)*distance - 0.0327;
-  distance += (1-1.07)*distance-0.423;
+  // distance += (1-1.07)*distance-0.423;
   Global::mutePos.lock();
   Global::position.dist = distance;
-  Global::position.robotAngle = robotAngle * (180. / PI);
+  Global::position.robotAngle = robotAngle * (180. / M_PI);
   Global::mutePos.unlock();
+  #ifndef OPTIMIZE
   timer.printTime(printTime," maths");
+  #endif
 
+  #ifndef OPTIMIZE
   std::stringstream streamDist;
   streamDist << std::fixed << std::setprecision(2) << distance << "ft";
   std::string sD = streamDist.str();
 
   std::stringstream streamAng;
-  streamAng << std::fixed << std::setprecision(2) << robotAngle * (180./PI) << "deg";
+  streamAng << std::fixed << std::setprecision(2) << robotAngle * (180./M_PI) << "deg";
   std::string sA = streamAng.str();
   cv::putText(rPos,sD,cv::Point(res.width*0.6,res.height*0.94),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
   cv::putText(rPos,sA,cv::Point(res.width*0.5,res.height*0.98),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
@@ -327,9 +328,11 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
     cv::putText(img,sD,cv::Point(Var::WIDTH*0.8,Var::HEIGHT*0.9),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
     cv::putText(img,sA,cv::Point(Var::WIDTH*0.75,Var::HEIGHT*0.95),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
   }
+  #endif
 
   // TODO AXIS
 
+  #ifndef OPTIMIZE
   axis2D.clear();
   circle2D.clear();
   base2D.clear();
@@ -385,5 +388,6 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
     }
   }
   timer.printTime(printTime," drew lines");
+  #endif
 
 }

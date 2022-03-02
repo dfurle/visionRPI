@@ -1,4 +1,5 @@
 #pragma once
+// #define OPTIMIZE
 
 #include <ctime>
 #include <iostream>
@@ -132,9 +133,6 @@ extern bool useTR;
 
 extern int httpStatus;
 
-// extern pthread_mutex_t muteFrame;
-// extern pthread_mutex_t mutePos;
-// extern pthread_mutex_t muteImg;
 extern mMutex muteFrame;
 extern mMutex mutePos;
 extern mMutex muteImg;
@@ -144,18 +142,13 @@ extern mMutex muteHTTP;
 
 namespace Switches {
 extern bool         SHOWORIG;
-extern bool         SHOWHUE;
 extern bool         SHOWTHRESH;
-extern bool         SHOWTRACK;
 extern bool         USEHTTP;
-// extern bool         USESERVER;
-// extern bool         USECOLOR;
 extern bool         DOPRINT;
 extern bool         FRAME;
 extern bool         SAVE;
 extern bool         DRAW;
 extern int          printTime;
-extern double       InitPID[];
 extern int          cameraInput;
 } // namespace Switches
 

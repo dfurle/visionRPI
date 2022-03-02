@@ -2,18 +2,6 @@
 #include "variables.h"
 #include "parser.h"
 
-
-void createTrackbars() {
-  const std::string trackbarWindowName = "Trackbars";
-  cv::namedWindow(trackbarWindowName, 0);
-  cv::createTrackbar("R_MIN", trackbarWindowName, &Var::minR, 255, NULL);
-  cv::createTrackbar("R_MAX", trackbarWindowName, &Var::maxR, 255, NULL);
-  cv::createTrackbar("G_MIN", trackbarWindowName, &Var::minG, 255, NULL);
-  cv::createTrackbar("G_MAX", trackbarWindowName, &Var::maxG, 255, NULL);
-  cv::createTrackbar("B_MIN", trackbarWindowName, &Var::minB, 255, NULL);
-  cv::createTrackbar("B_MAX", trackbarWindowName, &Var::maxB, 255, NULL);
-}
-
 void ThresholdImage(const cv::Mat& original, cv::Mat& thresholded) {
   cv::inRange(original, cv::Scalar(Var::minR, Var::minG, Var::minB), cv::Scalar(Var::maxR, Var::maxG, Var::maxB), thresholded);
 }
@@ -32,39 +20,55 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
   Global::targets.clear();
   int targetsFound = 0;
   // Clock total, between;
+  #ifndef OPTIMIZE
   ClockTimer timer;
   bool printTime = false;
+  #endif
   std::vector<cv::Vec4i> hierarchy;
   std::vector<std::vector<cv::Point> > contours;
+  #ifndef OPTIMIZE
   if (Switches::printTime == 2) {
     printTime = true;
     timer.reset();
     printf("begin findTarget\n");
   }
+  #endif
 
   // findContours(thresholded, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
   // findContours(thresholded, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
   cv::findContours(thresholded, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+  #ifndef OPTIMIZE
   timer.printTime(printTime," finding Contours");
+  #endif
 
   for (auto it = contours.begin(); it != contours.end();) {
     //printf("size: %f\n",cv::contourArea(*it));
     if (cv::contourArea(*it) < 45) { // min contour
       it = contours.erase(it);
+      #ifndef OPTIMIZE
       timer.printTime(printTime," removing contour");
+      #endif
     } else
       it++;
   }
 
+  #ifndef OPTIMIZE
   timer.printTime(printTime," filter:Perim");
+  #endif
   if (contours.size() > 50) {
+    #ifndef OPTIMIZE
     timer.printTime(printTime," many targets");
+    #endif
     return targetsFound;
   } else if (contours.size() < 1) {
+    #ifndef OPTIMIZE
     timer.printTime(printTime," few targets");
+    #endif
     return targetsFound;
   }
+  #ifndef OPTIMIZE
   timer.printTime(printTime," filter:Size");
+  #endif
 
   std::vector<cv::RotatedRect> minRect(contours.size());
   std::vector<std::vector<cv::Point> > art;
@@ -72,8 +76,10 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
 
   if (!contours.empty() && !hierarchy.empty()) {
     for (int i = 0; i < (int)contours.size(); i++) {
+      #ifndef OPTIMIZE
       if (printTime)
         printf("i: %d\n", i);
+      #endif
       // targets[i].NullTargets();
       Global::targets.push_back(Target());
       Global::targets.back().id = i;
@@ -172,7 +178,9 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
 
 
       Global::targets.back().boundingRect = mRect;
+      #ifndef OPTIMIZE
       timer.printTime(printTime, " findRect");
+      #endif
 
       bool flag = false;
       int bounding = 20;
@@ -182,21 +190,27 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
         }
       }
       if (flag) {
+        #ifndef OPTIMIZE
         if (printTime)
           printf("  SKIP: edge too close\n");
+        #endif
         Global::targets.erase(Global::targets.end()-1);
         continue;
       }
 
       
-      // if(Switches::DRAW){
+      #ifndef OPTIMIZE
+      if(Switches::DRAW){
         for (int j = 0; j < 4; j++) {
           cv::line(img, rect_points[j], rect_points[(j + 1) % 4], Global::BLUE, 1, 8);
           circle(img, rect_points[j], 3, Global::RED, -1, 8, 0);
         }
-      // }
+      }
+      #endif
       
+      #ifndef OPTIMIZE
       timer.printTime(printTime," drawRect");
+      #endif
 
       Global::targets.back().area = cv::contourArea(contours[i]);
 
@@ -246,12 +260,16 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
       */
 
       targetsFound++;
+      #ifndef OPTIMIZE
       timer.printTime(printTime," passed");
+      #endif
 
     } //---end contour loop i
 
+    #ifndef OPTIMIZE
     if (printTime)
       printf("end: %d found\n",targetsFound);
+    #endif
 
     /*
     if(Switches::DRAW){
@@ -336,8 +354,10 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
 
   }
 
+  #ifndef OPTIMIZE
   if (printTime)
     timer.PTotal();
+  #endif
 
 
   return targetsFound;
@@ -394,22 +414,23 @@ int main(int argc, const char* argv[]) {
     double printTime_d, cameraInput_d;
     p.add_Parameter("-o" ,"--orig",Switches::SHOWORIG,false,"displays original camera input w/ lines");
     p.add_Parameter("-th","--threshold",Switches::SHOWTHRESH,false,"displays thresholded image (black & white)");
-    p.add_Parameter("-tr","--track",Switches::SHOWTRACK,false,"displays sliders for RGB");
     p.add_Parameter("-http" ,"--http",Switches::USEHTTP,true,"use http server for streaming video");
     p.add_Parameter("-p" ,"--print",Switches::DOPRINT,false,"prints basic data");
     p.add_Parameter("-f" ,"--frame",Switches::FRAME,true,"prints of frames found");
     p.add_Parameter("-d","--draw",Switches::DRAW,true,"draws the lines on original img file");
     p.add_Parameter("-pt","--ptime",printTime_d,0,"(1-2) prints time taken for each loop");
-    p.add_Parameter("-P","--P",Switches::InitPID[0],0.0,"(0.0-1.0) Proportional value of PID");
-    p.add_Parameter("-I","--I",Switches::InitPID[1],0.0,"(0.0-1.0) Integral     value of PID");
-    p.add_Parameter("-D","--D",Switches::InitPID[2],0.0,"(0.0-1.0) Derivative   value of PID");
     p.add_Parameter("-cam","--camera",cameraInput_d,0,"(0-2) which camera port to use");
 
-    Var::dist_cof[0] =  0.05106937569;
-    Var::dist_cof[1] = -0.0761728305;
-    Var::dist_cof[2] = -0.0002898593;
-    Var::dist_cof[3] = -0.0252227088;
-    Var::dist_cof[4] =  0.05262168077;
+    #ifdef OPTIMIZE
+    Switches::USEHTTP = false;
+    Switches::DRAW = false;
+    #endif
+
+    Var::dist_cof[0] = 0;
+    Var::dist_cof[1] = 0;
+    Var::dist_cof[2] = 0;
+    Var::dist_cof[3] = 0;
+    Var::dist_cof[4] = 0;
 
     if(p.checkParams(true))
       return 0;
@@ -430,30 +451,10 @@ int main(int argc, const char* argv[]) {
     printTime = true;
   timer.printTime(printTime,"getting input");
 
-  /* ---=== Start I2C Connection ===--- */
-  // int addr = 0x04;
-  // int file_i2c;
-  // char* filename = (char*)"/dev/i2c-1";
-  // if ((file_i2c = open(filename, O_RDWR)) < 0) {
-  //     printf("Failed to open the i2c bus\n");
-  //     return false;
-  // }
-  // if (ioctl(file_i2c, I2C_SLAVE, addr) < 0) {
-  //     printf("Failed to acquire bus access and/or talk to slave.\n");
-  //     return false;
-  // }
-
   cv::Mat img, thresholded;
   cv::Mat rPos(cv::Size(250,1000),CV_8UC3);
   std::vector<Position> posA;
   int checkSum;
-
-#ifdef RASPI
-  // startThread("USB", NULL);
-  // I don't remember if this is needed so I'll keep this for later script.sh
-  // stty -F /dev/ttyUSB0 115200
-  // stty -F /dev/ttyUSB0 -hupcl
-#endif
 
   startThread("VIDEO");
   startThread("TCP");
@@ -461,12 +462,8 @@ int main(int argc, const char* argv[]) {
     startThread("HTTP");
   if (Switches::SAVE)
     startThread("SAVE",NULL);
-  // if (Switches::USESERVER)
-  //   startThread("SERVER");
 
 
-  if (Switches::SHOWTRACK)
-    createTrackbars();
   if (!img.isContinuous())
     img = img.clone();
   Global::position.nullifyStruct();
@@ -482,31 +479,44 @@ int main(int argc, const char* argv[]) {
     timer.reset();
     Global::muteFrame.lock();
     if (!Global::frame.empty() && Global::newFrame) {
+      #ifndef OPTIMIZE
       timer.printTime(printTime,"Get Frame");
+      #endif
       Global::frame.copyTo(img);
       Global::muteFrame.unlock();
+      #ifndef OPTIMIZE
       timer.printTime(printTime,"Copy Frame");
+      #endif
       frameCounter++;
 
       // TODO: lower resolution of thresholding, but do multiple times
       // cv::resize(img,scaled,cv::Size(640/2,480/2),INTER_LINEAR);
 
       ThresholdImage(img,thresholded);
+      #ifndef OPTIMIZE
       timer.printTime(printTime," thresholded");
+      #endif
 
       morphOps(thresholded);
+      #ifndef OPTIMIZE
       timer.printTime(printTime," morphOps");
+      #endif
 
       int targetsFound = findTarget(img,thresholded); // FIND THE TARGETS
+      #ifndef OPTIMIZE
       timer.printTime(printTime," findTarget");
-
+      #endif
+      // #ifndef OPTIMIZE
       if (targetsFound < 3)
         printf("  targetsFound: %d\n", targetsFound);
+      // #endif
 
       if (targetsFound >= 3) {
         /* ---=== Getting Position and Rotation ===--- */
         findAnglePnP(img,rPos);
+        #ifndef OPTIMIZE
         timer.printTime(printTime," solvePnP");
+        #endif
         posA.push_back(Global::position);
         if (posA.size() > 10)
           posA.erase(posA.begin());
@@ -521,14 +531,18 @@ int main(int argc, const char* argv[]) {
         }
         Global::positionAV.dist /= cntr;
         Global::positionAV.robotAngle /= cntr;
+        #ifndef OPTIMIZE
         timer.printTime(printTime," avaraging");
+        #endif
 
+        // #ifndef OPTIMIZE
         if (Switches::DOPRINT) {
           printf("dist=%6.2f, robotAngle=%6.2f, dataValid: %d\n",
                  Global::positionAV.dist,
                  Global::positionAV.robotAngle,
                  Global::dataValid);
         }
+        // #endif
       } else {
         missedFrames++;
       }
@@ -542,6 +556,8 @@ int main(int argc, const char* argv[]) {
         }
         Global::muteImg.unlock();
       }
+
+      #ifndef OPTIMIZE
       timer.printTime(printTime," copy to glob");
 
       /* ---=== Finished with frame, output it if needed ===--- */
@@ -550,21 +566,22 @@ int main(int argc, const char* argv[]) {
       if (Switches::SHOWTHRESH)
         imshow("Thresholded", thresholded);
       
-      if (Switches::SHOWORIG || Switches::SHOWTHRESH || Switches::SHOWTRACK) {
+      if (Switches::SHOWORIG || Switches::SHOWTHRESH) {
         cv::waitKey(5);
-      }
-      if(Switches::SHOWORIG || Switches::SHOWTHRESH)
         timer.printTime(printTime," finished imshow");
+      }
 
       if (printTime) {
         timer.printTime("End");
         printf("\n");
       }
+      #endif
       Global::newFrame = false;
     } // end check for new frame
     else
       Global::muteFrame.unlock();
 
+    // #ifndef OPTIMIZE
     frameCounter2++;
     if (frameCounter % 10 == 0 && frameCounter != frameCounterPrev) {
       frameCounterPrev = frameCounter;
@@ -572,6 +589,7 @@ int main(int argc, const char* argv[]) {
       if(Switches::FRAME){
         printf("------ Frame rate: %f fr/s (%f) \n", 10. / dt, frameCounter2 / dt);
         printf("------ Miss Frame: %d fr \n", missedFrames);
+        #ifndef OPTIMIZE
         int checkSumLoc = 0;
         checkSumLoc += Var::minR + Var::maxR;
         checkSumLoc += Var::minG + Var::maxG;
@@ -583,11 +601,13 @@ int main(int argc, const char* argv[]) {
           checkSum += Var::minG + Var::maxG;
           checkSum += Var::minB + Var::maxB;
         }
+        #endif
       }
       serverClock.restart();
       frameCounter2 = 0;
       missedFrames = 0;
     }
+    // #endif
     usleep(1000);
   }
 }
