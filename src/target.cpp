@@ -86,10 +86,91 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
       // std::copy(rect_points, rect_points + 4, Global::targets.back().points);
       Global::targets.back().rect = minRect[i];
       cv::Rect mRect = minRect[i].boundingRect();
-      mRect.x -= 3;
-      mRect.y -= 3;
-      mRect.height += 6;
-      mRect.width += 6;
+      // mRect.x -= 3;
+      // mRect.y -= 3;
+      // mRect.height += 6;
+      // mRect.width += 6;
+
+      std::vector<cv::Point2f> rp;
+      rp.push_back(rect_points[0]);
+      rp.push_back(rect_points[1]);
+      rp.push_back(rect_points[2]);
+      rp.push_back(rect_points[3]);
+
+      cv::Point2f rCenter;
+      for(int i = 0; i < 4; i++){
+        rCenter.x += rp[i].x;
+        rCenter.y += rp[i].y;
+      }
+      rCenter.x/=4.;
+      rCenter.y/=4.;
+
+      
+      // printf("-----BEGIN-------- %d\n",i);
+      // printf(" no sort\n");
+      // for(int i = 0; i < 4; i++)
+      //   printf("id: %d : %.1f,%.1f\n",i,rp[i].x,rp[i].y);
+
+      std::sort(rp.begin(), rp.end(), 
+      [ ](const cv::Point2f& lhs, const cv::Point2f& rhs){
+        return lhs.x < rhs.x;
+      });
+      // printf(" x sort\n");
+      // for(int i = 0; i < 4; i++)
+      //   printf("id: %d : %.1f,%.1f\n",i,rp[i].x,rp[i].y);
+
+      std::sort(rp.begin(), rp.begin()+2, 
+      [ rCenter ](const cv::Point2f& lhs, const cv::Point2f& rhs){
+        return abs(lhs.x - rCenter.x) < abs(rhs.x - rCenter.x);
+      });
+      // printf(" y-1 sort\n");
+      // for(int i = 0; i < 4; i++)
+      //   printf("id: %d : %.1f,%.1f\n",i,rp[i].x,rp[i].y);
+
+      std::sort(rp.begin()+2, rp.end(), 
+      [ rCenter ](const cv::Point2f& lhs, const cv::Point2f& rhs){
+        return abs(lhs.x - rCenter.x) < abs(rhs.x - rCenter.x);
+      });
+      // printf(" y-2 sort\n");
+      // for(int i = 0; i < 4; i++)
+      //   printf("id: %d : %.1f,%.1f\n",i,rp[i].x,rp[i].y);
+
+      // printf("-----END-------- %d\n",i);
+
+
+      std::vector<cv::Point2f> np;
+      np.push_back(cv::Point2f(rp[0].x,rp[0].y));
+      np.push_back(cv::Point2f(rp[2].x,rp[2].y));
+      np.push_back(cv::Point2f(rp[0].x,rp[1].y));
+      np.push_back(cv::Point2f(rp[2].x,rp[3].y));
+      // for(int i = 0; i < 4; i++){
+      //   printf("id: %d :r %.1f,%.1f\n",i,rect_points[i].x,rect_points[i].y);
+      //   printf("id: %d :n %.1f,%.1f\n",i,np[i].x,np[i].y);
+      // }
+
+      std::sort(np.begin(), np.end(), 
+      [ ](const cv::Point2f& lhs, const cv::Point2f& rhs){
+        return lhs.x < rhs.x;
+      });
+      std::sort(np.begin(), np.begin()+2, 
+      [ ](const cv::Point2f& lhs, const cv::Point2f& rhs){
+        return lhs.y < rhs.y;
+      });
+      std::sort(np.begin()+2, np.end(), 
+      [ ](const cv::Point2f& lhs, const cv::Point2f& rhs){
+        return lhs.y < rhs.y;
+      });
+      std::copy(np.begin(), np.end(), Global::targets.back().points);
+      rect_points[0] = np[0];
+      rect_points[1] = np[1];
+      rect_points[2] = np[3];
+      rect_points[3] = np[2];
+
+
+
+
+
+
       Global::targets.back().boundingRect = mRect;
       timer.printTime(printTime, " findRect");
 
@@ -109,10 +190,10 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
 
       
       // if(Switches::DRAW){
-      //   for (int j = 0; j < 4; j++) {
-      //     cv::line(img, rect_points[j], rect_points[(j + 1) % 4], Global::BLUE, 1, 8);
-      //     circle(img, rect_points[j], 3, Global::RED, -1, 8, 0);
-      //   }
+        for (int j = 0; j < 4; j++) {
+          cv::line(img, rect_points[j], rect_points[(j + 1) % 4], Global::BLUE, 1, 8);
+          circle(img, rect_points[j], 3, Global::RED, -1, 8, 0);
+        }
       // }
       
       timer.printTime(printTime," drawRect");
@@ -195,17 +276,17 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
         return lhs.area > rhs.area;
       });
       Global::targets.erase(Global::targets.begin()+3,Global::targets.end());
-      // std::sort(Global::targets.begin(), Global::targets.end(), 
-      // [ ](const Target& lhs, const Target& rhs){
-      //   return lhs.points[0].x < rhs.points[0].x;
-      // });
+      std::sort(Global::targets.begin(), Global::targets.end(), 
+      [ ](const Target& lhs, const Target& rhs){
+        return lhs.points[0].x < rhs.points[0].x;
+      });
       targetsFound = 3;
     }
 
 
     // Useful for a single target, here it's many rectangles which the previous algorithm already finds
     // ====================
-    // /*
+    /*
     double qualityLevel     = 0.05;
     double minDistance      = 5;
     int    blockSize        = 5;
@@ -251,7 +332,7 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
     [ ](const Target& lhs, const Target& rhs){
       return lhs.points[0].x < rhs.points[0].x;
     });
-    // */
+    */
 
   }
 
@@ -314,7 +395,7 @@ int main(int argc, const char* argv[]) {
     p.add_Parameter("-o" ,"--orig",Switches::SHOWORIG,false,"displays original camera input w/ lines");
     p.add_Parameter("-th","--threshold",Switches::SHOWTHRESH,false,"displays thresholded image (black & white)");
     p.add_Parameter("-tr","--track",Switches::SHOWTRACK,false,"displays sliders for RGB");
-    p.add_Parameter("-http" ,"--http",Switches::USEHTTP,false,"use http server for streaming video");
+    p.add_Parameter("-http" ,"--http",Switches::USEHTTP,true,"use http server for streaming video");
     p.add_Parameter("-p" ,"--print",Switches::DOPRINT,false,"prints basic data");
     p.add_Parameter("-f" ,"--frame",Switches::FRAME,true,"prints of frames found");
     p.add_Parameter("-d","--draw",Switches::DRAW,true,"draws the lines on original img file");

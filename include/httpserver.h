@@ -13,7 +13,7 @@ public:
 
   std::vector<char> getReqFile(std::string file);
   int sendData(std::vector<char> data);
-  void sendAll(std::string mimetype, std::vector<char> data, bool silence = false);
+  void sendAll(std::string mimetype, std::vector<char> data, bool silence = true);
 
   void handleRequest(std::string req);
   int  handleGET(std::vector<std::string> header);
@@ -21,4 +21,4 @@ public:
 };
 
 int g_sendData(void* data, int length, int socket);
-void sendIMG(std::vector<uchar>& imgBuf, int socket);
+int sendIMG(std::vector<uchar>& imgBuf, int socket);

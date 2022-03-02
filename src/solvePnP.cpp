@@ -170,36 +170,55 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
     printf("begin findTarget\n");
   }
 
-  // For 2022
   for(int t = 0; t < 3; t++){
-
-    std::vector<cv::Point2d> pts;
+    img2dpoints.push_back(Global::targets[t].points[0]);
+    img2dpoints.push_back(Global::targets[t].points[1]);
+    img2dpoints.push_back(Global::targets[t].points[2]);
+    img2dpoints.push_back(Global::targets[t].points[3]);
+  }
+  // For 2022
+  /*
+  for(int t = 0; t < 3; t++){
+    std::vector<cv::Point2f> pts;
     pts.push_back(Global::targets[t].points[0]);
     pts.push_back(Global::targets[t].points[1]);
     pts.push_back(Global::targets[t].points[2]);
     pts.push_back(Global::targets[t].points[3]);
 
     std::sort(pts.begin(), pts.end(), 
-    [ ](const cv::Point2d& lhs, const cv::Point2d& rhs){
+    [ ](const cv::Point2f& lhs, const cv::Point2f& rhs){
       return lhs.x < rhs.x;
     });
+    std::sort(pts.begin(), pts.begin()+2, 
+    [ ](const cv::Point2f& lhs, const cv::Point2f& rhs){
+      return lhs.y < rhs.y;
+    });
+    std::sort(pts.begin()+2, pts.end(), 
+    [ ](const cv::Point2f& lhs, const cv::Point2f& rhs){
+      return lhs.y < rhs.y;
+    });
+    img2dpoints.push_back(pts[0]);
+    img2dpoints.push_back(pts[1]);
+    img2dpoints.push_back(pts[2]);
+    img2dpoints.push_back(pts[3]);
 
 
-    if(pts[0].y < pts[1].y){
-      img2dpoints.push_back(pts[0]);
-      img2dpoints.push_back(pts[1]);
-    } else {
-      img2dpoints.push_back(pts[1]);
-      img2dpoints.push_back(pts[0]);
-    }
-    if(pts[2].y > pts[3].y){
-      img2dpoints.push_back(pts[3]);
-      img2dpoints.push_back(pts[2]);
-    } else {
-      img2dpoints.push_back(pts[2]);
-      img2dpoints.push_back(pts[3]);
-    }
+    // if(pts[0].y < pts[1].y){
+    //   img2dpoints.push_back(pts[0]);
+    //   img2dpoints.push_back(pts[1]);
+    // } else {
+    //   img2dpoints.push_back(pts[1]);
+    //   img2dpoints.push_back(pts[0]);
+    // }
+    // if(pts[2].y > pts[3].y){
+    //   img2dpoints.push_back(pts[3]);
+    //   img2dpoints.push_back(pts[2]);
+    // } else {
+    //   img2dpoints.push_back(pts[2]);
+    //   img2dpoints.push_back(pts[3]);
+    // }
   }
+  */
   timer.printTime(printTime," added pts");
 
   /* ---===debugging drawing===--- */
@@ -257,7 +276,7 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   double* transvec = tvec.ptr<double>();
   double* rotvec = rvec.ptr<double>();
   // printf("tv: %5.2f %5.2f %5.2f\n",transvec[0],transvec[1],transvec[2]);
-  printf("rv: %5.2f %5.2f %5.2f\n",rotvec[0]*(180./M_PI),rotvec[1]*(180./M_PI),rotvec[2]*(180./M_PI));
+  // printf("rv: %5.2f %5.2f %5.2f\n",rotvec[0]*(180./M_PI),rotvec[1]*(180./M_PI),rotvec[2]*(180./M_PI));
 
   cv::Mat tmp = cv::Mat(-rMat.t() * tvec);
   cv::Point3d xWorld = cv::Point3d(tmp.at<double>(0), tmp.at<double>(1), tmp.at<double>(2));

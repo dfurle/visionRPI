@@ -64,7 +64,7 @@ public:
   cv::Rect        boundingRect;
   double          area;
   int             id;
-  cv::Point2d     points[4];
+  cv::Point2f     points[4];
   void NullTargets() {
     // rect = cv::RotatedRect();
     // boundingRect = cv::Rect();

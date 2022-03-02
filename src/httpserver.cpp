@@ -58,8 +58,8 @@ void Client::handleRequest(std::string req){
 
 
   if(str::cmp(action,"GET")){
-    printf("---===RECEIVED===---\n");
-    std::cout << req << std::endl;
+    // printf("---===RECEIVED===---\n");
+    // std::cout << req << std::endl;
     if(handleGET(header)){
       close(socket);
     }
@@ -109,9 +109,9 @@ int Client::handleGET(std::vector<std::string> header){
     std::stringstream ssheader;
     ssheader << "HTTP/1.1 200 OK\r\n" ;
     ssheader << "Connection: keep-alive\r\n";
-    //ssheader << "Connection: close\r\n";
-    ssheader << "Max-Age: 0\r\n";
-    ssheader << "Expires: 0\r\n";
+    // ssheader << "Connection: close\r\n";
+    // ssheader << "Max-Age: 0\r\n";
+    // ssheader << "Expires: 0\r\n";
     ssheader << "Cache-Control: no-cache, private\r\n";
     ssheader << "Pragma: no-cache\r\n";
     ssheader << "Content-Type: multipart/x-mixed-replace; boundary=--frame\r\n\r\n";
@@ -209,7 +209,7 @@ int Client::sendData(std::vector<char> data){
   int length = data.size();
   int numSent;
   while (length > 0) {
-    numSent = send(socket, pdata, length, 0);
+    numSent = send(socket, pdata, length, MSG_NOSIGNAL);
     if (numSent == -1) return -1;
     pdata += numSent;
     length -= numSent;
@@ -245,7 +245,7 @@ int g_sendData(std::vector<char> data, int socket){
   int length = data.size();
   int numSent;
   while (length > 0) {
-    numSent = send(socket, pdata, length, 0);
+    numSent = send(socket, pdata, length, MSG_NOSIGNAL);
     if (numSent == -1) return -1;
     pdata += numSent;
     length -= numSent;
@@ -257,7 +257,7 @@ int g_sendData(std::vector<uchar> data, int socket){
   int length = data.size();
   int numSent;
   while (length > 0) {
-    numSent = send(socket, pdata, length, 0);
+    numSent = send(socket, pdata, length, MSG_NOSIGNAL);
     if (numSent == -1) return -1;
     pdata += numSent;
     length -= numSent;
@@ -265,24 +265,21 @@ int g_sendData(std::vector<uchar> data, int socket){
   return 0;
 }
 
-void sendIMG(std::vector<uchar>& imgBuf, int socket){
+int sendIMG(std::vector<uchar>& imgBuf, int socket){
   std::stringstream ssheader;
   int res = 0;
 
   ssheader.str("");
   ssheader.clear();
-  ssheader << "--frame\r\n";
+  ssheader << "\r\n\r\n--frame\r\n";
   ssheader << "Content-Type: " << "image/jpg" << "\r\n";
   ssheader << "Content-Length: " << imgBuf.size() << "\r\n\r\n";
   std::vector<char> header = str::ss_to_vec(ssheader);
   res = g_sendData(header,socket);
-
+  if(res == -1) return -1;
   res = g_sendData(imgBuf, socket);
-  ssheader.str("");
-  ssheader.clear();
-  ssheader << "\r\n\r\n";
-  std::vector<char> footer = str::ss_to_vec(ssheader);
-  res = g_sendData(footer, socket);
+  if(res == -1) return -1;
+  return 0;
 }
 
 void* stream_thread(void* arg){
@@ -305,20 +302,30 @@ void* stream_thread(void* arg){
     Global::muteImg.lock();
     Global::httpStatus = 0;
     Global::muteImg.unlock();
+
+    int res = 0;
     
-    if(!Global::imgSocket.empty()){
-      for(int s : Global::imgSocket){
-        sendIMG(imgBuffer,s);
+    if(!Global::imgSocket.empty() && !Global::thrSocket.empty() && !Global::rPosSocket.empty()){
+      for(auto it = Global::imgSocket.begin(); it != Global::imgSocket.end();){
+        if(sendIMG(imgBuffer,*it) == -1) {
+          close(*it);
+          Global::imgSocket.erase(it);
+        } else
+          it++;
       }
-    }
-    if(!Global::thrSocket.empty()){
-      for(int s : Global::thrSocket){
-        sendIMG(threshBuffer,s);
+      for(auto it = Global::thrSocket.begin(); it != Global::thrSocket.end();){
+        if(sendIMG(threshBuffer,*it) == -1){
+          close(*it);
+          Global::thrSocket.erase(it);
+        } else
+          it++;
       }
-    }
-    if(!Global::rPosSocket.empty()){
-      for(int s : Global::rPosSocket){
-        sendIMG(rPosBuffer,s);
+      for(auto it = Global::rPosSocket.begin(); it != Global::rPosSocket.end();){
+        if(sendIMG(rPosBuffer,*it) == -1){
+          close(*it);
+          Global::rPosSocket.erase(it);
+        } else
+          it++;
       }
     }
     usleep(100000);
