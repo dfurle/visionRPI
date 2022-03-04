@@ -61,7 +61,7 @@ void* VideoCap(void* args) {
   // cameraPipeline+="appsink";
 
   cv::VideoCapture vcap;
-  if (Switches::cameraInput == 2) {
+  if(!Switches::USECAM) {
     printf("Not Using Camera\n");
     // printf("ERR: function was disabled\n");
     // exit(1);
@@ -71,7 +71,7 @@ void* VideoCap(void* args) {
       std::cout << "cant connect" << std::endl;
       usleep(10000000);
     }
-    printf("Using Camera: %d\n",Switches::cameraInput);
+    printf("Using Camera: %d\n",0);
 
     printf("---===BEFORE===---\n");
     printf("auto exposure: %f\n",vcap.get(cv::CAP_PROP_AUTO_EXPOSURE));
@@ -110,7 +110,7 @@ void* VideoCap(void* args) {
     }
   }
 
-  if(Switches::cameraInput != 2){
+  if(Switches::USECAM){
     while (true) {
       if(vcap.grab()){
         Global::muteFrame.lock();

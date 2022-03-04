@@ -144,22 +144,32 @@ bool pointsInBounds(std::vector<cv::Point2f> vec){
 }
 
 void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
-  /*
-  center = cv::Point2d(Var::WIDTH / 2., Var::HEIGHT / 2.);
-  size = cv::Size(Var::WIDTH, Var::HEIGHT);
-
-  camera_matrix = (cv::Mat_<double>(3, 3) << 
-      size.width, 0, center.x,
-      0, size.height, center.y,
+  if(Var::WIDTH==640){
+    camera_matrix = (cv::Mat_<double>(3, 3) << 
+      580.4984062368188, 0, 325.3680926895594,
+      0, 580.4542213657525, 267.8603909876159,
       0, 0, 1);
+      
+    dist_coeffs = (cv::Mat_<double>(1, 5) << 
+      -0.02884002148680569,
+      0.08108439904507091,
+      0.009277215393240128,
+      0.000317625197072589,
+      -0.4184398847498976);
+  } else {
+    camera_matrix = (cv::Mat_<double>(3, 3) << 
+      1122.668685412353, 0, 631.338038581117,
+      0, 1072.878260659514, 308.0890669710171,
+      0, 0, 1);
+      
+    dist_coeffs = (cv::Mat_<double>(1, 5) << 
+      0.5288239655258603,
+      -7.815535053795306,
+      0.04467497612220633,
+      0.004964838135067267,
+      25.12841292762858);
+  }
 
-  // std::cout << "cam: " << std::endl;
-  // std::cout << camera_matrix << std::endl;
-  // dist_coeffs = NULL;
-  dist_coeffs = (cv::Mat_<double>(1, 5) << Var::dist_cof[0],Var::dist_cof[1],Var::dist_cof[2],Var::dist_cof[3],Var::dist_cof[4]);
-  // dist_coeffs = NULL;
-  
-  */
   std::vector<cv::Point2f> img2dpoints;
   #ifndef OPTIMIZE
   ClockTimer timer;

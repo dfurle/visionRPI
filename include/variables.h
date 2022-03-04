@@ -109,14 +109,8 @@ extern bool             newFrame;
 extern double           FrameWidth, FrameHeight;
 extern bool             interupt;
 extern bool             dataValid;
-extern double           gyroAngle;
-extern double           gyroVelocity;
-extern double           driveAngle;
-extern double           turn;
-extern double           P, I, D;
 extern std::vector<Target> targets;
 extern Position         position, positionAV;
-extern int              buttonPress;
 extern bool             videoError;
 extern int              videoSocket;
 extern const cv::Scalar BLUE, RED, YELLOW, GREEN;
@@ -148,8 +142,8 @@ extern bool         DOPRINT;
 extern bool         FRAME;
 extern bool         SAVE;
 extern bool         DRAW;
+extern bool         USECAM;
 extern int          printTime;
-extern int          cameraInput;
 } // namespace Switches
 
 

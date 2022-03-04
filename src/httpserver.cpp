@@ -96,14 +96,15 @@ int Client::handleGET(std::vector<std::string> header){
     wss << Var::minR << ',' << Var::maxR << ',';
     wss << Var::minG << ',' << Var::maxG << ',';
     wss << Var::minB << ',' << Var::maxB << ',';
-    for(int i = 0; i < 5; i++){
-      wss << Var::dist_cof[i] << ',';
-    }
     if(Var::WIDTH == 1280){
-      wss << "1";
+      wss << "1" << ',';
     } else {
-      wss << "0";
+      wss << "0" << ',';
     }
+    wss << Switches::DOPRINT << ',';
+    wss << Switches::FRAME << ',';
+    wss << Switches::DRAW << ',';
+    wss << Switches::printTime;
     sendAll("text/plain",str::ss_to_vec(wss));
   } else if(str::contains(req,"/video_stream")){
     std::stringstream ssheader;
@@ -147,14 +148,12 @@ void Client::handlePUT(std::vector<std::string> header, std::vector<std::string>
     return;
   }
   std::vector<std::string> rgb_vals = str::split(content[0],",");
-  std::vector<std::string> dco_vals = str::split(content[1],",");
-  std::vector<std::string> tvec_vals = str::split(content[3],",");
-  std::vector<std::string> rvec_vals = str::split(content[4],",");
+  std::vector<std::string> tvec_vals = str::split(content[1],",");
+  std::vector<std::string> rvec_vals = str::split(content[2],",");
+  std::vector<std::string> strswitches = str::split(content[4],",");
+  std::vector<bool> switches;
   for(int i = 0; i < 6; i++){
     vals[i] = std::stoi(rgb_vals[i]);
-  }
-  for(int i = 0; i < 5; i++){
-    dvals[i] = std::stod(dco_vals[i]);
   }
   for(int i = 0; i < 3; i++){
     Global::tvec_g.at<double>(i) = std::stod(tvec_vals[i]);
@@ -162,19 +161,24 @@ void Client::handlePUT(std::vector<std::string> header, std::vector<std::string>
   for(int i = 0; i < 3; i++){
     Global::rvec_g.at<double>(i) = std::stod(rvec_vals[i]);
   }
+  for(std::string s : strswitches){
+    switches.push_back(std::stoi(s));
+  }
+
   Global::muteHTTP.lock();
+  Global::useTR = switches[0];
+  int resval = switches[1];
+  Switches::DOPRINT = switches[2];
+  Switches::FRAME = switches[3];
+  Switches::DRAW = switches[4];
+  Switches::printTime = std::stoi(content[3]);
+  printf("Switches print: %d\n",Switches::printTime);
   Var::minR = vals[0];
   Var::maxR = vals[1];
   Var::minG = vals[2];
   Var::maxG = vals[3];
   Var::minB = vals[4];
   Var::maxB = vals[5];
-  Var::dist_cof[0] = dvals[0];
-  Var::dist_cof[1] = dvals[1];
-  Var::dist_cof[2] = dvals[2];
-  Var::dist_cof[3] = dvals[3];
-  Var::dist_cof[4] = dvals[4];
-  int resval = std::stoi(content[2]);
   if(resval){
     Var::WIDTH = 1280;
     Var::HEIGHT = 720;
@@ -182,7 +186,6 @@ void Client::handlePUT(std::vector<std::string> header, std::vector<std::string>
     Var::WIDTH = 640;
     Var::HEIGHT = 480;
   }
-  Global::useTR = std::stoi(content[5]);
   Global::muteHTTP.unlock();
 }
 

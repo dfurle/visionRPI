@@ -9,11 +9,8 @@ void ThresholdImage(const cv::Mat& original, cv::Mat& thresholded) {
 void morphOps(cv::Mat& thresh) {
   cv::Mat erodeElement = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
   cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(8, 8));
-  // cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
   cv::erode(thresh,thresh,erodeElement);
   cv::dilate(thresh,thresh,dilateElement);
-  cv::erode(thresh,thresh,erodeElement);
-  cv::erode(thresh,thresh,erodeElement);
 }
 
 int findTarget(cv::Mat& img, cv::Mat& thresholded) {
@@ -418,8 +415,8 @@ int main(int argc, const char* argv[]) {
     p.add_Parameter("-p" ,"--print",Switches::DOPRINT,false,"prints basic data");
     p.add_Parameter("-f" ,"--frame",Switches::FRAME,true,"prints of frames found");
     p.add_Parameter("-d","--draw",Switches::DRAW,true,"draws the lines on original img file");
+    p.add_Parameter("-cam","--camera",Switches::USECAM,true,"which camera port to use");
     p.add_Parameter("-pt","--ptime",printTime_d,0,"(1-2) prints time taken for each loop");
-    p.add_Parameter("-cam","--camera",cameraInput_d,0,"(0-2) which camera port to use");
 
     #ifdef OPTIMIZE
     Switches::USEHTTP = false;
@@ -434,22 +431,20 @@ int main(int argc, const char* argv[]) {
 
     if(p.checkParams(true))
       return 0;
-    Switches::cameraInput = std::round(cameraInput_d);
     Switches::printTime = std::round(printTime_d);
-    printf("cam: %d | pt: %d\n",Switches::cameraInput, Switches::printTime);
+    printf("pt: %d\n", Switches::printTime);
   }
-    
-  ClockTimer timer;
-  Clock serverClock;
 
-  bool printTime = false;
+  Clock serverClock;
   int frameCounter = 0, frameCounter2 = 0, frameCounterPrev = 0, missedFrames = 0;
 
-  std::cout << CV_VERSION << std::endl;
-
+  #ifndef OPTIMIZE
+  ClockTimer timer;
+  bool printTime = false;
   if (Switches::printTime == 1)
     printTime = true;
   timer.printTime(printTime,"getting input");
+  #endif
 
   cv::Mat img, thresholded;
   cv::Mat rPos(cv::Size(250,1000),CV_8UC3);
@@ -476,7 +471,13 @@ int main(int argc, const char* argv[]) {
   serverClock.restart();
 
   while (true) {
+    #ifndef OPTIMIZE
+    if (Switches::printTime == 1)
+      printTime = true;
+    else
+      printTime = false;
     timer.reset();
+    #endif
     Global::muteFrame.lock();
     if (!Global::frame.empty() && Global::newFrame) {
       #ifndef OPTIMIZE
@@ -497,7 +498,7 @@ int main(int argc, const char* argv[]) {
       timer.printTime(printTime," thresholded");
       #endif
 
-      morphOps(thresholded);
+      // morphOps(thresholded);
       #ifndef OPTIMIZE
       timer.printTime(printTime," morphOps");
       #endif
@@ -595,7 +596,7 @@ int main(int argc, const char* argv[]) {
         checkSumLoc += Var::minG + Var::maxG;
         checkSumLoc += Var::minB + Var::maxB;
         if(checkSum != checkSumLoc){
-          writeParameters();
+          // writeParameters();
           checkSum = 0;
           checkSum += Var::minR + Var::maxR;
           checkSum += Var::minG + Var::maxG;

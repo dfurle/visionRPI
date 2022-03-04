@@ -17,14 +17,12 @@
     </div>
     <br>
     <div class="slidecontainer">
-      <div class="label" id="distortion">Distortion</div>
-      <button id="clear" type="button">Clear</button><br>
-      d0<input id="d0" type="number" min="-1" max="1" step="0.01" value="0"><br>
-      d1<input id="d1" type="number" min="-1" max="1" step="0.01" value="0"><br>
-      d2<input id="d2" type="number" min="-1" max="1" step="0.01" value="0"><br>
-      d3<input id="d3" type="number" min="-1" max="1" step="0.01" value="0"><br>
-      d4<input id="d4" type="number" min="-1" max="1" step="0.01" value="0"><br>
-      High-Res<input id="res" type="checkbox">
+      <div class="label" id="switches">Switches</div>
+      High-Res<input id="SWres" type="checkbox" style="float: right"><br>
+      print<input id="SWprint" type="checkbox" style="float: right"><br>
+      frame<input id="SWframe" type="checkbox" style="float: right"><br>
+      draw<input id="SWdraw" type="checkbox" style="float: right"><br>
+      PT<input id="pt" type="number" min="0" max="3" step="1" value="0" style="float: right">
     </div>
     <br>
     <div class="slidecontainer">
@@ -38,7 +36,7 @@
       <input id="rvec2" type="number" min="-3.14" max="3.14" step="0.01" value="0.1">
     </div>
   </div>
-  <div id="right" style="width: 60%; float: right; border: solid black 3px; overflow: scroll; height: 100%;">
+  <div id="right" style="float: right; border: solid black 3px; overflow: scroll; height: 100%;">
     <div id="images" style="float: left; border: solid red 2px;">
       <div><img id="video_stream1" src="video_stream1" style="float: left; width: 100%"></div>
       <br>
@@ -64,56 +62,29 @@
       $("#rpos").outerWidth($("#rpos").outerWidth()/widthSum*maxWidth);
     }, 1000);
 
-    let element = $("#minR");
-    for(let i = 0; i < 6; i++){
-      element.on("input", onInput);
-      element = element.next().next().next();
-    }
-    element = $("#d0");
-    for(let i = 0; i < 5; i++){
-      element.on("input", onInput);
-      element = element.next().next();
-    }
-    element = $("#tvec0");
-    for(let i = 0; i < 3; i++){
-      element.on("input", onInput);
-      element = element.next();
-    }
-    element = $("#rvec0");
-    for(let i = 0; i < 3; i++){
-      element.on("input", onInput);
-      element = element.next();
-    }
-    $("#res").click(onInput)
-    $("#trvec-box").click(onInput)
-    $("#clear").click(function(){
-      element = $("#d0");
-      for(let i = 0; i < 5; i++){
-        element.val(0);
-        element = element.next().next();
+    function attach(elementID, amount = 1, skip = 0){
+      let element = $("#"+elementID);
+      for(let i = 0; i < amount; i++){
+        element.on("input", onInput);
+        for(let z = 0; z < skip; z++)
+          element = element.next();
       }
-      onInput();
-    });
+    }
+
+    attach("minR",6,3);
+    attach("tvec0",3,1);
+    attach("rvec0",3,1);
+    attach("trvec-box");
+    attach("SWres",5,2);
+    attach("pt");
 
     function onInput(e) {
-      let rgb = [];
-      let dist = [];
-      let tvec = [];
-      let rvec = [];
+      let rgb = [], dist = [], tvec = [], rvec = [], switches = [];
       let element = $("#minR");
       for(let i = 0; i < 6; i++){
         rgb.push(element.val());
         element = element.next();
         element.html(rgb[rgb.length-1]);
-        element = element.next().next();
-      }
-      element = $("#d0");
-      for(let i = 0; i < 5; i++){
-        let v = element.val();
-        if(v=="")
-          dist.push(0);
-        else
-          dist.push(v);
         element = element.next().next();
       }
       element = $("#tvec0");
@@ -134,17 +105,35 @@
           rvec.push(v);
         element = element.next();
       }
-      var resval = $("#res").prop("checked") ? "1" : "0";
-      var usetr = $("#trvec-box").prop("checked") ? "1" : "0";
+      function getCheck(element){
+        return element.prop("checked") ? "1" : "0";
+      }
+      switches.push(getCheck($("#trvec-box")));
+      element = $("#SWres");
+      for(let i = 0; i < 4; i++){
+        switches.push(getCheck(element));
+        element = element.next().next();
+      }
+      
+      let pt = "0";
+      if($("#pt").val() == "")
+        pt = "0";
+      else
+        pt = $("#pt").val();
+
 
       let data = "";
-      data += rgb.join(",") + "\n";
-      data += dist.join(",") + "\n";
-      data += resval + "\n";
-      data += tvec.join(",") + "\n";
-      data += rvec.join(",") + "\n";
-      data += usetr + "\n";
+      data += rgb.join(",") + "\n";     // 0
+      data += tvec.join(",") + "\n";    // 1
+      data += rvec.join(",") + "\n";    // 2
+      data += pt + "\n";                // 3
+      data += switches.join(",") + "\n";// 4
       console.log(data);
+
+      // High-Res - "SWres"
+      // print - "SWprint"
+      // frame - "SWframe"
+      // draw - "SWdraw"
 
       $.ajax({
         type: 'PUT',
@@ -172,12 +161,12 @@
         element.html(data[i]);
         element = element.next().next();
       }
-      element = $("#d0");
-      for(let i = 0; i < 5; i++){
-        element.val(data[i+6]);
+      element = $("#SWres");
+      for(let i = 0; i < 4; i++){
+        element.prop('checked', Boolean(parseInt(data[6+i])));
         element = element.next().next();
       }
-      $("#res").prop('checked', Boolean(parseInt(data[6+5])));
+      $("pt").val(data[6+5]);
     })
   })
 </script>	

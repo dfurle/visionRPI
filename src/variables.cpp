@@ -61,9 +61,8 @@ bool         DOPRINT                    = false;
 bool         FRAME                      = true;
 bool         SAVE                       = false;
 bool         DRAW                       = true;
+bool         USECAM                     = false;
 int          printTime                  = 0;
-double       InitPID[]                  = {0, 0, 0};
-int          cameraInput                = 0;
 } // namespace Switches
 
 
