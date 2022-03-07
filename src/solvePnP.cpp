@@ -304,6 +304,11 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   Global::mutePos.lock();
   Global::position.dist = distance;
   Global::position.robotAngle = robotAngle * (180. / M_PI);
+  if(robotAngle > M_PI/2. || xWorld.x > 5. || xWorld.z < 0){
+    Global::dataValid = 0;
+  } else {
+    Global::dataValid = 1;
+  }
   Global::mutePos.unlock();
   timer.printTime(" maths");
 
