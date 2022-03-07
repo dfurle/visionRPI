@@ -171,15 +171,11 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   }
 
   std::vector<cv::Point2f> img2dpoints;
-  #ifndef OPTIMIZE
-  ClockTimer timer;
-  bool printTime = false;
+  ClockTimer timer(Switches::printTime == 3);
   if (Switches::printTime == 3) {
-    printTime = true;
     timer.reset();
-    printf("begin findTarget\n");
+    printf("begin solvePnP\n");
   }
-  #endif
 
   for(int t = 0; t < 3; t++){
     img2dpoints.push_back(Global::targets[t].points[0]);
@@ -230,9 +226,7 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
     // }
   }
   */
-  #ifndef OPTIMIZE
-  timer.printTime(printTime," added pts");
-  #endif
+  timer.printTime(" added pts");
 
   /* ---===debugging drawing===--- */
   /*
@@ -251,11 +245,9 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   cv::Mat tvec;
   cv::Mat rMat;
 
-  // cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec);
-  // cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec, true); //test this out!? plug in old r and t vec values
-  #ifdef OPTIMIZE
-  cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec, false, cv::SOLVEPNP_ITERATIVE);
-  #else
+  
+  // cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec, false, cv::SOLVEPNP_ITERATIVE);
+  
   Global::muteHTTP.lock();
   // printf("tr: %d\n",Global::useTR);
   if(Global::useTR){
@@ -265,17 +257,12 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
     cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec, false, cv::SOLVEPNP_ITERATIVE);
   }
   Global::muteHTTP.unlock();
-  #endif
 
 
-  #ifndef OPTIMIZE
-  timer.printTime(printTime," solvePnP");
-  #endif
+  timer.printTime(" solvePnP");
 
   cv::Rodrigues(rvec, rMat);
-  #ifndef OPTIMIZE
-  timer.printTime(printTime," rodrig");
-  #endif
+  timer.printTime(" rodrig");
 
   // 2022
   // transvec is the transposing vector of target, x=0 y=1 z=2; x=dir y=height z=depth; rotation of robot matters
@@ -293,7 +280,6 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   double robotAngle = atan2(transvec[0], transvec[2]);
 
 
-  #ifndef OPTIMIZE
   cv::Size res(250,1000);
   rPos.setTo(cv::Scalar(0,0,0));
   double relative_size = 100./radius;
@@ -311,7 +297,6 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   double alpha = robotAngle + atan2(xWorld.x, xWorld.z);
   cv::line(rPos,robot_rPos,cv::Point(robot_rPos.x-(relative_size*sin(alpha)),robot_rPos.y-(relative_size*cos(alpha))), cv::Scalar(120,120,255),0.07*relative_size);
   cv::line(rPos,robot_rPos,cv::Point(robot_rPos.x-(15*relative_size*sin(alpha)),robot_rPos.y-(15*relative_size*cos(alpha))), cv::Scalar(120,120,255),0.04*relative_size);
-  #endif
 
   //distance += (1-0.904)*distance - 0.433;
   //distance += (1-0.992)*distance - 0.0327;
@@ -320,11 +305,8 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   Global::position.dist = distance;
   Global::position.robotAngle = robotAngle * (180. / M_PI);
   Global::mutePos.unlock();
-  #ifndef OPTIMIZE
-  timer.printTime(printTime," maths");
-  #endif
+  timer.printTime(" maths");
 
-  #ifndef OPTIMIZE
   std::stringstream streamDist;
   streamDist << std::fixed << std::setprecision(2) << distance << "ft";
   std::string sD = streamDist.str();
@@ -338,11 +320,9 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
     cv::putText(img,sD,cv::Point(Var::WIDTH*0.8,Var::HEIGHT*0.9),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
     cv::putText(img,sA,cv::Point(Var::WIDTH*0.75,Var::HEIGHT*0.95),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
   }
-  #endif
 
   // TODO AXIS
 
-  #ifndef OPTIMIZE
   axis2D.clear();
   circle2D.clear();
   base2D.clear();
@@ -353,7 +333,7 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   cv::projectPoints(axis3D, rvec, tvec, camera_matrix, dist_coeffs, axis2D);
   cv::projectPoints(circle3D, rvec, tvec, camera_matrix, dist_coeffs, circle2D);
   //cv::projectPoints(base3D, rvec, tvec, camera_matrix, dist_coeffs,base2D);
-  timer.printTime(printTime," projectPts");
+  timer.printTime(" projectPts");
 
   if(Switches::DRAW){
     if(pointsInBounds(axis2D)){
@@ -397,7 +377,6 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
       }
     }
   }
-  timer.printTime(printTime," drew lines");
-  #endif
+  timer.printTime(" drew lines");
 
 }

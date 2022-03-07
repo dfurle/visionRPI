@@ -2,6 +2,7 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include <string>
+#include <vector>
 
 class Clock {
 private:
@@ -29,29 +30,43 @@ public:
 };
 
 class ClockTimer {
-private:
+public:
   Clock total;
   Clock between;
+  bool doPrint;
+  std::vector<std::string> betweenStr;
+  std::vector<double> betweenTimes;
   
 public:
-  ClockTimer(){}
-  void PTotal(bool r = false){
-    printf("--finalTime: %.2f\n==---------------------------==\n", total.getTimeAsMillis());
-    if(r) reset();
+  ClockTimer(bool dp){ doPrint = dp; }
+  void PTotal(){
+    if(doPrint){
+      printf("--finalTime: %.2f\n==---------------------------==\n", total.getTimeAsMillis());
+    }
   }
   void printTime(std::string str){
-    printf(" %-20s %.2f tot: %.2f\n", str.c_str(), between.getTimeAsMillis(), total.getTimeAsMillis());
-    between.restart();
-  }
-  void printTime(bool doPrint, std::string str){
     if(doPrint){
+      betweenTimes.push_back(between.getTimeAsMillis());
+      betweenStr.push_back(str);
       printf(" %-20s %.2f tot: %.2f\n", str.c_str(), between.getTimeAsMillis(), total.getTimeAsMillis());
       between.restart();
+    }
+  }
+  void printProportion(){
+    std::vector<double> prop;
+    double sum = total.getTimeAsMillis();
+    for(double t : betweenTimes){
+      prop.push_back(t/sum*100);
+    }
+    for(int i = 0; i < prop.size(); i++){
+      printf(" %-20s %6.2f\n", betweenStr[i].c_str(), prop[i]);
     }
   }
   void reset(){
     total.restart();
     between.restart();
+    betweenTimes.clear();
+    betweenStr.clear();
   }
 
 };

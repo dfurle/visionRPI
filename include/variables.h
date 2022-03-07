@@ -1,5 +1,4 @@
 #pragma once
-// #define OPTIMIZE
 
 #include <ctime>
 #include <iostream>
