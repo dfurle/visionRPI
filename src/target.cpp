@@ -8,7 +8,8 @@ void ThresholdImage(const cv::Mat& original, cv::Mat& thresholded) {
 
 void morphOps(cv::Mat& thresh) {
   cv::Mat erodeElement = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
-  cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(8, 8));
+  // cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(8, 8));
+  cv::Mat dilateElement = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
   cv::erode(thresh,thresh,erodeElement);
   cv::dilate(thresh,thresh,dilateElement);
 }
@@ -366,6 +367,7 @@ void writeParameters(){
 }
 
 int main(int argc, const char* argv[]) {
+  std::cout << cv::getBuildInformation() << std::endl;
   readParameters();
   {
     Parser p(argc,argv);
@@ -433,7 +435,7 @@ int main(int argc, const char* argv[]) {
       timer.printTime("Copy Frame");
       frameCounter++;
 
-      #define USESCALING
+      // #define USESCALING
 
       #ifdef USESCALING
       cv::Mat scaled;
@@ -472,27 +474,32 @@ int main(int argc, const char* argv[]) {
       }
       min = min * scale;
       max = max * scale;
+      cv::Rect minRect = cv::Rect(min,cv::Size(max-min));
       timer.printTime(" find min/max");
 
-      cv::Mat imgCut, threshCut;
-      img(cv::Rect(min,cv::Size(max-min))).copyTo(imgCut);
-      timer.printTime(" copyTo");
+      if(minRect.width > 0 && minRect.height > 0){
+        cv::Mat imgCut, threshCut;
+        img(minRect).copyTo(imgCut);
+        timer.printTime(" copyTo");
 
-      if(imgCut.rows != 0 && imgCut.cols != 0){
         ThresholdImage(imgCut,threshCut);
         timer.printTime(" thresh cut");
-        morphOps(threshCut);
-        timer.printTime(" morph cut");
+        // morphOps(threshCut);
+        // timer.printTime(" morph cut");
         thresholded = cv::Mat(cv::Size(Var::WIDTH,Var::HEIGHT), CV_8UC1);
         thresholded.setTo(0);
         threshCut.copyTo(thresholded(cv::Rect(min,threshCut.size())));
+        timer.printTime(" copyto");
       } else {
-        printf("FAILED SCALE THRESH");
-        ThresholdImage(img,thresholded);
-        timer.printTime(" thr heavy");
+        timer.printTime(" failed scale");
+        thresholded = cv::Mat(cv::Size(Var::WIDTH,Var::HEIGHT), CV_8UC1);
+        thresholded.setTo(0);
+        timer.printTime(" set0");
+        // ThresholdImage(img,thresholded);
+        // timer.printTime(" thr heavy");
 
-        morphOps(thresholded);
-        timer.printTime(" morph heavy");
+        // morphOps(thresholded);
+        // timer.printTime(" morph heavy");
       }
       #else
       ThresholdImage(img,thresholded);
@@ -561,9 +568,9 @@ int main(int argc, const char* argv[]) {
       }
 
       timer.PTotal();
-      printf("-------\n");
+      if(timer.doPrint) printf("-------\n");
       timer.printProportion();
-      printf("-------\n");
+      if(timer.doPrint) printf("-------\n");
       Global::newFrame = false;
     } // end check for new frame
     else

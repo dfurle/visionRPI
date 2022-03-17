@@ -9,10 +9,10 @@ int maxG = 255; // 255
 int minB = 0;   // 222
 int maxB = 120; // 241
 
-//int          WIDTH          = 640; // 1920 //1280 //640
-//int          HEIGHT         = 480; // 1080 //720  //480
-int          WIDTH          = 1280; // 1920 //1280 //640
-int          HEIGHT         = 720; // 1080 //720  //480
+int          WIDTH          = 640; // 1920 //1280 //640
+int          HEIGHT         = 480; // 1080 //720  //480
+// int          WIDTH          = 1280; // 1920 //1280 //640
+// int          HEIGHT         = 720; // 1080 //720  //480
 int          EXPOSURE       = 3; // edit in threads.cpp for now
 unsigned int waitAfterFrame = 1000;
 

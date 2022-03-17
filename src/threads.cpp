@@ -111,13 +111,19 @@ void* VideoCap(void* args) {
   }
 
   if(Switches::USECAM){
+    ClockTimer timer(false);
     while (true) {
+      timer.reset();
       if(vcap.grab()){
+        timer.printTime("Grab");
         Global::muteFrame.lock();
+        timer.printTime(" Lock");
         vcap.retrieve(Global::frame);
+        timer.printTime(" Retrieve");
         Global::newFrame = true;
         Global::muteFrame.unlock();
       }
+      timer.PTotal();
       if(int(Global::FrameWidth) != Var::WIDTH){
         printf("width: %d\n",vcap.set(cv::CAP_PROP_FRAME_WIDTH, Var::WIDTH));
         printf("height: %d\n",vcap.set(cv::CAP_PROP_FRAME_HEIGHT, Var::HEIGHT));

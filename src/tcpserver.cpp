@@ -73,12 +73,12 @@ void* client_thread(void* arg) {
     // sprintf(to_client, "%.2f,%.2f,%d\n", Global::position->dist, Global::position->robotAngle, Global::dataValid);
     // mutex are most likely required, test performance
     Global::mutePos.lock();
-    snprintf(to_client, sizeof(to_client), "%.2f,%.2f,%d\n", Global::position.dist, Global::position.robotAngle, Global::dataValid);
+    snprintf(to_client, MAXLINE, "%.2f,%.2f,%d\n", Global::position.dist, Global::position.robotAngle, Global::dataValid);
     Global::mutePos.unlock();
     std::string send_to = to_client;
 
     // int bytesSent = send(socket, to_client, sizeof(to_client), MSG_NOSIGNAL);
-    int bytesSent = send(socket, send_to.c_str(), sizeof(send_to), MSG_NOSIGNAL);
+    int bytesSent = send(socket, send_to.c_str(), send_to.length(), MSG_NOSIGNAL);
     if(bytesSent < 0){
       printf("thread: %d failed\n",client->ID);
       close(socket);
