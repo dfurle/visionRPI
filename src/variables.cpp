@@ -2,12 +2,26 @@
 
 
 namespace Var {    //      2021
-int minR = 0;   // 218   // 150
-int maxR = 255; // 255
-int minG = 194; // 209   // 195
-int maxG = 255; // 255
-int minB = 0;   // 222
-int maxB = 120; // 241
+// int minR = 0;   // 218   // 150
+// int maxR = 255; // 255
+// int minG = 194; // 209   // 195
+// int maxG = 255; // 255
+// int minB = 0;   // 222
+// int maxB = 120; // 241
+
+int rminR = 0;
+int rmaxR = 255;
+int rminG = 0;
+int rmaxG = 255;
+int rminB = 0;
+int rmaxB = 255;
+
+int bminR = 0;
+int bmaxR = 255;
+int bminG = 0;
+int bmaxG = 255;
+int bminB = 0;
+int bmaxB = 255;
 
 int          WIDTH          = 640; // 1920 //1280 //640
 int          HEIGHT         = 480; // 1080 //720  //480
@@ -33,15 +47,11 @@ int              videoSocket = 0;
 const cv::Scalar BLUE = cv::Scalar(255, 0, 0), RED = cv::Scalar(0, 0, 255), YELLOW = cv::Scalar(0, 255, 255), GREEN = cv::Scalar(0, 255, 0);
 
 cv::Mat frame;
-cv::Mat imgC, thresholdedC, rPosC;
-
-cv::Mat tvec_g(cv::Size(1,3),6);
-cv::Mat rvec_g(cv::Size(1,3),6);
-bool useTR;
+cv::Mat imgClean, imgC, thresholdedRC, thresholdedBC;
 
 std::vector<int> imgSocket;
-std::vector<int> thrSocket;
-std::vector<int> rPosSocket;
+std::vector<int> thrRSocket;
+std::vector<int> thrBSocket;
 
 int httpStatus = 0;
 

@@ -8,12 +8,22 @@
   <div id="left" style="width: 15%; float: left; border: solid black 3px; overflow: scroll; height: 100%; padding: 2px">
     <div class="slidecontainer">
       <div class="label" id="rgb">RGB</div>
-      minR<input type="range" min="0" max="255" value="50" class="slider" id="minR"><output id="minRo" width=40px>50</output><br>
-      maxR<input type="range" min="0" max="255" value="255" class="slider" id="maxR"><output id="maxRo" width=40px>255</output><br>
-      minG<input type="range" min="0" max="255" value="50" class="slider" id="minG"><output id="minGo" width=40px>50</output><br>
-      maxG<input type="range" min="0" max="255" value="255" class="slider" id="maxG"><output id="maxGo" width=40px>255</output><br>
-      minB<input type="range" min="0" max="255" value="50" class="slider" id="minB"><output id="minBo" width=40px>50</output><br>
-      maxB<input type="range" min="0" max="255" value="255" class="slider" id="maxB"><output id="maxBo" width=40px>255</output>
+      rminR<input type="range" min="0" max="255" value="50" class="slider" id="rminR"><output id="rminRo" width=40px>50</output><br>
+      rmaxR<input type="range" min="0" max="255" value="255" class="slider" id="rmaxR"><output id="rmaxRo" width=40px>255</output><br>
+      rminG<input type="range" min="0" max="255" value="50" class="slider" id="rminG"><output id="rminGo" width=40px>50</output><br>
+      rmaxG<input type="range" min="0" max="255" value="255" class="slider" id="rmaxG"><output id="rmaxGo" width=40px>255</output><br>
+      rminB<input type="range" min="0" max="255" value="50" class="slider" id="rminB"><output id="rminBo" width=40px>50</output><br>
+      rmaxB<input type="range" min="0" max="255" value="255" class="slider" id="rmaxB"><output id="rmaxBo" width=40px>255</output>
+    </div>
+    <br>
+    <div class="slidecontainer">
+      <div class="label" id="rgb2">RGB2</div>
+      bminR<input type="range" min="0" max="255" value="50" class="slider" id="bminR"><output id="bminRo" width=40px>50</output><br>
+      bmaxR<input type="range" min="0" max="255" value="255" class="slider" id="bmaxR"><output id="bmaxRo" width=40px>255</output><br>
+      bminG<input type="range" min="0" max="255" value="50" class="slider" id="bminG"><output id="bminGo" width=40px>50</output><br>
+      bmaxG<input type="range" min="0" max="255" value="255" class="slider" id="bmaxG"><output id="bmaxGo" width=40px>255</output><br>
+      bminB<input type="range" min="0" max="255" value="50" class="slider" id="bminB"><output id="bminBo" width=40px>50</output><br>
+      bmaxB<input type="range" min="0" max="255" value="255" class="slider" id="bmaxB"><output id="bmaxBo" width=40px>255</output>
     </div>
     <br>
     <div class="slidecontainer">
@@ -38,12 +48,15 @@
   </div>
   <div id="right" style="float: right; border: solid black 3px; overflow: scroll; height: 100%;">
     <div id="images" style="float: left; border: solid red 2px;">
-      <div><img id="video_stream1" src="video_stream1" style="float: left; width: 100%"></div>
+      <div><img style="border: solid red 1px" id="video_stream2" src="video_stream2" style="float: left; width: 100%"></div>
       <br>
-      <div><img id="video_stream2" src="video_stream2" style="float: left; width: 100%"></div>
+      <div><img style="border: solid red 1px" id="video_stream3" src="video_stream3" style="float: left; width: 100%"></div>
     </div>
     <div id="rpos" style="float: left; border: solid red 2px;">
-      <img id="video_stream3" src="video_stream3" style="height: 100%">
+      <div><img id="video_stream1" src="video_stream1" style="float: left; width: 100%"></div>
+    </div>
+    <div id="rpos" style="float: left; border: solid red 2px;">
+      <!-- <img id="video_stream3" src="video_stream3" style="height: 100%"> -->
     </div>
   </div>
 </body>
@@ -54,13 +67,13 @@
     $("#right").outerWidth($("body").width() - $("#left").outerWidth(true) - 1);
     var maxWidth = $("#right").width()-10;
     
-    setInterval(function(){
-      $("#rpos").height($("#images").height());
-      $("#rpos").width($("#video_stream3").width());
-      let widthSum = $("#images").outerWidth()+$("#rpos").outerWidth();
-      $("#images").outerWidth($("#images").outerWidth()/widthSum*maxWidth);
-      $("#rpos").outerWidth($("#rpos").outerWidth()/widthSum*maxWidth);
-    }, 1000);
+    // setInterval(function(){
+    //   $("#rpos").height($("#images").height());
+    //   $("#rpos").width($("#video_stream3").width());
+    //   let widthSum = $("#images").outerWidth()+$("#rpos").outerWidth();
+    //   $("#images").outerWidth($("#images").outerWidth()/widthSum*maxWidth);
+    //   $("#rpos").outerWidth($("#rpos").outerWidth()/widthSum*maxWidth);
+    // }, 1000);
 
     function attach(elementID, amount = 1, skip = 0){
       let element = $("#"+elementID);
@@ -71,7 +84,8 @@
       }
     }
 
-    attach("minR",6,3);
+    attach("rminR",6,3);
+    attach("bminR",6,3);
     attach("tvec0",3,1);
     attach("rvec0",3,1);
     attach("trvec-box");
@@ -79,12 +93,19 @@
     attach("pt");
 
     function onInput(e) {
-      let rgb = [], dist = [], tvec = [], rvec = [], switches = [];
-      let element = $("#minR");
+      let rgb = [], rgb2 = [], dist = [], tvec = [], rvec = [], switches = [];
+      let element = $("#rminR");
       for(let i = 0; i < 6; i++){
         rgb.push(element.val());
         element = element.next();
         element.html(rgb[rgb.length-1]);
+        element = element.next().next();
+      }
+      element = $("#bminR");
+      for(let i = 0; i < 6; i++){
+        rgb2.push(element.val());
+        element = element.next();
+        element.html(rgb2[rgb2.length-1]);
         element = element.next().next();
       }
       element = $("#tvec0");
@@ -123,7 +144,8 @@
 
 
       let data = "";
-      data += rgb.join(",") + "\n";     // 0
+      data += rgb.join(",") + ",";            // 0
+      data += rgb2.join(",") + "\n";    // 0
       data += tvec.join(",") + "\n";    // 1
       data += rvec.join(",") + "\n";    // 2
       data += pt + "\n";                // 3
@@ -154,19 +176,26 @@
       data = msg.split(',')
       console.log(data)
 
-      let element = $("#minR");
+      let element = $("#rminR");
       for(let i = 0; i < 6; i++){
         element.val(data[i]);
         element = element.next();
         element.html(data[i]);
         element = element.next().next();
       }
-      element = $("#SWres");
-      for(let i = 0; i < 4; i++){
-        element.prop('checked', Boolean(parseInt(data[6+i])));
+      element = $("#bminR");
+      for(let i = 0; i < 6; i++){
+        element.val(data[6+i]);
+        element = element.next();
+        element.html(data[6+i]);
         element = element.next().next();
       }
-      $("pt").val(data[6+5]);
+      element = $("#SWres");
+      for(let i = 0; i < 4; i++){
+        element.prop('checked', Boolean(parseInt(data[6+6+i])));
+        element = element.next().next();
+      }
+      $("pt").val(data[6+6+5]);
     })
   })
 </script>	

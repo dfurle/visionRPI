@@ -28,9 +28,9 @@ inline bool checkErr(int rc, std::string name) {
 
 /**
  *  Valid Names:
- *   "USB"
+ *   "VIDEO"
+ *   "TCP"
  *   "SAVE"
- *   "PID"
  *   "HTTP"
  **/
 bool startThread(std::string name, void* params) {
@@ -44,7 +44,7 @@ bool startThread(std::string name, void* params) {
     return checkErr(rc, name);
   }
   if(!name.compare("SAVE")){
-    rc = pthread_create(&videoSave_t, NULL, VideoSave, params);
+    rc = pthread_create(&videoSave_t, NULL, VideoSave, NULL);
     return checkErr(rc, name);
   }
   if(!name.compare("HTTP")){
@@ -67,7 +67,7 @@ void* VideoCap(void* args) {
     // exit(1);
   } else {
     // while (!vcap.open(cameraPipeline)) {
-    while (!vcap.open(0)) {
+    while (!vcap.open(1)) {
       std::cout << "cant connect" << std::endl;
       usleep(10000000);
     }
@@ -77,6 +77,7 @@ void* VideoCap(void* args) {
     printf("auto exposure: %f\n",vcap.get(cv::CAP_PROP_AUTO_EXPOSURE));
     printf("exposure: %f\n",vcap.get(cv::CAP_PROP_EXPOSURE));
     printf("brightness: %f\n",vcap.get(cv::CAP_PROP_BRIGHTNESS));
+    printf("framerate: %f\n",vcap.get(cv::CAP_PROP_FPS));
     {
     int b = vcap.get(cv::CAP_PROP_FOURCC);
     char* fourcc = (char*) &b;
@@ -88,11 +89,13 @@ void* VideoCap(void* args) {
     printf("---===Setting===---\n");
     printf("fourcc: %d\n",vcap.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('Y','U','Y','V')));
     printf("auto exposure: %d\n",vcap.set(cv::CAP_PROP_AUTO_EXPOSURE, 1));
-    printf("exposure: %d\n",vcap.set(cv::CAP_PROP_EXPOSURE, 3));
+    // printf("exposure: %d\n",vcap.set(cv::CAP_PROP_EXPOSURE, 3));
+    printf("exposure: %d\n",vcap.set(cv::CAP_PROP_EXPOSURE, 100));
     printf("autofocus: %d\n",vcap.set(cv::CAP_PROP_AUTOFOCUS, 0));
     printf("Frame: %f, %d\n",Global::FrameWidth,Var::WIDTH);
     printf("width: %d\n",vcap.set(cv::CAP_PROP_FRAME_WIDTH, Var::WIDTH));
     printf("height: %d\n",vcap.set(cv::CAP_PROP_FRAME_HEIGHT, Var::HEIGHT));
+    printf("framerate: %d\n",vcap.set(cv::CAP_PROP_FPS, 30));
     Global::FrameWidth = vcap.get(cv::CAP_PROP_FRAME_WIDTH);
     Global::FrameHeight = vcap.get(cv::CAP_PROP_FRAME_HEIGHT);
 
@@ -101,6 +104,7 @@ void* VideoCap(void* args) {
     printf("auto exposure: %f\n",vcap.get(cv::CAP_PROP_AUTO_EXPOSURE));
     printf("exposure: %f\n",vcap.get(cv::CAP_PROP_EXPOSURE));
     printf("brightness: %f\n",vcap.get(cv::CAP_PROP_BRIGHTNESS));
+    printf("framerate: %f\n",vcap.get(cv::CAP_PROP_FPS));
     {
     int b = vcap.get(cv::CAP_PROP_FOURCC);
     char* fourcc = (char*) &b;
@@ -124,12 +128,12 @@ void* VideoCap(void* args) {
         Global::muteFrame.unlock();
       }
       timer.PTotal();
-      if(int(Global::FrameWidth) != Var::WIDTH){
-        printf("width: %d\n",vcap.set(cv::CAP_PROP_FRAME_WIDTH, Var::WIDTH));
-        printf("height: %d\n",vcap.set(cv::CAP_PROP_FRAME_HEIGHT, Var::HEIGHT));
-        Global::FrameWidth = Var::WIDTH;
-        Global::FrameHeight = Var::HEIGHT;
-      }
+      // if(int(Global::FrameWidth) != Var::WIDTH){
+      //   printf("width: %d\n",vcap.set(cv::CAP_PROP_FRAME_WIDTH, Var::WIDTH));
+      //   printf("height: %d\n",vcap.set(cv::CAP_PROP_FRAME_HEIGHT, Var::HEIGHT));
+      //   Global::FrameWidth = Var::WIDTH;
+      //   Global::FrameHeight = Var::HEIGHT;
+      // }
       usleep(Var::waitAfterFrame);
     }
   } else {
@@ -170,24 +174,23 @@ void* VideoCap(void* args) {
 }
 
 void* VideoSave(void* arg){
-  printf("DO NOT USE SAVE FOR NOW, STILL WORKING ON IT\n");
-  exit(1);
+  // printf("DO NOT USE SAVE FOR NOW, STILL WORKING ON IT\n");
+  // exit(1);
 
-  cv::Mat* img = (cv::Mat*) arg;
-  int currentLog = 0;
+  int currentLog = 1;
   int fourcc = cv::VideoWriter::fourcc('M','J','P','G');
+  // int fourcc = cv::VideoWriter::fourcc('Y','U','Y','V');
   int prevTime = 30;
   cv::VideoWriter out;
   Clock timer;
 
   out.open("./output0.avi",fourcc,30.,cv::Size(Var::WIDTH,Var::HEIGHT));
 
-
   while(true){
     Global::muteImg.lock();
-    out.write(*img);
-    cv::imshow("debug",*img);
-    cv::waitKey(0);
+    if(Global::imgClean.size().area() != 0){
+      out.write(Global::imgClean);
+    }
     Global::muteImg.unlock();
 
     if(timer.getTimeAsSecs() >= 30){
@@ -206,6 +209,6 @@ void* VideoSave(void* arg){
         prevTime = time;
       }
     }
-    
+    usleep(33000);
   }
 }

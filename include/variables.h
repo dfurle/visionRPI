@@ -29,12 +29,19 @@
 
 
 namespace Var {
-extern int minR;
-extern int maxR;
-extern int minG;
-extern int maxG;
-extern int minB;
-extern int maxB;
+extern int rminR;
+extern int rmaxR;
+extern int rminG;
+extern int rmaxG;
+extern int rminB;
+extern int rmaxB;
+
+extern int bminR;
+extern int bmaxR;
+extern int bminG;
+extern int bmaxG;
+extern int bminB;
+extern int bmaxB;
 
 extern int          WIDTH;
 extern int          HEIGHT;
@@ -64,6 +71,11 @@ public:
   cv::Rect        boundingRect;
   double          area;
   int             id;
+  int             color;
+  enum COLOR{
+    RED,
+    BLUE
+  };
   cv::Point2f     points[4];
   void NullTargets() {
     // rect = cv::RotatedRect();
@@ -115,14 +127,11 @@ extern int              videoSocket;
 extern const cv::Scalar BLUE, RED, YELLOW, GREEN;
 
 extern std::vector<int> imgSocket;
-extern std::vector<int> thrSocket;
-extern std::vector<int> rPosSocket;
+extern std::vector<int> thrRSocket;
+extern std::vector<int> thrBSocket;
 
 extern cv::Mat frame;
-extern cv::Mat imgC, thresholdedC, rPosC;
-
-extern cv::Mat tvec_g, rvec_g;
-extern bool useTR;
+extern cv::Mat imgClean, imgC, thresholdedRC, thresholdedBC;
 
 extern int httpStatus;
 
@@ -148,8 +157,6 @@ extern int          printTime;
 
 // In target.cpp
 bool startThread(std::string name, void* params = NULL);
-void initSolvePnP();
-void findAnglePnP(cv::Mat& img, cv::Mat& rPos);
 
 // In variables.cpp
 namespace str{

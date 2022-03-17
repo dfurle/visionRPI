@@ -93,9 +93,12 @@ int Client::handleGET(std::vector<std::string> header){
     sendAll("text/javascript",getReqFile("/home/pi/jquery.js"));
   } else if(str::cmp(req,"/initialData")){
     std::stringstream wss;
-    wss << Var::minR << ',' << Var::maxR << ',';
-    wss << Var::minG << ',' << Var::maxG << ',';
-    wss << Var::minB << ',' << Var::maxB << ',';
+    wss << Var::rminR << ',' << Var::rmaxR << ',';
+    wss << Var::rminG << ',' << Var::rmaxG << ',';
+    wss << Var::rminB << ',' << Var::rmaxB << ',';
+    wss << Var::bminR << ',' << Var::bmaxR << ',';
+    wss << Var::bminG << ',' << Var::bmaxG << ',';
+    wss << Var::bminB << ',' << Var::bmaxB << ',';
     if(Var::WIDTH == 1280){
       wss << "1" << ',';
     } else {
@@ -126,11 +129,11 @@ int Client::handleGET(std::vector<std::string> header){
     }
     if(str::cmp(req,"/video_stream2")){
       printf("VIDEO STREAM TWO PUSH %d\n",socket);
-      Global::thrSocket.push_back(socket);
+      Global::thrRSocket.push_back(socket);
     }
     if(str::cmp(req,"/video_stream3")){
       printf("VIDEO STREAM THREE PUSH %d\n",socket);
-      Global::rPosSocket.push_back(socket);
+      Global::thrBSocket.push_back(socket);
     }
   }
   if(str::contains(req,"/video_stream")){
@@ -141,7 +144,7 @@ int Client::handleGET(std::vector<std::string> header){
 }
 
 void Client::handlePUT(std::vector<std::string> header, std::vector<std::string> content){
-  int vals[6];
+  int vals[12];
   double dvals[5];
   sendAll("text/plain",std::vector<char>(),true);
   if(content.size() == 0){
@@ -152,33 +155,33 @@ void Client::handlePUT(std::vector<std::string> header, std::vector<std::string>
   std::vector<std::string> rvec_vals = str::split(content[2],",");
   std::vector<std::string> strswitches = str::split(content[4],",");
   std::vector<bool> switches;
-  for(int i = 0; i < 6; i++){
+  for(int i = 0; i < 12; i++){
     vals[i] = std::stoi(rgb_vals[i]);
-  }
-  for(int i = 0; i < 3; i++){
-    Global::tvec_g.at<double>(i) = std::stod(tvec_vals[i]);
-  }
-  for(int i = 0; i < 3; i++){
-    Global::rvec_g.at<double>(i) = std::stod(rvec_vals[i]);
   }
   for(std::string s : strswitches){
     switches.push_back(std::stoi(s));
   }
 
   Global::muteHTTP.lock();
-  Global::useTR = switches[0];
   int resval = switches[1];
   Switches::DOPRINT = switches[2];
   Switches::FRAME = switches[3];
   Switches::DRAW = switches[4];
   Switches::printTime = std::stoi(content[3]);
   printf("Switches print: %d\n",Switches::printTime);
-  Var::minR = vals[0];
-  Var::maxR = vals[1];
-  Var::minG = vals[2];
-  Var::maxG = vals[3];
-  Var::minB = vals[4];
-  Var::maxB = vals[5];
+  Var::rminR = vals[0];
+  Var::rmaxR = vals[1];
+  Var::rminG = vals[2];
+  Var::rmaxG = vals[3];
+  Var::rminB = vals[4];
+  Var::rmaxB = vals[5];
+
+  Var::bminR = vals[6];
+  Var::bmaxR = vals[7];
+  Var::bminG = vals[8];
+  Var::bmaxG = vals[9];
+  Var::bminB = vals[10];
+  Var::bmaxB = vals[11];
   if(resval){
     Var::WIDTH = 1280;
     Var::HEIGHT = 720;
@@ -287,7 +290,8 @@ int sendIMG(std::vector<uchar>& imgBuf, int socket){
 
 void* stream_thread(void* arg){
   std::vector<uchar> imgBuffer;
-  std::vector<uchar> threshBuffer;
+  std::vector<uchar> threshRBuffer;
+  std::vector<uchar> threshBBuffer;
   std::vector<uchar> rPosBuffer;
   while(1){
     if(Global::imgC.empty()){
@@ -299,8 +303,8 @@ void* stream_thread(void* arg){
     Global::muteImg.unlock();
 
     cv::imencode(".jpeg", Global::imgC,imgBuffer);
-    cv::imencode(".jpeg", Global::thresholdedC,threshBuffer);
-    cv::imencode(".jpeg", Global::rPosC,rPosBuffer);
+    cv::imencode(".jpeg", Global::thresholdedRC,threshRBuffer);
+    cv::imencode(".jpeg", Global::thresholdedBC,threshBBuffer);
 
     Global::muteImg.lock();
     Global::httpStatus = 0;
@@ -308,7 +312,7 @@ void* stream_thread(void* arg){
 
     int res = 0;
     
-    if(!Global::imgSocket.empty() && !Global::thrSocket.empty() && !Global::rPosSocket.empty()){
+    if(!Global::imgSocket.empty() && !Global::thrRSocket.empty() && !Global::thrBSocket.empty()){
       for(auto it = Global::imgSocket.begin(); it != Global::imgSocket.end();){
         if(sendIMG(imgBuffer,*it) == -1) {
           close(*it);
@@ -316,17 +320,17 @@ void* stream_thread(void* arg){
         } else
           it++;
       }
-      for(auto it = Global::thrSocket.begin(); it != Global::thrSocket.end();){
-        if(sendIMG(threshBuffer,*it) == -1){
+      for(auto it = Global::thrRSocket.begin(); it != Global::thrRSocket.end();){
+        if(sendIMG(threshRBuffer,*it) == -1){
           close(*it);
-          Global::thrSocket.erase(it);
+          Global::thrRSocket.erase(it);
         } else
           it++;
       }
-      for(auto it = Global::rPosSocket.begin(); it != Global::rPosSocket.end();){
-        if(sendIMG(rPosBuffer,*it) == -1){
+      for(auto it = Global::thrBSocket.begin(); it != Global::thrBSocket.end();){
+        if(sendIMG(threshBBuffer,*it) == -1){
           close(*it);
-          Global::rPosSocket.erase(it);
+          Global::thrBSocket.erase(it);
         } else
           it++;
       }
