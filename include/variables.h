@@ -60,10 +60,12 @@ extern double IRLOffset;
 class Target {
 public:
   Target() { NullTargets(); };
-  cv::RotatedRect rect;
+  int             id;
+  cv::RotatedRect minRect;
   cv::Rect        boundingRect;
   double          area;
-  int             id;
+  cv::Point2f     center;
+  cv::Point2f     centerAim;
   cv::Point2f     points[4];
   void NullTargets() {
     // rect = cv::RotatedRect();
@@ -74,6 +76,10 @@ public:
       points[i].x = 0;
       points[i].y = 0;
     }
+    center.x = 0.;
+    center.y = 0.;
+    centerAim.x = 0.;
+    centerAim.y = 0.;
   }
 };
 

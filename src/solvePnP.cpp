@@ -41,11 +41,17 @@ std::vector<cv::Point2f> base2D;
 
 void initSolvePnP() {
   mod3d.clear();
+  // for(int i = 0; i < 3; i++){ 
+  //   mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]-tAngleL),0,           radius*cos(tCenters[i]-tAngleL)));
+  //   mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]-tAngleL),-stripHeight,radius*cos(tCenters[i]-tAngleL)));
+  //   mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]+tAngleL),0,           radius*cos(tCenters[i]+tAngleL)));
+  //   mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]+tAngleL),-stripHeight,radius*cos(tCenters[i]+tAngleL)));
+  // }
   for(int i = 0; i < 3; i++){ 
     mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]-tAngleL),0,           radius*cos(tCenters[i]-tAngleL)));
-    mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]-tAngleL),-stripHeight,radius*cos(tCenters[i]-tAngleL)));
     mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]+tAngleL),0,           radius*cos(tCenters[i]+tAngleL)));
     mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]+tAngleL),-stripHeight,radius*cos(tCenters[i]+tAngleL)));
+    mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]-tAngleL),-stripHeight,radius*cos(tCenters[i]-tAngleL)));
   }
 
 

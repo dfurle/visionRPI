@@ -26,14 +26,11 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
     printf("begin findTarget\n");
   }
 
-  // findContours(thresholded, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
-  // findContours(thresholded, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
   cv::findContours(thresholded, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
   timer.printTime(" finding Contours");
 
   for (auto it = contours.begin(); it != contours.end();) {
-    //printf("size: %f\n",cv::contourArea(*it));
-    if (cv::contourArea(*it) < 45) { // min contour
+    if (cv::contourArea(*it) < 45) {
       it = contours.erase(it);
       timer.printTime(" removing contour");
     } else
@@ -50,135 +47,90 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
   }
   timer.printTime(" filter:Size");
 
-  std::vector<cv::RotatedRect> minRect(contours.size());
   std::vector<std::vector<cv::Point> > art;
-  cv::Mat workingImage(Global::FrameHeight, Global::FrameWidth, CV_8UC1, cv::Scalar(0));
+  // cv::Mat workingImage(Global::FrameHeight, Global::FrameWidth, CV_8UC1, cv::Scalar(0));
 
   if (!contours.empty() && !hierarchy.empty()) {
     for (int i = 0; i < (int)contours.size(); i++) {
       if (timer.doPrint)
         printf("i: %d\n", i);
-      // targets[i].NullTargets();
-      Global::targets.push_back(Target());
-      Global::targets.back().id = i;
       if (hierarchy[i][2] != -1) {
         continue;
       }
-      minRect[i] = cv::minAreaRect(cv::Mat(contours[i]));
-      cv::Point2f rect_points[4];
-      minRect[i].points(rect_points);
-      // std::copy(rect_points, rect_points + 4, Global::targets.back().points);
-      Global::targets.back().rect = minRect[i];
-      cv::Rect mRect = minRect[i].boundingRect();
+      Target t;
+      t.id = i;
+      t.minRect = cv::minAreaRect(cv::Mat(contours[i]));
+      t.minRect.points(t.points);
+      t.boundingRect = t.minRect.boundingRect();
+      t.area = cv::contourArea(contours[i]);
 
-      std::vector<cv::Point2f> rp;
-      rp.push_back(rect_points[0]);
-      rp.push_back(rect_points[1]);
-      rp.push_back(rect_points[2]);
-      rp.push_back(rect_points[3]);
 
-      cv::Point2f rCenter;
       for(int i = 0; i < 4; i++){
-        rCenter.x += rp[i].x;
-        rCenter.y += rp[i].y;
+        t.center.x += t.points[i].x;
+        t.center.y += t.points[i].y;
       }
-      rCenter.x/=4.;
-      rCenter.y/=4.;
+      t.center.x/=4.;
+      t.center.y/=4.;
+      t.centerAim.x = (t.center.x / Var::WIDTH /2) - 1;
+      t.centerAim.y = (t.center.y / Var::HEIGHT/2) - 1;
 
-      
-      // printf("-----BEGIN-------- %d\n",i);
-      // printf(" no sort\n");
-      // for(int i = 0; i < 4; i++)
-      //   printf("id: %d : %.1f,%.1f\n",i,rp[i].x,rp[i].y);
-
+      std::vector<cv::Point2f> rp(t.points, t.points+4);
       std::sort(rp.begin(), rp.end(), 
       [ ](const cv::Point2f& lhs, const cv::Point2f& rhs){
         return lhs.x < rhs.x;
       });
-      // printf(" x sort\n");
-      // for(int i = 0; i < 4; i++)
-      //   printf("id: %d : %.1f,%.1f\n",i,rp[i].x,rp[i].y);
-
       std::sort(rp.begin(), rp.begin()+2, 
-      [ rCenter ](const cv::Point2f& lhs, const cv::Point2f& rhs){
-        return abs(lhs.x - rCenter.x) < abs(rhs.x - rCenter.x);
+      [ t ](const cv::Point2f& lhs, const cv::Point2f& rhs){
+        return abs(lhs.x - t.center.x) < abs(rhs.x - t.center.x);
       });
-      // printf(" y-1 sort\n");
-      // for(int i = 0; i < 4; i++)
-      //   printf("id: %d : %.1f,%.1f\n",i,rp[i].x,rp[i].y);
-
       std::sort(rp.begin()+2, rp.end(), 
-      [ rCenter ](const cv::Point2f& lhs, const cv::Point2f& rhs){
-        return abs(lhs.x - rCenter.x) < abs(rhs.x - rCenter.x);
+      [ t ](const cv::Point2f& lhs, const cv::Point2f& rhs){
+        return abs(lhs.x - t.center.x) < abs(rhs.x - t.center.x);
       });
-      // printf(" y-2 sort\n");
-      // for(int i = 0; i < 4; i++)
-      //   printf("id: %d : %.1f,%.1f\n",i,rp[i].x,rp[i].y);
-
-      // printf("-----END-------- %d\n",i);
-
 
       std::vector<cv::Point2f> np;
       np.push_back(cv::Point2f(rp[0].x,rp[0].y));
       np.push_back(cv::Point2f(rp[2].x,rp[2].y));
       np.push_back(cv::Point2f(rp[0].x,rp[1].y));
       np.push_back(cv::Point2f(rp[2].x,rp[3].y));
-      // for(int i = 0; i < 4; i++){
-      //   printf("id: %d :r %.1f,%.1f\n",i,rect_points[i].x,rect_points[i].y);
-      //   printf("id: %d :n %.1f,%.1f\n",i,np[i].x,np[i].y);
-      // }
 
       std::sort(np.begin(), np.end(), 
       [ ](const cv::Point2f& lhs, const cv::Point2f& rhs){
-        return lhs.x < rhs.x;
+        return lhs.y < rhs.y;
       });
       std::sort(np.begin(), np.begin()+2, 
       [ ](const cv::Point2f& lhs, const cv::Point2f& rhs){
-        return lhs.y < rhs.y;
+        return lhs.x < rhs.x;
       });
       std::sort(np.begin()+2, np.end(), 
       [ ](const cv::Point2f& lhs, const cv::Point2f& rhs){
-        return lhs.y < rhs.y;
+        return lhs.x > rhs.x;
       });
-      std::copy(np.begin(), np.end(), Global::targets.back().points);
-      rect_points[0] = np[0];
-      rect_points[1] = np[1];
-      rect_points[2] = np[3];
-      rect_points[3] = np[2];
+      std::copy(np.begin(), np.end(), t.points);
+      timer.printTime(" findRect");
 
-
-
-
-
-
-      Global::targets.back().boundingRect = mRect;
-      timer.printTime( " findRect");
-
-      bool flag = false;
+      bool outOfBounds = false;
       int bounding = 20;
       for (int k = 0; k < 4; k++) {
-        if (abs(rect_points[k].x - Global::FrameWidth / 2) > (Global::FrameWidth / 2 - bounding) || abs(rect_points[k].y - Global::FrameHeight / 2) > (Global::FrameHeight / 2 - bounding)){
-          flag = true;
+        if (abs(t.points[k].x - Global::FrameWidth / 2) > (Global::FrameWidth / 2 - bounding) || abs(t.points[k].y - Global::FrameHeight / 2) > (Global::FrameHeight / 2 - bounding)){
+          outOfBounds = true;
         }
       }
-      if (flag) {
+      if (outOfBounds) {
         if (timer.doPrint)
           printf("  SKIP: edge too close\n");
-        Global::targets.erase(Global::targets.end()-1);
         continue;
       }
 
       
       if(Switches::DRAW){
         for (int j = 0; j < 4; j++) {
-          cv::line(img, rect_points[j], rect_points[(j + 1) % 4], Global::BLUE, 1, 8);
-          circle(img, rect_points[j], 3, Global::RED, -1, 8, 0);
+          cv::line(img, t.points[j], t.points[(j + 1) % 4], Global::BLUE, 1, 8);
+          cv::circle(img, t.points[j], 3, Global::RED, -1, 8, 0);
         }
+        timer.printTime(" drawRect");
       }
-      
-      timer.printTime(" drawRect");
 
-      Global::targets.back().area = cv::contourArea(contours[i]);
 
       // Might be useless? maybe good for differentiating between lights? idk
       // =========
@@ -220,13 +172,14 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
       //
       if(approx.size() == 4){
         for(int i = 0; i < 4; i++){
-          Global::targets.back().points[i] = approx[i];
+          t.points[i] = approx[i];
         }
       }
       */
 
       targetsFound++;
       timer.printTime(" passed");
+      Global::targets.push_back(t);
 
     } //---end contour loop i
 
