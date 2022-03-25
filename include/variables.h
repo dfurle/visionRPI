@@ -126,6 +126,7 @@ extern std::vector<int> rPosSocket;
 
 extern cv::Mat frame;
 extern cv::Mat imgC, thresholdedC, rPosC;
+extern cv::Mat imgClean;
 
 extern cv::Mat tvec_g, rvec_g;
 extern bool useTR;

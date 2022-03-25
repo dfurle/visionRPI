@@ -34,6 +34,7 @@ const cv::Scalar BLUE = cv::Scalar(255, 0, 0), RED = cv::Scalar(0, 0, 255), YELL
 
 cv::Mat frame;
 cv::Mat imgC, thresholdedC, rPosC;
+cv::Mat imgClean;
 
 cv::Mat tvec_g(cv::Size(1,3),6);
 cv::Mat rvec_g(cv::Size(1,3),6);
@@ -53,9 +54,7 @@ mMutex muteHTTP;
 
 namespace Switches {
 bool         SHOWORIG                   = false;
-bool         SHOWHUE                    = false;
 bool         SHOWTHRESH                 = false;
-bool         SHOWTRACK                  = false;
 bool         USEHTTP                    = false;
 bool         DOPRINT                    = false;
 bool         FRAME                      = true;

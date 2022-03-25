@@ -48,7 +48,6 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
   timer.printTime(" filter:Size");
 
   std::vector<std::vector<cv::Point> > art;
-  // cv::Mat workingImage(Global::FrameHeight, Global::FrameWidth, CV_8UC1, cv::Scalar(0));
 
   if (!contours.empty() && !hierarchy.empty()) {
     for (int i = 0; i < (int)contours.size(); i++) {
@@ -329,6 +328,7 @@ int main(int argc, const char* argv[]) {
     p.add_Parameter("-th","--threshold",Switches::SHOWTHRESH,false,"displays thresholded image (black & white)");
     p.add_Parameter("-http" ,"--http",Switches::USEHTTP,true,"use http server for streaming video");
     p.add_Parameter("-p" ,"--print",Switches::DOPRINT,false,"prints basic data");
+    p.add_Parameter("-sv" ,"--save",Switches::SAVE,false,"prints basic data");
     p.add_Parameter("-f" ,"--frame",Switches::FRAME,true,"prints of frames found");
     p.add_Parameter("-d","--draw",Switches::DRAW,true,"draws the lines on original img file");
     p.add_Parameter("-cam","--camera",Switches::USECAM,true,"which camera port to use");
@@ -385,6 +385,10 @@ int main(int argc, const char* argv[]) {
       timer.printTime("Get Frame");
       Global::frame.copyTo(img);
       Global::muteFrame.unlock();
+      Global::muteImg.lock();
+      if(Switches::SAVE)
+        img.copyTo(Global::imgClean);
+      Global::muteImg.unlock();
       timer.printTime("Copy Frame");
       frameCounter++;
 
@@ -497,7 +501,7 @@ int main(int argc, const char* argv[]) {
         missedFrames++;
       }
 
-      if(Switches::USEHTTP){
+      if(Switches::USEHTTP || Switches::SAVE){
         Global::muteImg.lock();
         if(Global::httpStatus == 0){
           img.copyTo(Global::imgC);

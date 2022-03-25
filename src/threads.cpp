@@ -28,9 +28,9 @@ inline bool checkErr(int rc, std::string name) {
 
 /**
  *  Valid Names:
- *   "USB"
- *   "SAVE"
- *   "PID"
+ *   "VIDEO"
+ *   "TCP"
+ *   "VIDEO"
  *   "HTTP"
  **/
 bool startThread(std::string name, void* params) {
@@ -170,11 +170,7 @@ void* VideoCap(void* args) {
 }
 
 void* VideoSave(void* arg){
-  printf("DO NOT USE SAVE FOR NOW, STILL WORKING ON IT\n");
-  exit(1);
-
-  cv::Mat* img = (cv::Mat*) arg;
-  int currentLog = 0;
+  int currentLog = 1;
   int fourcc = cv::VideoWriter::fourcc('M','J','P','G');
   int prevTime = 30;
   cv::VideoWriter out;
@@ -182,12 +178,11 @@ void* VideoSave(void* arg){
 
   out.open("./output0.avi",fourcc,30.,cv::Size(Var::WIDTH,Var::HEIGHT));
 
-
   while(true){
     Global::muteImg.lock();
-    out.write(*img);
-    cv::imshow("debug",*img);
-    cv::waitKey(0);
+    if(Global::imgClean.size().area() != 0){
+      out.write(Global::imgClean);
+    }
     Global::muteImg.unlock();
 
     if(timer.getTimeAsSecs() >= 30){
@@ -206,6 +201,6 @@ void* VideoSave(void* arg){
         prevTime = time;
       }
     }
-    
+    usleep(33000);
   }
 }
