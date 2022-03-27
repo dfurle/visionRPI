@@ -2,7 +2,7 @@
 
 #include <ctime>
 #include <iostream>
-#include <pthread.h>
+#include <thread>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
@@ -29,12 +29,8 @@
 
 
 namespace Var {
-extern int minR;
-extern int maxR;
-extern int minG;
-extern int maxG;
-extern int minB;
-extern int maxB;
+extern cv::Scalar minBGR;
+extern cv::Scalar maxBGR;
 
 extern int          WIDTH;
 extern int          HEIGHT;
@@ -95,19 +91,6 @@ public:
   }
 };
 
-class mMutex{
-public:
-  pthread_mutex_t mutex;
-  mMutex(){
-    mutex = PTHREAD_MUTEX_INITIALIZER;
-  }
-  void lock(){
-    pthread_mutex_lock(&mutex);
-  }
-  void unlock(){
-    pthread_mutex_unlock(&mutex);
-  }
-};
 
 namespace Global {
 extern bool             newFrame;
@@ -125,7 +108,7 @@ extern std::vector<int> thrSocket;
 extern std::vector<int> rPosSocket;
 
 extern cv::Mat frame;
-extern cv::Mat imgC, thresholdedC, rPosC;
+// extern cv::Mat imgC, thresholdedC, rPosC;
 extern cv::Mat imgClean;
 
 extern cv::Mat tvec_g, rvec_g;
@@ -133,10 +116,12 @@ extern bool useTR;
 
 extern int httpStatus;
 
-extern mMutex muteFrame;
-extern mMutex mutePos;
-extern mMutex muteImg;
-extern mMutex muteHTTP;
+extern bool missPrev;
+
+extern std::mutex muteFrame;
+extern std::mutex mutePos;
+extern std::mutex muteImg;
+extern std::mutex muteHTTP;
 
 } // namespace Global
 
@@ -145,6 +130,7 @@ extern bool         SHOWORIG;
 extern bool         SHOWTHRESH;
 extern bool         USEHTTP;
 extern bool         DOPRINT;
+extern bool         TFPRINT;
 extern bool         FRAME;
 extern bool         SAVE;
 extern bool         DRAW;
@@ -155,18 +141,19 @@ extern int          printTime;
 
 // In target.cpp
 bool startThread(std::string name, void* params = NULL);
+int findTarget(cv::Mat& img, cv::Mat& thresholded);
 void initSolvePnP();
 void findAnglePnP(cv::Mat& img, cv::Mat& rPos);
 
 // In variables.cpp
-namespace str{
-bool cmp(std::string& s, std::string c);
-std::string substring(std::string& s, int i, int f);
-std::string substring(std::string& s, int i);
-bool contains(std::string& s, std::string c);
-std::vector<std::string> split(std::string s, std::string delim);
-std::string containsParam(std::vector<std::string>& v, std::string search);
-std::string getParam(std::vector<std::string>& v, std::string search);
-std::vector<char> ss_to_vec(std::stringstream& ss);
-}
+// namespace str{
+// bool cmp(std::string& s, std::string c);
+// std::string substring(std::string& s, int i, int f);
+// std::string substring(std::string& s, int i);
+// bool contains(std::string& s, std::string c);
+// std::vector<std::string> split(std::string s, std::string delim);
+// std::string containsParam(std::vector<std::string>& v, std::string search);
+// std::string getParam(std::vector<std::string>& v, std::string search);
+// std::vector<char> ss_to_vec(std::stringstream& ss);
+// }
 

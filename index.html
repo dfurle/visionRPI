@@ -1,39 +1,76 @@
 <html>
 <head>
- <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+ <!-- <link rel="stylesheet" href="//code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css"> -->
+ <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+ <!-- <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script> -->
  <!-- <script type="text/javascript" src="jquery.js"></script> -->
 </head>
 
 <body>
   <div id="left" style="width: 15%; float: left; border: solid black 3px; overflow: scroll; height: 100%; padding: 2px">
     <div class="slidecontainer">
-      <div class="label" id="rgb">RGB</div>
-      minR<input type="range" min="0" max="255" value="50" class="slider" id="minR"><output id="minRo" width=40px>50</output><br>
-      maxR<input type="range" min="0" max="255" value="255" class="slider" id="maxR"><output id="maxRo" width=40px>255</output><br>
-      minG<input type="range" min="0" max="255" value="50" class="slider" id="minG"><output id="minGo" width=40px>50</output><br>
-      maxG<input type="range" min="0" max="255" value="255" class="slider" id="maxG"><output id="maxGo" width=40px>255</output><br>
-      minB<input type="range" min="0" max="255" value="50" class="slider" id="minB"><output id="minBo" width=40px>50</output><br>
-      maxB<input type="range" min="0" max="255" value="255" class="slider" id="maxB"><output id="maxBo" width=40px>255</output>
+      <div class="label" id="BGR">BGR</div>
+      <!-- <label for="blue-amount">Blue Range</label>
+      <input type="text" class="amount" id="blue-amount" readonly style="border:0; color:blue; font-weight:bold;">
+      <div class="slider" id="blue-slider"></div>
+      
+      <label for="green-amount">Green Range</label>
+      <input type="text" class="amount" id="green-amount" readonly style="border:0; color:lightgreen; font-weight:bold;">
+      <div class="slider" id="green-slider"></div>
+      
+      <label for="red-amount">Red Range</label>
+      <input type="text" class="amount" id="red-amount" readonly style="border:0; color:red; font-weight:bold;">
+      <div class="slider" id="red-slider"></div> -->
+
+      <label id="minB">minB</label>
+      <input type="range" min="0" max="255" value="50" class="slider">
+      <output width=40px>50</output><br>
+      
+      <label id="maxB">maxB</label>
+      <input type="range" min="0" max="255" value="255" class="slider">
+      <output width=40px>255</output><br>
+      
+      <label id="minG">minG</label>
+      <input type="range" min="0" max="255" value="50" class="slider">
+      <output width=40px>50</output><br>
+      
+      <label id="maxG">maxG</label>
+      <input type="range" min="0" max="255" value="255" class="slider">
+      <output width=40px>255</output><br>
+      
+      <label id="minR">minR</label>
+      <input type="range" min="0" max="255" value="50" class="slider">
+      <output width=40px>50</output><br>
+      
+      <label id="maxR">maxR</label>
+      <input type="range" min="0" max="255" value="255" class="slider">
+      <output width=40px>255</output><br>
     </div>
     <br>
     <div class="slidecontainer">
-      <div class="label" id="switches">Switches</div>
-      High-Res<input id="SWres" type="checkbox" style="float: right"><br>
-      print<input id="SWprint" type="checkbox" style="float: right"><br>
-      frame<input id="SWframe" type="checkbox" style="float: right"><br>
-      draw<input id="SWdraw" type="checkbox" style="float: right"><br>
-      PT<input id="pt" type="number" min="0" max="3" step="1" value="0" style="float: right">
+      <div class="label" id="SWITCHES">Switches</div>
+
+      <label id="HighRes">HighRes</label>
+      <input type="checkbox" style="float: right"><br>
+
+      <label id="Print">Print</label>
+      <input type="checkbox" style="float: right"><br>
+      
+      <label id="TFPrint">TFPrint</label>
+      <input type="checkbox" style="float: right"><br>
+      
+      <label id="Frame">Frame</label>
+      <input type="checkbox" style="float: right"><br>
+      
+      <label id="Draw">Draw</label>
+      <input type="checkbox" style="float: right"><br>
     </div>
     <br>
-    <div class="slidecontainer">
-      <div class="label" id="TRvec">T&R Vec</div>
-      Use These<input id="trvec-box" type="checkbox"><br>
-      tvec<br><input id="tvec0" type="number" min="-20" max="20" step="0.5" value="0">
-      <input id="tvec1" type="number" min="-20" max="20" step="0.5" value="0">
-      <input id="tvec2" type="number" min="-20" max="20" step="0.5" value="0"><br>
-      rvec<br><input id="rvec0" type="number" min="-3.14" max="3.14" step="0.01" value="0.1">
-      <input id="rvec1" type="number" min="-3.14" max="3.14" step="0.01" value="0.1">
-      <input id="rvec2" type="number" min="-3.14" max="3.14" step="0.01" value="0.1">
+    <div>
+      <div class="label" id="NUMBER">Number</div>
+
+      <label id="PrintTime">PrintTime</label>
+      <input type="number" value="0" style="float: right; width: 40px"><br>
     </div>
   </div>
   <div id="right" style="float: right; border: solid black 3px; overflow: scroll; height: 100%;">
@@ -49,6 +86,24 @@
 </body>
 
 <script type="text/javascript">
+  // $( function() {
+  //   $(".slider").slider({
+  //     range: true,
+  //     min: 0,
+  //     max: 255,
+  //     values: [ 0, 255 ],
+  //     slide: function( event, ui ) {
+  //       console.log(type(event));
+  //       console.log(type(ui));
+  //       console.log(event);
+  //       console.log(ui);
+  //       $(".amount").val("" + ui.values[0] + " - " + ui.values[1]);
+  //     }
+  //   });
+  //   $(".amount").val($("#slider").slider("values", 0) +
+  //     " - " + $("#slider").slider("values", 1));
+  // });
+  
   $(document).ready(function() {
 
     $("#right").outerWidth($("body").width() - $("#left").outerWidth(true) - 1);
@@ -63,77 +118,77 @@
     }, 1000);
 
     function attach(elementID, amount = 1, skip = 0){
-      let element = $("#"+elementID);
+      let element = $("#"+elementID).next();
       for(let i = 0; i < amount; i++){
-        element.on("input", onInput);
+        element.next().on("input", onInput);
         for(let z = 0; z < skip; z++)
           element = element.next();
       }
     }
 
-    attach("minR",6,3);
-    attach("tvec0",3,1);
-    attach("rvec0",3,1);
-    attach("trvec-box");
-    attach("SWres",5,2);
-    attach("pt");
+    attach("BGR",6,4);
+    attach("SWITCHES",5,3);
+    attach("NUMBER",1,3);
 
     function onInput(e) {
-      let rgb = [], dist = [], tvec = [], rvec = [], switches = [];
-      let element = $("#minR");
+      console.log("INPUT:");
+      console.log(e);
+      let bgr  = new Map();
+      let switches = new Map();
+      let numbers = new Map();
+
+      let element = $("#BGR").next();
       for(let i = 0; i < 6; i++){
-        rgb.push(element.val());
+        let label = element.text();
         element = element.next();
-        element.html(rgb[rgb.length-1]);
+        
+        let value = element.val();
+        element = element.next();
+        bgr[label] = value;
+        bgr.set(label, value);
+
+        element.html(value);
         element = element.next().next();
       }
-      element = $("#tvec0");
-      for(let i = 0; i < 3; i++){
-        let v = element.val();
-        if(v=="")
-          tvec.push(0);
-        else
-          tvec.push(v);
+
+      element = $("#SWITCHES").next();
+      for(let i = 0; i < 5; i++){
+        let label = element.text();
         element = element.next();
-      }
-      element = $("#rvec0");
-      for(let i = 0; i < 3; i++){
-        let v = element.val();
-        if(v=="")
-          rvec.push(0);
-        else
-          rvec.push(v);
+        
+        let value = element.prop("checked") ? "1" : "0";
         element = element.next();
-      }
-      function getCheck(element){
-        return element.prop("checked") ? "1" : "0";
-      }
-      switches.push(getCheck($("#trvec-box")));
-      element = $("#SWres");
-      for(let i = 0; i < 4; i++){
-        switches.push(getCheck(element));
-        element = element.next().next();
+        switches.set(label, value);
+
+        element = element.next();
       }
       
-      let pt = "0";
-      if($("#pt").val() == "")
-        pt = "0";
-      else
-        pt = $("#pt").val();
+      element = $("#NUMBER").next();
+      for(let i = 0; i < 1; i++){
+        let label = element.text();
+        element = element.next();
+        
+        let value = element.val();
+        element = element.next();
+        numbers.set(label, value);
 
+        element = element.next();
+      }
+
+      console.log(numbers)
 
       let data = "";
-      data += rgb.join(",") + "\n";     // 0
-      data += tvec.join(",") + "\n";    // 1
-      data += rvec.join(",") + "\n";    // 2
-      data += pt + "\n";                // 3
-      data += switches.join(",") + "\n";// 4
+      bgr.forEach(function(value, key, map){
+        data += key + " " + value + "\n";
+      })
+      switches.forEach(function(value, key, map){
+        data += key + " " + value + "\n";
+      })
+      numbers.forEach(function(value, key, map){
+        data += key + " " + value + "\n";
+      })
+      data += "\r\n\r\n";
       console.log(data);
-
-      // High-Res - "SWres"
-      // print - "SWprint"
-      // frame - "SWframe"
-      // draw - "SWdraw"
 
       $.ajax({
         type: 'PUT',
@@ -151,22 +206,21 @@
     }).fail(function (msg) {
       console.log('FAIL');
     }).then(function (msg) {
-      data = msg.split(',')
-      console.log(data)
+      data = msg.split('\n');
+      console.log(data);
 
-      let element = $("#minR");
-      for(let i = 0; i < 6; i++){
-        element.val(data[i]);
-        element = element.next();
-        element.html(data[i]);
-        element = element.next().next();
+      for(let i = 0; i < data.length; i++){
+        let par = data[i].split(' ')[0];
+        let val = data[i].split(' ')[1];
+        let element = $("#"+par).next();
+        let type = element.prop("type");
+        if(type == "range"){
+          element.val(val);
+          element.next().text(val);
+        } else if(type == "checkbox"){
+          element.prop("checked", Boolean(parseInt(val)));
+        }
       }
-      element = $("#SWres");
-      for(let i = 0; i < 4; i++){
-        element.prop('checked', Boolean(parseInt(data[6+i])));
-        element = element.next().next();
-      }
-      $("pt").val(data[6+5]);
     })
   })
 </script>	

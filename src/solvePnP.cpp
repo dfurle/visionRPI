@@ -261,6 +261,12 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
     tvec = Global::tvec_g;
   } else {
     cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec, false, cv::SOLVEPNP_ITERATIVE);
+    // if(Global::missPrev){
+    //   cv::solvePnP(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec, false, cv::SOLVEPNP_ITERATIVE);
+    // } else {
+    //   cv::solvePnPRefineLM(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec);
+    //   // cv::solvePnPRefineVVS(mod3d, img2dpoints, camera_matrix, dist_coeffs, rvec, tvec);
+    // }
   }
   Global::muteHTTP.unlock();
 

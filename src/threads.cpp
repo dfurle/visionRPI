@@ -1,60 +1,38 @@
 #include "variables.h"
-#include "httpserver.h"
 #include "clock.h"
 
 // threads.cpp
-pthread_t VideoCap_t;
-void* VideoCap(void* arg);
+std::thread* videoCap_t;
+void VideoCap();
 
 // threads.cpp
-pthread_t videoSave_t;
-void* VideoSave(void* arg);
+std::thread* videoSave_t;
+void VideoSave();
 
 // tcpserver.cpp
-pthread_t opentcp_t;
-void* opentcp(void* arg);
-
-// httpserver.cpp
-pthread_t handleHttp_thread_t;
-void* handleHttp_thread(void* arg);
-
-inline bool checkErr(int rc, std::string name) {
-  if (rc != 0) {
-    printf("%s thread fail %d\n", name.c_str(), rc);
-    return false;
-  } else
-    return true;
-}
+std::thread* opentcp_t;
+void opentcp();
 
 /**
  *  Valid Names:
  *   "VIDEO"
  *   "TCP"
- *   "VIDEO"
- *   "HTTP"
+ *   "SAVE"
  **/
 bool startThread(std::string name, void* params) {
-  int rc = 1;
   if (!name.compare("VIDEO")) {
-    rc = pthread_create(&VideoCap_t, NULL, VideoCap, NULL);
-    return checkErr(rc, name);
+    videoCap_t = new std::thread(&VideoCap);
   }
   if (!name.compare("TCP")) {
-    rc = pthread_create(&opentcp_t, NULL, opentcp, NULL);
-    return checkErr(rc, name);
+    opentcp_t = new std::thread(&opentcp);
   }
   if(!name.compare("SAVE")){
-    rc = pthread_create(&videoSave_t, NULL, VideoSave, params);
-    return checkErr(rc, name);
-  }
-  if(!name.compare("HTTP")){
-    rc = pthread_create(&handleHttp_thread_t, NULL, handleHttp_thread, NULL);
-    return checkErr(rc, name);
+    videoSave_t = new std::thread(&VideoSave);
   }
   return false;
 }
 
-void* VideoCap(void* args) {
+void VideoCap() {
   // std::string cameraPipeline;
   // cameraPipeline ="v4l2src device=/dev/video0 extra-controls=\"c,exposure_auto=0,exposure_absolute=40\" ! ";
   // cameraPipeline+="video/x-raw, format=BGR, framerate=30/1, width=(int)640,height=(int)480 ! ";
@@ -63,8 +41,6 @@ void* VideoCap(void* args) {
   cv::VideoCapture vcap;
   if(!Switches::USECAM) {
     printf("Not Using Camera\n");
-    // printf("ERR: function was disabled\n");
-    // exit(1);
   } else {
     // while (!vcap.open(cameraPipeline)) {
     while (!vcap.open(0)) {
@@ -120,6 +96,8 @@ void* VideoCap(void* args) {
         timer.printTime(" Lock");
         vcap.retrieve(Global::frame);
         timer.printTime(" Retrieve");
+        cv::rotate(Global::frame, Global::frame, cv::ROTATE_90_CLOCKWISE);
+        timer.printTime(" Rotate");
         Global::newFrame = true;
         Global::muteFrame.unlock();
       }
@@ -143,7 +121,6 @@ void* VideoCap(void* args) {
       else
         imgText = "../2022/BG";
       imgText.append(std::to_string(num++));
-      //imgText.append(std::to_string(1));
       imgText.append(".jpeg");
 
       Global::muteFrame.lock();
@@ -169,7 +146,7 @@ void* VideoCap(void* args) {
   }
 }
 
-void* VideoSave(void* arg){
+void VideoSave(){
   int currentLog = 1;
   int fourcc = cv::VideoWriter::fourcc('M','J','P','G');
   int prevTime = 30;
