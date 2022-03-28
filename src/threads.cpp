@@ -89,6 +89,7 @@ void VideoCap() {
   if(Switches::USECAM){
     ClockTimer timer(false);
     while (true) {
+      timer.doPrint = (Switches::printTime == Global::PrintTimes::FRAME);
       timer.reset();
       if(vcap.grab()){
         timer.printTime("Grab");

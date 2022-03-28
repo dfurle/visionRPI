@@ -40,7 +40,7 @@ int main(int argc, const char* argv[]) {
   Clock serverClock;
   int frameCounter = 0, frameCounter2 = 0, frameCounterPrev = 0, missedFrames = 0;
 
-  ClockTimer timer(Switches::printTime == 1);
+  ClockTimer timer(Switches::printTime == Global::PrintTimes::MAIN);
   timer.printTime("getting input");
 
   cv::Mat img, thresh, rPos(cv::Size(250,1000),CV_8UC3);
@@ -87,7 +87,7 @@ int main(int argc, const char* argv[]) {
   serverClock.restart();
 
   while (true) {
-    timer.doPrint = Switches::printTime == 1;
+    timer.doPrint = Switches::printTime == Global::PrintTimes::MAIN;
     timer.reset();
     Global::muteFrame.lock();
     if (!Global::frame.empty() && Global::newFrame) {

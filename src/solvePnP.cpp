@@ -1,7 +1,7 @@
 #include "variables.h"
 #include "clock.h"
 
-#define SOLVEPNP
+// #define SOLVEPNP
 
 double radius = 2.2239583;
 
@@ -158,8 +158,8 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   }
 
   std::vector<cv::Point2f> img2dpoints;
-  ClockTimer timer(Switches::printTime == 3);
-  if (Switches::printTime == 3) {
+  ClockTimer timer(Switches::printTime == Global::PrintTimes::SOLVE);
+  if (Switches::printTime == Global::PrintTimes::SOLVE) {
     timer.reset();
     printf("begin solvePnP\n");
   }
@@ -381,9 +381,11 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
     std::cout << Global::targets[1].points[i] << std::endl;
   }
 
-  double FOV_horz = 45.6 * (M_PI/180);
-  double FOV_vert = 58.5 * (M_PI/180);
-  printf("FOV: %f %f\n",FOV_vert, FOV_horz);
+  cv::Size2f FOV;
+  // flipped bc camera rotated by 90deg;
+  FOV.width = 45.6 * (M_PI/180);
+  FOV.height = 58.5 * (M_PI/180);
+  printf("FOV: %f %f\n",FOV.width, FOV.height);
 
   printf(" C: %f, %f\n",Global::targets[1].center.x,Global::targets[1].center.y);
   printf("AC: %f, %f\n",Global::targets[1].centerAim.x,Global::targets[1].centerAim.y);
@@ -391,8 +393,8 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   cv::circle(img,Global::targets[1].center,2,cv::Scalar(0,0,255));
   cv::circle(img,center,2,cv::Scalar(0,0,255));
 
-  double pitch = Global::targets[1].centerAim.y/2.*FOV_vert;
-  double yaw   = Global::targets[1].centerAim.x/2.*FOV_horz;
+  double pitch = Global::targets[1].centerAim.y/2.*FOV.height;
+  double yaw   = Global::targets[1].centerAim.x/2.*FOV.width;
   printf("pitch: %fdeg %f\n",pitch*(180/M_PI),pitch);
   printf("yaw  : %fdeg %f\n",yaw*(180/M_PI),yaw);
 

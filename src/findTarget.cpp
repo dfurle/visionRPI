@@ -4,10 +4,10 @@
 int findTarget(cv::Mat& img, cv::Mat& thresholded) {
   Global::targets.clear();
   int targetsFound = 0;
-  ClockTimer timer(Switches::printTime == 2);
+  ClockTimer timer(Switches::printTime == Global::PrintTimes::TARGET);
   std::vector<cv::Vec4i> hierarchy;
   std::vector<std::vector<cv::Point> > contours;
-  if (Switches::printTime == 2) {
+  if (Switches::printTime == Global::PrintTimes::TARGET) {
     timer.reset();
     printf("begin findTarget\n");
   }

@@ -105,6 +105,13 @@ extern const cv::Scalar BLUE, RED, YELLOW, GREEN;
 
 extern cv::Size SIZE;
 extern int FRAME_SIZES[6];
+enum PrintTimes{
+  NONE,
+  MAIN,
+  TARGET,
+  SOLVE,
+  FRAME
+};
 
 // extern std::vector<int> imgSocket;
 // extern std::vector<int> thrSocket;
