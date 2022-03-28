@@ -32,9 +32,10 @@ namespace Var {
 extern cv::Scalar minBGR;
 extern cv::Scalar maxBGR;
 
-extern int          WIDTH;
-extern int          HEIGHT;
-extern int          EXPOSURE;
+// extern int  WIDTH;
+// extern int  HEIGHT;
+
+extern int  EXPOSURE;
 extern unsigned int waitAfterFrame;
 
 extern double dist_cof[5];
@@ -94,7 +95,6 @@ public:
 
 namespace Global {
 extern bool             newFrame;
-extern double           FrameWidth, FrameHeight;
 extern bool             interupt;
 extern bool             dataValid;
 extern std::vector<Target> targets;
@@ -103,9 +103,12 @@ extern bool             videoError;
 extern int              videoSocket;
 extern const cv::Scalar BLUE, RED, YELLOW, GREEN;
 
-extern std::vector<int> imgSocket;
-extern std::vector<int> thrSocket;
-extern std::vector<int> rPosSocket;
+extern cv::Size SIZE;
+extern int FRAME_SIZES[6];
+
+// extern std::vector<int> imgSocket;
+// extern std::vector<int> thrSocket;
+// extern std::vector<int> rPosSocket;
 
 extern cv::Mat frame;
 // extern cv::Mat imgC, thresholdedC, rPosC;
@@ -126,16 +129,17 @@ extern std::mutex muteHTTP;
 } // namespace Global
 
 namespace Switches {
-extern bool         SHOWORIG;
-extern bool         SHOWTHRESH;
-extern bool         USEHTTP;
-extern bool         DOPRINT;
-extern bool         TFPRINT;
-extern bool         FRAME;
-extern bool         SAVE;
-extern bool         DRAW;
-extern bool         USECAM;
-extern int          printTime;
+extern bool SHOWORIG;
+extern bool SHOWTHRESH;
+extern bool USEHTTP;
+extern bool DOPRINT;
+extern bool TFPRINT;
+extern bool FRAME;
+extern bool SAVE;
+extern bool DRAW;
+extern bool USECAM;
+extern int  printTime;
+extern int  resolution;
 } // namespace Switches
 
 

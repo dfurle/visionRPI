@@ -66,12 +66,11 @@ void VideoCap() {
     printf("auto exposure: %d\n",vcap.set(cv::CAP_PROP_AUTO_EXPOSURE, 1));
     printf("exposure: %d\n",vcap.set(cv::CAP_PROP_EXPOSURE, 3));
     printf("autofocus: %d\n",vcap.set(cv::CAP_PROP_AUTOFOCUS, 0));
-    printf("Frame: %f, %d\n",Global::FrameWidth,Var::WIDTH);
-    printf("width: %d\n",vcap.set(cv::CAP_PROP_FRAME_WIDTH, Var::WIDTH));
-    printf("height: %d\n",vcap.set(cv::CAP_PROP_FRAME_HEIGHT, Var::HEIGHT));
-    Global::FrameWidth = vcap.get(cv::CAP_PROP_FRAME_WIDTH);
-    Global::FrameHeight = vcap.get(cv::CAP_PROP_FRAME_HEIGHT);
-
+    printf("Frame: %dx%d\n",Global::SIZE.width,Global::SIZE.height);
+    printf("width: %d\n",vcap.set(cv::CAP_PROP_FRAME_WIDTH, Global::SIZE.width));
+    printf("height: %d\n",vcap.set(cv::CAP_PROP_FRAME_HEIGHT, Global::SIZE.height));
+    Global::SIZE.width = vcap.get(cv::CAP_PROP_FRAME_WIDTH);
+    Global::SIZE.height = vcap.get(cv::CAP_PROP_FRAME_HEIGHT);
 
     printf("---===AFTER===---\n");
     printf("auto exposure: %f\n",vcap.get(cv::CAP_PROP_AUTO_EXPOSURE));
@@ -86,6 +85,7 @@ void VideoCap() {
     }
   }
 
+  int prevRes = Switches::resolution;
   if(Switches::USECAM){
     ClockTimer timer(false);
     while (true) {
@@ -102,21 +102,18 @@ void VideoCap() {
         Global::muteFrame.unlock();
       }
       timer.PTotal();
-      if(int(Global::FrameWidth) != Var::WIDTH){
-        printf("width: %d\n",vcap.set(cv::CAP_PROP_FRAME_WIDTH, Var::WIDTH));
-        printf("height: %d\n",vcap.set(cv::CAP_PROP_FRAME_HEIGHT, Var::HEIGHT));
-        Global::FrameWidth = Var::WIDTH;
-        Global::FrameHeight = Var::HEIGHT;
+      if(Switches::resolution != prevRes){
+        printf("width: %d\n",vcap.set(cv::CAP_PROP_FRAME_WIDTH, Global::SIZE.width));
+        printf("height: %d\n",vcap.set(cv::CAP_PROP_FRAME_HEIGHT, Global::SIZE.height));
+        prevRes = Switches::resolution;
       }
       usleep(Var::waitAfterFrame);
     }
   } else {
-    Global::FrameHeight = Var::HEIGHT;
-    Global::FrameWidth = Var::WIDTH;
     int num = 0;
     while(true){
       std::string imgText;
-      if(Var::WIDTH == 1280)
+      if(Switches::resolution == 1)
         imgText = "../2022-720p/BG";
       else
         imgText = "../2022/BG";
@@ -153,7 +150,7 @@ void VideoSave(){
   cv::VideoWriter out;
   Clock timer;
 
-  out.open("./output0.avi",fourcc,30.,cv::Size(Var::WIDTH,Var::HEIGHT));
+  out.open("./output0.avi",fourcc,30.,Global::SIZE);
 
   while(true){
     Global::muteImg.lock();
@@ -170,7 +167,7 @@ void VideoSave(){
       std::string name = "./output";
       name += std::to_string(currentLog++);
       name += ".avi";
-      out.open(name,fourcc,30.,cv::Size(Var::WIDTH,Var::HEIGHT));
+      out.open(name,fourcc,30.,Global::SIZE);
     } else {
       int time =  int(30.-timer.getTimeAsSecs());
       if(time != prevTime){

@@ -56,8 +56,8 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
       }
       t.center.x/=4.;
       t.center.y/=4.;
-      t.centerAim.x = (t.center.x / Var::WIDTH /2) - 1;
-      t.centerAim.y = (t.center.y / Var::HEIGHT/2) - 1;
+      t.centerAim.x = (t.center.x / Global::SIZE.width /2) - 1;
+      t.centerAim.y = (t.center.y / Global::SIZE.height/2) - 1;
 
       std::vector<cv::Point2f> rp(t.points, t.points+4);
       std::sort(rp.begin(), rp.end(), 
@@ -97,7 +97,7 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
       bool outOfBounds = false;
       int bounding = 20;
       for (int k = 0; k < 4; k++) {
-        if (abs(t.points[k].x - Global::FrameWidth / 2) > (Global::FrameWidth / 2 - bounding) || abs(t.points[k].y - Global::FrameHeight / 2) > (Global::FrameHeight / 2 - bounding)){
+        if (abs(t.points[k].x - Global::SIZE.width / 2) > (Global::SIZE.width / 2 - bounding) || abs(t.points[k].y - Global::SIZE.height / 2) > (Global::SIZE.height / 2 - bounding)){
           outOfBounds = true;
         }
       }

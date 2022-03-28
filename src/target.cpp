@@ -11,7 +11,7 @@ int main(int argc, const char* argv[]) {
   std::cout << cv::getBuildInformation() << std::endl;
   {
     Parser p(argc,argv);
-    double printTime_d, cameraInput_d;
+    double printTime_d, res_d;
     p.add_Parameter("-o" ,"--orig",Switches::SHOWORIG,false,"displays original camera input w/ lines");
     p.add_Parameter("-th","--threshold",Switches::SHOWTHRESH,false,"displays thresholded image (black & white)");
     p.add_Parameter("-http" ,"--http",Switches::USEHTTP,true,"use http server for streaming video");
@@ -22,6 +22,7 @@ int main(int argc, const char* argv[]) {
     p.add_Parameter("-d","--draw",Switches::DRAW,true,"draws the lines on original img file");
     p.add_Parameter("-cam","--camera",Switches::USECAM,true,"which camera port to use");
     p.add_Parameter("-pt","--ptime",printTime_d,0,"(1-2) prints time taken for each loop");
+    p.add_Parameter("-res","--resolution",res_d,0,"(1-2) prints time taken for each loop");
 
     Var::dist_cof[0] = 0;
     Var::dist_cof[1] = 0;
@@ -32,7 +33,8 @@ int main(int argc, const char* argv[]) {
     if(p.checkParams(true))
       return 0;
     Switches::printTime = std::round(printTime_d);
-    printf("pt: %d\n", Switches::printTime);
+    Switches::resolution = std::round(res_d);
+    Global::SIZE = cv::Size(Global::FRAME_SIZES[2*Switches::resolution],Global::FRAME_SIZES[2*Switches::resolution+1]);
   }
 
   Clock serverClock;
@@ -210,7 +212,7 @@ void scaleAndThresh(cv::Mat& img, cv::Mat& thresh, ClockTimer& timer){
   cv::Mat scaled;
   cv::Mat scaledT;
   int scale = 4;
-  cv::resize(img,scaled,cv::Size(Var::WIDTH/scale,Var::HEIGHT/scale),cv::INTER_LINEAR);
+  cv::resize(img,scaled,Global::SIZE/scale,cv::INTER_LINEAR);
   timer.printTime(" scale1");
 
   ThresholdImage(scaled,scaledT);
@@ -255,13 +257,13 @@ void scaleAndThresh(cv::Mat& img, cv::Mat& thresh, ClockTimer& timer){
     timer.printTime(" thresh cut");
     // morphOps(threshCut);
     // timer.printTime(" morph cut");
-    thresh = cv::Mat(cv::Size(Var::WIDTH,Var::HEIGHT), CV_8UC1);
+    thresh = cv::Mat(Global::SIZE, CV_8UC1);
     thresh.setTo(0);
     threshCut.copyTo(thresh(cv::Rect(min,threshCut.size())));
     timer.printTime(" copyto");
   } else {
     timer.printTime(" failed scale");
-    thresh = cv::Mat(cv::Size(Var::WIDTH,Var::HEIGHT), CV_8UC1);
+    thresh = cv::Mat(Global::SIZE, CV_8UC1);
     thresh.setTo(0);
     timer.printTime(" set0");
     ThresholdImage(img,thresh);

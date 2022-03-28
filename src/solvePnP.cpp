@@ -25,7 +25,6 @@ cv::Mat dist_coeffs;
 
 std::vector<std::vector<cv::Point3f>> objectPoints;
 std::vector<std::vector<cv::Point2f>> imagePoints;
-cv::Size size;
 cv::Mat new_cam_matrix;
 cv::Mat distCoeffs;
 std::vector<cv::Mat> rvecs;
@@ -103,48 +102,20 @@ void initSolvePnP() {
   // mod3d.push_back(cv::Point3d(-tStrip / 2.0, 0.0, 0.0));    // bottom left
   // mod3d.push_back(cv::Point3d(+tStrip / 2.0, 0.0, 0.0));    // bottom right
 
-  center = cv::Point2d(Var::WIDTH / 2., Var::HEIGHT / 2.);
-  size = cv::Size(Var::WIDTH, Var::HEIGHT);
+  center = cv::Point2d(Global::SIZE.width / 2., Global::SIZE.height / 2.);
 
   camera_matrix = (cv::Mat_<double>(3, 3) << 
-		  size.width, 0, center.x,
-		  0, size.height, center.y,
+		  Global::SIZE.width, 0, center.x,
+		  0, Global::SIZE.height, center.y,
 		  0, 0, 1);
   // dist_coeffs = NULL;
   // dist_coeffs = cv::Mat::zeros(1, 5, cv::DataType<double>::type);
-  
-
-  dist_coeffs = (cv::Mat_<double>(1, 5) << Var::dist_cof[0],Var::dist_cof[1],Var::dist_cof[2],Var::dist_cof[3],Var::dist_cof[4]);
-  camera_matrix = (cv::Mat_<double>(3, 3) << 
-    580.4984062368188, 0, 325.3680926895594,
-    0, 580.4542213657525, 267.8603909876159,
-    0, 0, 1);
-    
-  dist_coeffs = (cv::Mat_<double>(1, 5) << 
-    -0.02884002148680569,
-    0.08108439904507091,
-    0.009277215393240128,
-    0.000317625197072589,
-    -0.4184398847498976);
-
-
-  camera_matrix = (cv::Mat_<double>(3, 3) << 
-    1122.668685412353, 0, 631.338038581117,
-    0, 1072.878260659514, 308.0890669710171,
-    0, 0, 1);
-    
-  dist_coeffs = (cv::Mat_<double>(1, 5) << 
-    0.5288239655258603,
-    -7.815535053795306,
-    0.04467497612220633,
-    0.004964838135067267,
-    25.12841292762858);
   #endif
 }
 
 bool pointsInBounds(std::vector<cv::Point2f> vec){
   for(auto it = vec.begin(); it != vec.end(); it++){
-    if(it->x < 0 || it->x > Global::FrameWidth || it->y < 0 || it->y > Global::FrameHeight){
+    if(it->x < 0 || it->x > Global::SIZE.width || it->y < 0 || it->y > Global::SIZE.height){
       printf("FAILED LINES OUT OF BOUNDS\n");
       return false;
     }
@@ -154,18 +125,24 @@ bool pointsInBounds(std::vector<cv::Point2f> vec){
 
 void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   #ifdef SOLVEPNP
-  if(Var::WIDTH==640){
+  if(Switches::resolution == 0){
     camera_matrix = (cv::Mat_<double>(3, 3) << 
       580.4984062368188, 0, 325.3680926895594,
       0, 580.4542213657525, 267.8603909876159,
       0, 0, 1);
       
+    // dist_coeffs = (cv::Mat_<double>(1, 5) << 
+    //   -0.02884002148680569,
+    //   0.08108439904507091,
+    //   0.009277215393240128,
+    //   0.000317625197072589,
+    //   -0.4184398847498976);
     dist_coeffs = (cv::Mat_<double>(1, 5) << 
-      -0.02884002148680569,
-      0.08108439904507091,
-      0.009277215393240128,
-      0.000317625197072589,
-      -0.4184398847498976);
+      0.5288239655258603,
+      -7.815535053795306,
+      0.04467497612220633,
+      0.004964838135067267,
+      25.12841292762858);
   } else {
     camera_matrix = (cv::Mat_<double>(3, 3) << 
       1122.668685412353, 0, 631.338038581117,
@@ -338,8 +315,8 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   cv::putText(rPos,sD,cv::Point(res.width*0.6,res.height*0.94),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
   cv::putText(rPos,sA,cv::Point(res.width*0.5,res.height*0.98),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
   if(Switches::DRAW){
-    cv::putText(img,sD,cv::Point(Var::WIDTH*0.8,Var::HEIGHT*0.9),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
-    cv::putText(img,sA,cv::Point(Var::WIDTH*0.75,Var::HEIGHT*0.95),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
+    cv::putText(img,sD,cv::Point(Global::SIZE.width*0.8,Global::SIZE.height*0.9),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
+    cv::putText(img,sA,cv::Point(Global::SIZE.width*0.75,Global::SIZE.height*0.95),cv::FONT_HERSHEY_COMPLEX,1,cv::Scalar(255,255,255));
   }
 
   // TODO AXIS
@@ -412,7 +389,7 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   printf("AC: %f, %f\n",Global::targets[1].centerAim.x,Global::targets[1].centerAim.y);
 
   cv::circle(img,Global::targets[1].center,2,cv::Scalar(0,0,255));
-  cv::circle(img,cv::Point(Var::WIDTH/2.,Var::HEIGHT/2.),2,cv::Scalar(0,0,255));
+  cv::circle(img,center,2,cv::Scalar(0,0,255));
 
   double pitch = Global::targets[1].centerAim.y/2.*FOV_vert;
   double yaw   = Global::targets[1].centerAim.x/2.*FOV_horz;

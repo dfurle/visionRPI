@@ -6,8 +6,10 @@ namespace Var {
 cv::Scalar minBGR{ 39,114,  0};
 cv::Scalar maxBGR{255,255, 89};
 
-int          WIDTH          = 640; // 1920 //1280 //640
-int          HEIGHT         = 480; // 1080 //720  //480
+// int          WIDTH          = 640; // 1920 //1280 //640
+// int          HEIGHT         = 480; // 1080 //720  //480
+
+
 // int          WIDTH          = 1280; // 1920 //1280 //640
 // int          HEIGHT         = 720; // 1080 //720  //480
 int          EXPOSURE       = 3; // edit in threads.cpp for now
@@ -20,7 +22,6 @@ double IRLOffset = 0.;
 
 namespace Global {
 bool             newFrame = false;
-double           FrameWidth, FrameHeight;
 bool             interupt     = false;
 bool             dataValid    = 0;
 std::vector<Target> targets;
@@ -28,6 +29,17 @@ Position         position, positionAV;
 bool             videoError  = false;
 int              videoSocket = 0;
 const cv::Scalar BLUE = cv::Scalar(255, 0, 0), RED = cv::Scalar(0, 0, 255), YELLOW = cv::Scalar(0, 255, 255), GREEN = cv::Scalar(0, 255, 0);
+
+cv::Size SIZE;
+
+int FRAME_SIZES[6] = {
+  640,
+  480,
+  1280,
+  720,
+  1920,
+  1080
+};
 
 cv::Mat frame;
 // cv::Mat imgC, thresholdedC, rPosC;
@@ -52,16 +64,17 @@ std::mutex muteHTTP;
 } // namespace Global
 
 namespace Switches {
-bool         SHOWORIG;
-bool         SHOWTHRESH;
-bool         USEHTTP;
-bool         DOPRINT;
-bool         TFPRINT;
-bool         FRAME;
-bool         SAVE;
-bool         DRAW;
-bool         USECAM;
-int          printTime;
+bool SHOWORIG;
+bool SHOWTHRESH;
+bool USEHTTP;
+bool DOPRINT;
+bool TFPRINT;
+bool FRAME;
+bool SAVE;
+bool DRAW;
+bool USECAM;
+int  printTime;
+int  resolution;
 } // namespace Switches
 
 
