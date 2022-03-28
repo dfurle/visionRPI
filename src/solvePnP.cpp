@@ -1,6 +1,8 @@
 #include "variables.h"
 #include "clock.h"
 
+#define SOLVEPNP
+
 double radius = 2.2239583;
 
 int numTargets = 16;
@@ -40,6 +42,7 @@ std::vector<cv::Point2f> base2D;
 
 
 void initSolvePnP() {
+  #ifdef SOLVEPNP
   mod3d.clear();
   // for(int i = 0; i < 3; i++){ 
   //   mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]-tAngleL),0,           radius*cos(tCenters[i]-tAngleL)));
@@ -49,9 +52,9 @@ void initSolvePnP() {
   // }
   for(int i = 0; i < 3; i++){ 
     mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]-tAngleL),0,           radius*cos(tCenters[i]-tAngleL)));
-    mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]+tAngleL),0,           radius*cos(tCenters[i]+tAngleL)));
-    mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]+tAngleL),-stripHeight,radius*cos(tCenters[i]+tAngleL)));
     mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]-tAngleL),-stripHeight,radius*cos(tCenters[i]-tAngleL)));
+    mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]+tAngleL),-stripHeight,radius*cos(tCenters[i]+tAngleL)));
+    mod3d.push_back(cv::Point3f(radius*sin(tCenters[i]+tAngleL),0,           radius*cos(tCenters[i]+tAngleL)));
   }
 
 
@@ -136,7 +139,7 @@ void initSolvePnP() {
     0.04467497612220633,
     0.004964838135067267,
     25.12841292762858);
-
+  #endif
 }
 
 bool pointsInBounds(std::vector<cv::Point2f> vec){
@@ -150,6 +153,7 @@ bool pointsInBounds(std::vector<cv::Point2f> vec){
 }
 
 void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
+  #ifdef SOLVEPNP
   if(Var::WIDTH==640){
     camera_matrix = (cv::Mat_<double>(3, 3) << 
       580.4984062368188, 0, 325.3680926895594,
@@ -395,5 +399,38 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
     }
   }
   timer.printTime(" drew lines");
+  #else
+  for(int i = 0; i < 4; i++){
+    std::cout << Global::targets[1].points[i] << std::endl;
+  }
 
+  double FOV_horz = 45.6 * (M_PI/180);
+  double FOV_vert = 58.5 * (M_PI/180);
+  printf("FOV: %f %f\n",FOV_vert, FOV_horz);
+
+  printf(" C: %f, %f\n",Global::targets[1].center.x,Global::targets[1].center.y);
+  printf("AC: %f, %f\n",Global::targets[1].centerAim.x,Global::targets[1].centerAim.y);
+
+  cv::circle(img,Global::targets[1].center,2,cv::Scalar(0,0,255));
+  cv::circle(img,cv::Point(Var::WIDTH/2.,Var::HEIGHT/2.),2,cv::Scalar(0,0,255));
+
+  double pitch = Global::targets[1].centerAim.y/2.*FOV_vert;
+  double yaw   = Global::targets[1].centerAim.x/2.*FOV_horz;
+  printf("pitch: %fdeg %f\n",pitch*(180/M_PI),pitch);
+  printf("yaw  : %fdeg %f\n",yaw*(180/M_PI),yaw);
+
+  #define targetHeight 8.5 //ft
+  #define cameraHeight 2.5 //ft
+  #define cameraAngle (30 * (M_PI/180)) // deg to rad
+
+  double distance = (targetHeight-cameraHeight)/(tan(cameraAngle+pitch));
+  printf("dist: %f\n",distance);
+
+
+  Global::mutePos.lock();
+  Global::position.dist = distance;
+  Global::position.robotAngle = yaw * (180. / M_PI);
+  Global::dataValid = 1;
+  Global::mutePos.unlock();
+  #endif
 }

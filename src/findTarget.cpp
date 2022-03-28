@@ -4,7 +4,6 @@
 int findTarget(cv::Mat& img, cv::Mat& thresholded) {
   Global::targets.clear();
   int targetsFound = 0;
-  // Clock total, between;
   ClockTimer timer(Switches::printTime == 2);
   std::vector<cv::Vec4i> hierarchy;
   std::vector<std::vector<cv::Point> > contours;
@@ -82,15 +81,15 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
 
       std::sort(np.begin(), np.end(), 
       [ ](const cv::Point2f& lhs, const cv::Point2f& rhs){
-        return lhs.y < rhs.y;
+        return lhs.x < rhs.x;
       });
       std::sort(np.begin(), np.begin()+2, 
       [ ](const cv::Point2f& lhs, const cv::Point2f& rhs){
-        return lhs.x < rhs.x;
+        return lhs.y < rhs.y;
       });
       std::sort(np.begin()+2, np.end(), 
       [ ](const cv::Point2f& lhs, const cv::Point2f& rhs){
-        return lhs.x > rhs.x;
+        return lhs.y > rhs.y;
       });
       std::copy(np.begin(), np.end(), t.points);
       timer.printTime(" findRect");
@@ -111,7 +110,7 @@ int findTarget(cv::Mat& img, cv::Mat& thresholded) {
       
       if(Switches::DRAW){
         for (int j = 0; j < 4; j++) {
-          cv::line(img, t.points[j], t.points[(j + 1) % 4], Global::BLUE, 1, 8);
+          cv::line(img, t.points[j], t.points[(j + 1) % 4], Global::RED, 1, 8);
           cv::circle(img, t.points[j], 3, Global::RED, -1, 8, 0);
         }
         timer.printTime(" drawRect");
