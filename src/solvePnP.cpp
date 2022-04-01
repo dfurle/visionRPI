@@ -382,8 +382,16 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   }
 
   cv::Size2f FOV;
+  // LifeCam HD-3000 has 68.5deg diagonal FOV
+  // for 4:3 aspect ratio:
+  //  Diag  -> Horz | Vert
+  //  60deg -> 49.6 | 38.2
+  //  70deg -> 58.5 | 45.6
+
   // flipped bc camera rotated by 90deg;
-  FOV.width = 45.6 * (M_PI/180);
+  // FOV.height = 45.6 * (M_PI/180) / 2.;
+  // FOV.width  = 58.5 * (M_PI/180) / 2.;
+  FOV.width  = 45.6 * (M_PI/180);
   FOV.height = 58.5 * (M_PI/180);
   printf("FOV: %f %f\n",FOV.width, FOV.height);
 
