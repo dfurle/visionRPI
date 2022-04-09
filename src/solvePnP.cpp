@@ -389,8 +389,8 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   //  70deg -> 58.5 | 45.6
 
   // flipped bc camera rotated by 90deg;
-  // FOV.height = 45.6 * (M_PI/180) / 2.;
-  // FOV.width  = 58.5 * (M_PI/180) / 2.;
+  // FOV.height = 45.6 * (M_PI/180);
+  // FOV.width  = 58.5 * (M_PI/180);
   FOV.width  = 45.6 * (M_PI/180);
   FOV.height = 58.5 * (M_PI/180);
   printf("FOV: %f %f\n",FOV.width, FOV.height);
@@ -401,10 +401,10 @@ void findAnglePnP(cv::Mat& img, cv::Mat& rPos){
   cv::circle(img,Global::targets[1].center,2,cv::Scalar(0,0,255));
   cv::circle(img,center,2,cv::Scalar(0,0,255));
 
-  double pitch = Global::targets[1].centerAim.y/2.*FOV.height;
-  double yaw   = Global::targets[1].centerAim.x/2.*FOV.width;
-  printf("pitch: %fdeg %f\n",pitch*(180/M_PI),pitch);
-  printf("yaw  : %fdeg %f\n",yaw*(180/M_PI),yaw);
+  double pitch = Global::targets[1].centerAim.y * FOV.height/2.;
+  double yaw   = Global::targets[1].centerAim.x * FOV.width /2.;
+  printf("pitch: %7.4f rad -> %5.2f deg \n",pitch,pitch*(180/M_PI));
+  printf("yaw  : %7.4f rad -> %5.2f deg \n",yaw,yaw*(180/M_PI));
 
   #define targetHeight 8.5 //ft
   #define cameraHeight 2.5 //ft

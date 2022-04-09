@@ -1,8 +1,8 @@
 #include "tcpserver.h"
 
 #define HOSTNAMELENGTH 128
-#define MAXCLIENTS 32
-#define RIO_ID 5957 // 1220
+#define MAXCLIENTS 128
+#define RIO_ID 5800
 
 bool interrupt = false;
 
@@ -55,19 +55,20 @@ void client_thread(CLIENT* client) {
 
   const int MAXLINE = 32; // random value for buffer just in case?
   char from_client[MAXLINE];
-  const int MLEN = 1024;
-  char to_client[MLEN];
   while (true) {
     // Read from client
     bzero(from_client, MAXLINE);
     int lenbuf = read(socket, from_client, sizeof(from_client));
 
-    // mutex are most likely required, test performance
+    // Generate data string
+    char to_client[64];
     Global::mutePos.lock();
-    snprintf(to_client, MAXLINE, "%.2f,%.2f,%d\n", Global::position.dist, Global::position.robotAngle, Global::dataValid);
+    snprintf(to_client, 64, "%.2f,%.2f,%d\n", Global::position.dist, Global::position.robotAngle, Global::dataValid);
+    Global::dataValid = 0;
     Global::mutePos.unlock();
     std::string send_to = to_client;
 
+    // Send string
     int bytesSent = send(socket, send_to.c_str(), send_to.length(), MSG_NOSIGNAL);
     if(bytesSent < 0){
       printf("thread: %d failed\n",client->ID);
@@ -76,5 +77,5 @@ void client_thread(CLIENT* client) {
     }
     usleep(100);
   }
-  close(client->socket);
+  close(socket);
 }
